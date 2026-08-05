@@ -1,0 +1,7 @@
+add_subdirectory(core)
+#add_subdirectory(ecs)
+#add_subdirectory(events)
+#add_subdirectory(math)
+#add_subdirectory(scheduler)
+#add_subdirectory(serialization)
+#add_subdirectory(simulation)

@@ -1,0 +1,10 @@
+#include <catch2/catch_test_macros.hpp>
+
+#include "UUID.h"
+
+TEST_CASE("UUIDs are unique") {
+    conductor::UUID a;
+    conductor::UUID b;
+
+    REQUIRE(a.value() != b.value());
+}
