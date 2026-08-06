@@ -1,0 +1,26 @@
+add_library(conductor_events
+
+)
+
+target_include_directories(conductor_events
+PUBLIC 
+    ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+target_compile_features(conductor_events
+PUBLIC
+    cxx_std_23
+)
+
+if(MSVC)
+    target_compile_options(conductor_events PRIVATE 
+        /W4
+        /permissive-
+    )
+else()
+    target_compile_options(conductor_events PRIVATE
+        -Wall
+        -Wextra
+        -Wpedantic
+    )
+endif()
