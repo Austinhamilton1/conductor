@@ -4,13 +4,15 @@
 
 #include "core/Clock.h"
 #include "core/SimulationClock.h"
+#include "core/NonCopyable.h"
 #include "events/EventBus.h"
 #include "scheduler/Scheduler.h"
 #include "layers/Layer.h"
 #include "layers/LayerStack.h"
+#include "ApplicationContext.h"
 
 namespace conductor {
-    class Application {
+    class Application : public NonCopyable {
     private:
         bool m_running = false;
         
@@ -19,6 +21,14 @@ namespace conductor {
 
         EventBus m_events;
         Scheduler m_scheduler;
+
+        ApplicationContext m_context {
+            m_clock,
+            m_simulation_clock,
+            m_events,
+            m_scheduler
+        };
+
         LayerStack m_layers;
 
     protected:
@@ -27,11 +37,14 @@ namespace conductor {
         virtual void shutdown() {};
 
     public:
-        Application() {};
+        Application() : m_layers(m_context) {};
         virtual ~Application() = default;
 
         Clock& clock();
         SimulationClock& simulation_clock();
+
+        EventBus& events();
+        Scheduler& scheduler();
 
         void run();
         void stop();

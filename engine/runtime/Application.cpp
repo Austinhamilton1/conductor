@@ -10,26 +10,37 @@ conductor::SimulationClock& conductor::Application::simulation_clock() {
     return m_simulation_clock;
 }
 
+conductor::EventBus& conductor::Application::events() {
+    return m_events;
+}
+
+conductor::Scheduler& conductor::Application::scheduler() {
+    return m_scheduler;
+}
+
 void conductor::Application::run() {
     initialize();
 
     m_running = true;
 
     while(m_running) {
-        // Update real time
         m_clock.tick();
+        const double real_dt = m_clock.delta_seconds();
 
-        // Update simulation time
-        m_simulation_clock.update(m_clock.delta_seconds());
+        m_simulation_clock.update(real_dt);
+        const double simulation_dt = m_simulation_clock.delta_seconds();
 
-        // Process events
+        // Process events from last frame
         m_events.process();
 
-        // Run scheduled tasks
-        m_scheduler.update(m_simulation_clock.delta_seconds());
+        // Scheduler handles complex time-based tasks
+        m_scheduler.update(simulation_dt);
 
-        // User update
-        update(m_simulation_clock.delta_seconds());
+        // LayerStack handles domain specific updates (e.g., Physics)
+        m_layers.update(simulation_dt); 
+
+        // Application manages global updates
+        update(simulation_dt);
     }
 
     shutdown();

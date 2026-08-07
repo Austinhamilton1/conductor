@@ -8,6 +8,13 @@ PUBLIC
     ${PROJECT_SOURCE_DIR}/engine
 )
 
+target_link_libraries(conductor_layers
+PUBLIC
+    conductor_core
+    conductor_events
+    conductor_scheduler
+)
+
 target_compile_features(conductor_layers
 PUBLIC
     cxx_std_23
