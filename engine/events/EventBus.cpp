@@ -1,7 +1,16 @@
+#include <cstddef>
+
 #include "EventBus.h"
 
 void conductor::EventBus::process() {
-    queue.drain([this](const Event& event) {
+    const std::size_t count = queue.size();
+
+    for(std::size_t i = 0; i < count; i++) {
+        Event event = queue.pop();
+
         dispatcher.dispatch(event);
-    });
+
+        if(event.destroy)
+            event.destroy(event.payload);
+    }
 }

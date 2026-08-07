@@ -11,6 +11,10 @@ bool conductor::EventQueue::empty() const {
     return events.empty();
 }
 
+std::size_t conductor::EventQueue::size() const {
+    return events.size();
+}
+
 void conductor::EventQueue::clear() {
     while(!events.empty()) {
         auto event = pop();

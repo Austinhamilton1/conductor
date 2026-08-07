@@ -1,8 +1,8 @@
 add_executable(core_tests
-    TestApplication.cpp
     TestClock.cpp
     TestLogger.cpp
     TestRandom.cpp
+    TestSimulationClock.cpp
     TestTimer.cpp
     TestUUID.cpp
 )

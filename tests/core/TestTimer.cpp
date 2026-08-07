@@ -2,7 +2,7 @@
 #include <thread>
 #include <chrono>
 
-#include "Timer.h"
+#include "core/Timer.h"
 
 TEST_CASE("Timer measures elapsed time") {
     conductor::Timer timer;

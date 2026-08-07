@@ -1,6 +1,6 @@
 #include <catch2/catch_test_macros.hpp>
 
-#include "Random.h"
+#include "core/Random.h"
 
 TEST_CASE("Random produces deterministic sequences") {
     conductor::Random a(1234);

@@ -2,7 +2,7 @@
 #include <sstream>
 #include <string>
 
-#include "Logger.h"
+#include "core/Logger.h"
 
 TEST_CASE("Log prints something") {
     std::ostringstream out;

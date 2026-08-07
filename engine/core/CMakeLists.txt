@@ -1,8 +1,8 @@
 add_library(conductor_core
-    Application.cpp
     Clock.cpp
     Logger.cpp
     Random.cpp
+    SimulationClock.cpp
     Timer.cpp
     UUID.cpp
 )
@@ -10,6 +10,7 @@ add_library(conductor_core
 target_include_directories(conductor_core
 PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}
+    ${PROJECT_SOURCE_DIR}/engine
 )
 
 target_compile_features(conductor_core

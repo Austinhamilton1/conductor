@@ -1,10 +1,19 @@
 add_library(conductor_events
-
+    EventBus.cpp
+    EventDispatcher.cpp
+    EventQueue.cpp
+    Subscription.cpp
 )
 
 target_include_directories(conductor_events
 PUBLIC 
     ${CMAKE_CURRENT_SOURCE_DIR}
+    ${PROJECT_SOURCE_DIR}/engine
+)
+
+target_link_libraries(conductor_events
+PUBLIC
+    conductor_core
 )
 
 target_compile_features(conductor_events

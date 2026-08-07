@@ -6,6 +6,7 @@
 #include <queue>
 #include <utility>
 #include <type_traits>
+#include <cstddef>
 
 namespace conductor {
     class EventQueue {
@@ -14,10 +15,11 @@ namespace conductor {
 
     public:
         EventQueue() {};
-        ~EventQueue();;
+        ~EventQueue();
 
         bool empty() const;
         void clear();
+        std::size_t size() const;
 
         template<typename T>
         void push(T&& event);
@@ -25,9 +27,6 @@ namespace conductor {
 
         template<typename T>
         static void destroy(void *ptr);
-
-        template<typename F>
-        void drain(F&& consumer);
     };
 };
 
@@ -47,16 +46,4 @@ void conductor::EventQueue::push(T&& event) {
 template<typename T>
 void conductor::EventQueue::destroy(void *ptr) {
     delete static_cast<T*>(ptr);
-}
-
-template<typename F>
-void conductor::EventQueue::drain(F&& consumer) {
-    while(!events.empty()) {
-        Event event = pop();
-
-        consumer(event);
-
-        if(event.destroy)
-            event.destroy(event.payload);
-    }
 }
