@@ -4,27 +4,37 @@
 #include "layers/Layer.h"
 #include "layers/LayerStack.h"
 
-class TestLayer : public conductor::Layer {
+class LayerState {
 public:
     bool attached = false;
     bool detached = false;
+    bool destroyed = false;
     int update_count = 0;
     double last_delta = 0.0;
+};
+
+class TestLayer : public conductor::Layer {
+private:
+    LayerState& state;
+
+public:  
+    explicit TestLayer(LayerState& state)
+        : state(state) {}
 
     conductor::ApplicationContext* context = nullptr;
 
     void on_attach(conductor::ApplicationContext& ctx) override {
-        attached = true;
+        state.attached = true;
         context = &ctx;
     }
 
     void on_detach() override {
-        detached = true;
+        state.detached = true;
     }
 
     void on_update(double delta_time) override {
-        update_count++;
-        last_delta = delta_time;
+        state.update_count++;
+        state.last_delta = delta_time;
     }
 };
 
@@ -58,14 +68,16 @@ TEST_CASE("Layer is attached when pushed") {
 
     conductor::LayerStack stack(context);
 
-    auto layer = std::make_unique<TestLayer>();
+    LayerState state;
+
+    auto layer = std::make_unique<TestLayer>(state);
     TestLayer* layer_ptr = layer.get();
 
     stack.push(std::move(layer));
 
     REQUIRE(stack.size() == 1);
-    REQUIRE(layer_ptr->attached);
-    REQUIRE_FALSE(layer_ptr->detached);
+    REQUIRE(state.attached);
+    REQUIRE_FALSE(state.detached);
 }
 
 
@@ -84,18 +96,20 @@ TEST_CASE("Layer is detached when popped") {
 
     conductor::LayerStack stack(context);
 
-    auto layer = std::make_unique<TestLayer>();
+    LayerState state;
+
+    auto layer = std::make_unique<TestLayer>(state);
     TestLayer* layer_ptr = layer.get();
 
     stack.push(std::move(layer));
 
-    REQUIRE(layer_ptr->attached);
-    REQUIRE_FALSE(layer_ptr->detached);
+    REQUIRE(state.attached);
+    REQUIRE_FALSE(state.detached);
 
     stack.pop();
 
     REQUIRE(stack.empty());
-    REQUIRE(layer_ptr->detached);
+    REQUIRE(state.detached);
 }
 
 
@@ -114,7 +128,9 @@ TEST_CASE("Layer receives ApplicationContext when attached") {
 
     conductor::LayerStack stack(context);
 
-    auto layer = std::make_unique<TestLayer>();
+    LayerState state;
+
+    auto layer = std::make_unique<TestLayer>(state);
     TestLayer* layer_ptr = layer.get();
 
     stack.push(std::move(layer));
@@ -142,7 +158,9 @@ TEST_CASE("Layer receives update calls") {
 
     conductor::LayerStack stack(context);
 
-    auto layer = std::make_unique<TestLayer>();
+    LayerState state;
+
+    auto layer = std::make_unique<TestLayer>(state);
     TestLayer* layer_ptr = layer.get();
 
     stack.push(std::move(layer));
@@ -151,12 +169,12 @@ TEST_CASE("Layer receives update calls") {
 
     stack.update(delta_time);
 
-    REQUIRE(layer_ptr->update_count == 1);
-    REQUIRE(layer_ptr->last_delta == delta_time);
+    REQUIRE(state.update_count == 1);
+    REQUIRE(state.last_delta == delta_time);
 
     stack.update(delta_time);
 
-    REQUIRE(layer_ptr->update_count == 2);
+    REQUIRE(state.update_count == 2);
 }
 
 
@@ -213,8 +231,11 @@ TEST_CASE("Popping a layer removes the most recently added layer") {
 
     conductor::LayerStack stack(context);
 
-    auto first = std::make_unique<TestLayer>();
-    auto second = std::make_unique<TestLayer>();
+    LayerState first_state;
+    LayerState second_state;
+
+    auto first = std::make_unique<TestLayer>(first_state);
+    auto second = std::make_unique<TestLayer>(second_state);
 
     TestLayer* first_ptr = first.get();
     TestLayer* second_ptr = second.get();
@@ -227,8 +248,8 @@ TEST_CASE("Popping a layer removes the most recently added layer") {
     stack.pop();
 
     REQUIRE(stack.size() == 1);
-    REQUIRE(second_ptr->detached);
-    REQUIRE_FALSE(first_ptr->detached);
+    REQUIRE(second_state.detached);
+    REQUIRE_FALSE(first_state.detached);
 }
 
 
@@ -247,9 +268,13 @@ TEST_CASE("Clearing the layer stack detaches every layer") {
 
     conductor::LayerStack stack(context);
 
-    auto first = std::make_unique<TestLayer>();
-    auto second = std::make_unique<TestLayer>();
-    auto third = std::make_unique<TestLayer>();
+    LayerState first_state;
+    LayerState second_state;
+    LayerState third_state;
+
+    auto first = std::make_unique<TestLayer>(first_state);
+    auto second = std::make_unique<TestLayer>(second_state);
+    auto third = std::make_unique<TestLayer>(third_state);
 
     TestLayer* first_ptr = first.get();
     TestLayer* second_ptr = second.get();
@@ -264,9 +289,9 @@ TEST_CASE("Clearing the layer stack detaches every layer") {
     stack.clear();
 
     REQUIRE(stack.empty());
-    REQUIRE(first_ptr->detached);
-    REQUIRE(second_ptr->detached);
-    REQUIRE(third_ptr->detached);
+    REQUIRE(first_state.detached);
+    REQUIRE(second_state.detached);
+    REQUIRE(third_state.detached);
 }
 
 
@@ -311,13 +336,6 @@ TEST_CASE("Pushing a null layer does nothing") {
 
     REQUIRE(stack.empty());
 }
-
-class LayerState {
-public:
-    bool attached = false;
-    bool detached = false;
-    bool destroyed = false;
-};
 
 class LifetimeLayer : public conductor::Layer {
 public:
