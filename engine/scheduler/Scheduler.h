@@ -40,7 +40,7 @@ namespace conductor {
 
             TaskId id() const;
 
-            DependencyResult depends_on(TaskHandle parent);
+            DependencyResult depends_on(const TaskHandle& parent);
         };
 
         TaskHandle schedule(

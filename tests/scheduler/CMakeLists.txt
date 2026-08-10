@@ -1,4 +1,5 @@
 add_executable(scheduler_tests
+    TestScheduledTask.cpp
     TestScheduler.cpp
 )
 

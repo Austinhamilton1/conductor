@@ -114,7 +114,7 @@ bool conductor::Scheduler::creates_cycle(
     std::vector<TaskId> stack;
     std::unordered_set<TaskId> visited;
 
-    stack.push_back(child);
+    stack.push_back(parent);
 
     while(!stack.empty()) {
         const TaskId current = stack.back();
@@ -123,7 +123,7 @@ bool conductor::Scheduler::creates_cycle(
         if(!visited.insert(current).second)
             continue;
 
-        if(current == parent)
+        if(current == child)
             return true;
 
         auto it = m_tasks.find(current);
@@ -288,7 +288,7 @@ conductor::TaskId conductor::Scheduler::TaskHandle::id() const {
     return m_id;
 }
 
-conductor::DependencyResult conductor::Scheduler::TaskHandle::depends_on(TaskHandle parent) {
+conductor::DependencyResult conductor::Scheduler::TaskHandle::depends_on(const TaskHandle& parent) {
     return m_scheduler->depends_on(m_id, parent.id());
 }
 
