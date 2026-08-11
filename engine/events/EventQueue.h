@@ -10,9 +10,6 @@
 
 namespace conductor {
     class EventQueue {
-    private:
-        std::queue<Event> events;
-
     public:
         EventQueue() {};
         ~EventQueue();
@@ -27,8 +24,11 @@ namespace conductor {
 
         template<typename T>
         static void destroy(void *ptr);
+
+    private:
+        std::queue<Event> events;
     };
-};
+}
 
 template<typename T>
 void conductor::EventQueue::push(T&& event) {

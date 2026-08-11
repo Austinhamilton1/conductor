@@ -19,10 +19,6 @@ namespace conductor {
     };
 
     class EventDispatcher {
-    private:
-        uint64_t next_listener;
-        std::unordered_map<EventType, std::vector<Listener>> registry;
-
     public:
         EventDispatcher() : next_listener(1) {};
         ~EventDispatcher() = default;
@@ -31,8 +27,12 @@ namespace conductor {
         Subscription subscribe(std::function<void(const T&)> callback);
         void unsubscribe(EventType, uint64_t id);       
         void dispatch(const Event& event);
+
+    private:
+        uint64_t next_listener;
+        std::unordered_map<EventType, std::vector<Listener>> registry;
     };
-};
+}
 
 template<typename T>
 conductor::Subscription conductor::EventDispatcher::subscribe(

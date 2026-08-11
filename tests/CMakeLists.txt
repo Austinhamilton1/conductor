@@ -1,6 +1,8 @@
 include(CTest)
 
+add_subdirectory(commands)
 add_subdirectory(core)
+add_subdirectory(ecs)
 add_subdirectory(events)
 add_subdirectory(layers)
 add_subdirectory(runtime)

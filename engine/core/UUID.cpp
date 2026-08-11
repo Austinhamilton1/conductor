@@ -2,12 +2,14 @@
 
 #include <random>
 
-conductor::UUID::UUID() {
-    std::random_device rd;
+namespace conductor {
+    UUID::UUID() {
+        std::random_device rd;
 
-    uuid = (uint64_t(rd()) << 32) | rd();
-}
+        uuid = (uint64_t(rd()) << 32) | rd();
+    }
 
-uint64_t conductor::UUID::value() const {
-    return uuid;
+    uint64_t UUID::value() const {
+        return uuid;
+    }
 }

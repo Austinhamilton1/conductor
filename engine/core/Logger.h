@@ -12,12 +12,6 @@ namespace conductor {
     };
 
     class Logger {
-    private:
-        int log_level;
-        std::ostream& out;
-
-        void log(LogLevel level, std::string_view msg);
-
     public:
         Logger(int max_level, std::ostream& out)
             : log_level(max_level), 
@@ -27,5 +21,11 @@ namespace conductor {
         void warn(std::string_view msg);
         void info(std::string_view msg);
         void debug(std::string_view msg);
+        
+    private:
+        int log_level;
+        std::ostream& out;
+
+        void log(LogLevel level, std::string_view msg);
     };
-};
+}

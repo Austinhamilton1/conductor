@@ -9,4 +9,4 @@ namespace conductor {
         TaskId parent;
         uint64_t consumed_generation = 0;
     };
-};
+}

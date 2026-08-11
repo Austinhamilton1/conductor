@@ -7,4 +7,4 @@ namespace conductor {
         Running,
         Failed
     };
-};
+}

@@ -2,33 +2,35 @@
 
 #include "EventDispatcher.h"
 
-void conductor::EventDispatcher::unsubscribe(EventType type, uint64_t id) {
-    auto it = registry.find(type);
+namespace conductor {
+    void EventDispatcher::unsubscribe(EventType type, uint64_t id) {
+        auto it = registry.find(type);
 
-    if(it == registry.end())
-        return;
+        if(it == registry.end())
+            return;
 
-    auto& listeners = it->second;
+        auto& listeners = it->second;
 
-    listeners.erase(
-        std::remove_if(
-            listeners.begin(),
-            listeners.end(),
-            [id](const Listener& l) {
-                return l.id == id;
-            }
-        ),
-        listeners.end()
-    );
-}
+        listeners.erase(
+            std::remove_if(
+                listeners.begin(),
+                listeners.end(),
+                [id](const Listener& l) {
+                    return l.id == id;
+                }
+            ),
+            listeners.end()
+        );
+    }
 
-void conductor::EventDispatcher::dispatch(const Event& event) {
-    auto it = registry.find(event.type);
+    void EventDispatcher::dispatch(const Event& event) {
+        auto it = registry.find(event.type);
 
-    if(it == registry.end())
-        return;
+        if(it == registry.end())
+            return;
 
-    for(auto& listener : it->second) {
-        listener.callback(event.payload);
+        for(auto& listener : it->second) {
+            listener.callback(event.payload);
+        }
     }
 }

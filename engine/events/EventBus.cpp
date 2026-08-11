@@ -2,15 +2,17 @@
 
 #include "EventBus.h"
 
-void conductor::EventBus::process() {
-    const std::size_t count = queue.size();
+namespace conductor {
+    void conductor::EventBus::process() {
+        const std::size_t count = queue.size();
 
-    for(std::size_t i = 0; i < count; i++) {
-        Event event = queue.pop();
+        for(std::size_t i = 0; i < count; i++) {
+            Event event = queue.pop();
 
-        dispatcher.dispatch(event);
+            dispatcher.dispatch(event);
 
-        if(event.destroy)
-            event.destroy(event.payload);
+            if(event.destroy)
+                event.destroy(event.payload);
+        }
     }
 }

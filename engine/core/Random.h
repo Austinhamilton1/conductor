@@ -5,10 +5,6 @@
 
 namespace conductor {
     class Random {
-    private:
-        uint64_t s;
-        std::mt19937_64 generator;
-
     public:
         explicit Random(uint64_t s) 
             : s(s), 
@@ -21,5 +17,9 @@ namespace conductor {
         float next_float();
         double next_double();
         bool chance(float p);
+        
+    private:
+        uint64_t s;
+        std::mt19937_64 generator;
     };
-};
+}

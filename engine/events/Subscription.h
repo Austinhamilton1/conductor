@@ -7,11 +7,6 @@ namespace conductor {
     class EventDispatcher; 
 
     class Subscription : public NonCopyable {
-    private:
-        EventDispatcher *dispatcher = nullptr;
-        EventType type = 0;
-        uint64_t id = 0;
-
     public:
         Subscription() = default;
 
@@ -31,7 +26,10 @@ namespace conductor {
         Subscription& operator=(Subscription&&);
 
     private:
-        void release();
+        EventDispatcher *dispatcher = nullptr;
+        EventType type = 0;
+        uint64_t id = 0;
         
+        void release();
     };
-};
+}

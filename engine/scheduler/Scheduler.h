@@ -104,4 +104,4 @@ namespace conductor {
 
         bool execute_task(TaskId id);
     };
-};
+}

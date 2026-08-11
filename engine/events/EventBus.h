@@ -8,10 +8,6 @@
 
 namespace conductor {
     class EventBus {
-    private:
-        EventQueue queue;
-        EventDispatcher dispatcher;
-
     public:
         template<typename T>
         void publish(T&&  event);
@@ -20,8 +16,12 @@ namespace conductor {
         Subscription subscribe(std::function<void(const T&)> callback);
 
         void process();
+
+    private:
+        EventQueue queue;
+        EventDispatcher dispatcher;
     };
-};
+}
 
 template<typename T>
 void conductor::EventBus::publish(T&& event) {

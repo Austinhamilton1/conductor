@@ -10,4 +10,4 @@ namespace conductor {
         void *payload = nullptr;
         void (*destroy)(void *) = nullptr;
     };
-};
+}

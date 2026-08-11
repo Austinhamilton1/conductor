@@ -12,7 +12,7 @@ namespace conductor {
 
     template<typename T>
     EventType event_type();
-};
+}
 
 template<typename T>
 conductor::EventType conductor::event_type() {

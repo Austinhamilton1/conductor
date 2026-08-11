@@ -2,12 +2,6 @@
 
 namespace conductor {
     class SimulationClock {
-    private:
-        bool m_paused;
-        double m_time_scale;
-        double m_delta;
-        double m_total;
-
     public:
         SimulationClock()
             : m_paused(false),
@@ -24,5 +18,11 @@ namespace conductor {
 
         double delta_seconds() const;
         double total_seconds() const;
+        
+    private:
+        bool m_paused;
+        double m_time_scale;
+        double m_delta;
+        double m_total;
     };
-};
+}

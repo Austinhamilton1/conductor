@@ -10,11 +10,6 @@
 
 namespace conductor {
     class LayerStack : public NonCopyable {
-    private:
-        std::vector<std::unique_ptr<Layer>> m_layers;
-
-        ApplicationContext& m_context;
-
     public:
         explicit LayerStack(ApplicationContext& context)
             : m_context(context) {};
@@ -34,5 +29,10 @@ namespace conductor {
         std::size_t size() const;
 
         bool empty() const;
+
+    private:
+        std::vector<std::unique_ptr<Layer>> m_layers;
+
+        ApplicationContext& m_context;
     };
 }

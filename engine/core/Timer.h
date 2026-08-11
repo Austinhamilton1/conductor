@@ -4,9 +4,6 @@
 
 namespace conductor {
     class Timer {
-    private:
-        std::chrono::time_point<std::chrono::steady_clock> start;
-
     public:
         Timer()
             : start(std::chrono::steady_clock::now()) {};
@@ -14,5 +11,8 @@ namespace conductor {
         double seconds();
         double milliseconds();
         double microseconds();
+        
+    private:
+        std::chrono::time_point<std::chrono::steady_clock> start;
     };
-};
+}

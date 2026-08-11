@@ -12,4 +12,4 @@ namespace conductor {
         EventBus& events;
         Scheduler& scheduler;
     };
-};
+}
