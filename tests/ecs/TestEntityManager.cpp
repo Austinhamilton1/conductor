@@ -1,9 +1,9 @@
 #include <catch2/catch_test_macros.hpp>
 
-#include "ecs/EntityRegistry.h"
+#include "ecs/EntityManager.h"
 
 TEST_CASE("Registry creates entities") {
-    conductor::EntityRegistry registry;
+    conductor::EntityManager registry;
 
     auto a = registry.create();
     auto b = registry.create();
@@ -15,7 +15,7 @@ TEST_CASE("Registry creates entities") {
 }
 
 TEST_CASE("Registry destroys entities") {
-    conductor::EntityRegistry registry;
+    conductor::EntityManager registry;
 
     auto entity = registry.create();
 
@@ -28,7 +28,7 @@ TEST_CASE("Registry destroys entities") {
 }
 
 TEST_CASE("Destroyed entity handle remains invalid after slot reuse") {
-    conductor::EntityRegistry registry;
+    conductor::EntityManager registry;
 
     auto old_entity = registry.create();
 
@@ -44,7 +44,7 @@ TEST_CASE("Destroyed entity handle remains invalid after slot reuse") {
 }
 
 TEST_CASE("Destroying an already destroyed entity is harmless") {
-    conductor::EntityRegistry registry;
+    conductor::EntityManager registry;
 
     auto entity = registry.create();
 

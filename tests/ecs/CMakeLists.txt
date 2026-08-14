@@ -1,5 +1,8 @@
 add_executable(ecs_tests
-    TestEventRegistry.cpp
+    TestComponentRegistry.cpp
+    TestComponentRegistryFreeze.cpp
+    TestComponentSet.cpp
+    TestEntityManager.cpp
 )
 
 target_link_libraries(ecs_tests

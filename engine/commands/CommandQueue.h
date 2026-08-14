@@ -7,8 +7,9 @@
 
 #include "Command.h"
 #include "core/NonCopyable.h"
-#include "ecs/EntityRegistry.h"
+#include "ecs/EntityManager.h"
 #include "ecs/ComponentType.h"
+#include "ecs/ComponentRegistry.h"
 
 namespace conductor {
     class CommandQueue : public NonCopyable {
@@ -74,7 +75,7 @@ namespace conductor {
          * cleared automatically. Call clear() when the synchronization phase
          * is complete.
          */
-        void apply(EntityRegistry& registry);
+        void apply(EntityManager& registry);
 
         /*
          * Remove all commands and invalidate all DeferredEntity handles
@@ -128,7 +129,7 @@ void conductor::CommandQueue::add_component(
 ) {
     add_component(
         EntityReference::from_entity(entity),
-        component_type_id<T>(),
+        ComponentRegistry::register_component<T>(),
         &component,
         sizeof(T)
     );
@@ -141,7 +142,7 @@ void conductor::CommandQueue::add_component(
 ) {
     add_component(
         EntityReference::from_deferred(entity),
-        component_type_id<T>(),
+        ComponentRegistry::register_component<T>(),
         &component,
         sizeof(T)
     );

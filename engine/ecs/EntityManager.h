@@ -7,13 +7,15 @@
 #include "Entity.h"
 
 namespace conductor {
-    class EntityRegistry {
+    class EntityManager {
     public:
         Entity create();
 
         void destroy(Entity entity);
 
         bool alive(Entity entity) const noexcept;
+
+        void reserve(size_t capacity);
 
         size_t size() const noexcept;
         

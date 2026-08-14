@@ -3,7 +3,7 @@
 #include "commands/CommandQueue.h"
 
 TEST_CASE("CommandQueue creates deferred entities") {
-    conductor::EntityRegistry registry;
+    conductor::EntityManager registry;
     conductor::CommandQueue queue;
 
     auto deferred = queue.create_entity();
@@ -22,7 +22,7 @@ TEST_CASE("CommandQueue creates deferred entities") {
 }
 
 TEST_CASE("CommandQueue resolves multiple deferred entities") {
-    conductor::EntityRegistry registry;
+    conductor::EntityManager registry;
     conductor::CommandQueue queue;
 
     auto first = queue.create_entity();
@@ -45,7 +45,7 @@ TEST_CASE("CommandQueue resolves multiple deferred entities") {
 }
 
 TEST_CASE("Deferred entity cannot be resolved before apply") {
-    conductor::EntityRegistry registry;
+    conductor::EntityManager registry;
     conductor::CommandQueue queue;
 
     auto deferred = queue.create_entity();
@@ -57,7 +57,7 @@ TEST_CASE("Deferred entity cannot be resolved before apply") {
 }
 
 TEST_CASE("Applying command queue consumes commands") {
-    conductor::EntityRegistry registry;
+    conductor::EntityManager registry;
     conductor::CommandQueue queue;
 
     queue.create_entity();
@@ -72,7 +72,7 @@ TEST_CASE("Applying command queue consumes commands") {
 }
 
 TEST_CASE("Deferred entity remains resolvable after apply") {
-    conductor::EntityRegistry registry;
+    conductor::EntityManager registry;
     conductor::CommandQueue queue;
 
     auto deferred = queue.create_entity();
@@ -85,7 +85,7 @@ TEST_CASE("Deferred entity remains resolvable after apply") {
 }
 
 TEST_CASE("Clearing command queue invalidates deferred entities") {
-    conductor::EntityRegistry registry;
+    conductor::EntityManager registry;
     conductor::CommandQueue queue;
 
     auto deferred = queue.create_entity();
@@ -103,7 +103,7 @@ TEST_CASE("Clearing command queue invalidates deferred entities") {
 }
 
 TEST_CASE("Destroy command is deferred") {
-    conductor::EntityRegistry registry;
+    conductor::EntityManager registry;
     conductor::CommandQueue queue;
 
     auto entity = registry.create();

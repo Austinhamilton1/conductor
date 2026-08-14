@@ -109,12 +109,12 @@ namespace conductor {
         return entity;
     }
 
-    void CommandQueue::apply(EntityRegistry& registry) {
+    void CommandQueue::apply(EntityManager& manager) {
         for(const Command& command: m_commands) {
             switch (command.type) {
             case CommandType::CreateEntity: {
                 const Entity entity = 
-                    registry.create();
+                    manager.create();
 
                 const auto id = 
                     command.m_create_entity.deferred.id();
@@ -130,7 +130,7 @@ namespace conductor {
             }
             
             case CommandType::DestroyEntity:
-                registry.destroy(
+                manager.destroy(
                     command.m_destroy_entity.entity
                 );
                 break;

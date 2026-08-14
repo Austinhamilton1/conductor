@@ -1,5 +1,7 @@
 add_library(conductor_ecs
-    EntityRegistry.cpp
+    ComponentRegistry.cpp
+    ComponentSet.cpp
+    EntityManager.cpp
 )
 
 target_include_directories(conductor_ecs

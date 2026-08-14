@@ -1,7 +1,7 @@
-#include "EntityRegistry.h"
+#include "EntityManager.h"
 
 namespace conductor {
-    Entity EntityRegistry::create() {
+    Entity EntityManager::create() {
         if(!m_free_indices.empty()) {
             const Entity::Index index = m_free_indices.back();
             m_free_indices.pop_back();
@@ -19,7 +19,7 @@ namespace conductor {
         return Entity(index, 0);
     }
 
-    void EntityRegistry::destroy(Entity entity) {
+    void EntityManager::destroy(Entity entity) {
         if(!alive(entity))
             return;
 
@@ -31,7 +31,7 @@ namespace conductor {
         --m_alive_count;
     }
 
-    bool EntityRegistry::alive(Entity entity) const noexcept {
+    bool EntityManager::alive(Entity entity) const noexcept {
         if(!entity.valid())
             return false;
 
@@ -41,7 +41,11 @@ namespace conductor {
         return m_generations[entity.index()] == entity.generation();
     }
 
-    size_t EntityRegistry::size() const noexcept {
+    void EntityManager::reserve(size_t capacity) {
+        m_generations.reserve(capacity);
+    }
+
+    size_t EntityManager::size() const noexcept {
         return m_alive_count;
     }
 }
