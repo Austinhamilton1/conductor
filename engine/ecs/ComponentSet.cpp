@@ -1,36 +1,27 @@
 #include "ComponentSet.h"
 
 namespace conductor {
-    ComponentSet::ComponentSet() {
-        const size_t component_count =
-            ComponentRegistry::size();
-
-        const size_t word_count = 
-            (component_count + BITS_PER_WORD - 1) /
-            BITS_PER_WORD;
-
-        m_bits.resize(word_count);
-    }
-
     void ComponentSet::add(ComponentTypeId id) {
         const size_t word = word_index(id);
 
-        if(word >= m_bits.size()) {
+        if (word >= m_bits.size()) {
             m_bits.resize(word + 1, 0);
         }
 
         const uint64_t mask = bit_mask(id);
 
-        if((m_bits[word] & mask) == 0) {
+        if ((m_bits[word] & mask) == 0) {
             m_bits[word] |= mask;
             ++m_size;
         }
     }
 
-    bool ComponentSet::contains(ComponentTypeId id) const noexcept {        
+    bool ComponentSet::contains(
+        ComponentTypeId id
+    ) const noexcept {
         const size_t word = word_index(id);
 
-        if(word >= m_bits.size()) {
+        if (word >= m_bits.size()) {
             return false;
         }
 
@@ -39,15 +30,30 @@ namespace conductor {
         return (m_bits[word] & mask) != 0;
     }
 
-    bool ComponentSet::contains(const ComponentSet& other) const noexcept {
-        if(m_bits.size() != other.m_bits.size()) {
-            return false;
-        }
-        
-        for(size_t i = 0; i < m_bits.size(); i++) {
-            if((m_bits[i] & other.m_bits[i]) != other.m_bits[i]) {
+    bool ComponentSet::contains(
+        const ComponentSet& other
+    ) const noexcept {
+
+        /*
+         * Every word in 'other' must be completely contained
+         * within this set.
+         *
+         * If 'other' has words beyond our size, those words
+         * must be zero for containment to succeed.
+         */
+        for (size_t i = 0; i < other.m_bits.size(); ++i) {
+
+            const uint64_t other_word =
+                other.m_bits[i];
+
+            if (other_word == 0)
+                continue;
+
+            if (i >= m_bits.size())
                 return false;
-            }
+
+            if ((m_bits[i] & other_word) != other_word)
+                return false;
         }
 
         return true;
@@ -71,11 +77,15 @@ namespace conductor {
         m_size = 0;
     }
 
-    size_t ComponentSet::word_index(ComponentTypeId id) noexcept {
+    size_t ComponentSet::word_index(
+        ComponentTypeId id
+    ) noexcept {
         return id / BITS_PER_WORD;
     }
 
-    uint64_t ComponentSet::bit_mask(ComponentTypeId id) noexcept {
+    uint64_t ComponentSet::bit_mask(
+        ComponentTypeId id
+    ) noexcept {
         return uint64_t{1} << (id % BITS_PER_WORD);
     }
 }

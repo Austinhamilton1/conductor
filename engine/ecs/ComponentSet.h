@@ -9,7 +9,7 @@
 namespace conductor {
     class ComponentSet {
     public:
-        ComponentSet();
+        ComponentSet() = default;
 
         template<Component T>
         void add();

@@ -1,7 +1,7 @@
 add_executable(ecs_tests
     TestComponentRegistry.cpp
-    TestComponentRegistryFreeze.cpp
     TestComponentSet.cpp
+    TestComponentStorage.cpp
     TestEntityManager.cpp
 )
 
