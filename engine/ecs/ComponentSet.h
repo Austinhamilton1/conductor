@@ -24,7 +24,7 @@ namespace conductor {
         size_t size() const noexcept;
         void clear();
 
-        bool operator==(const ComponentSet&) const noexcept = default;
+        bool operator==(const ComponentSet&) const noexcept;
 
         private:
             static constexpr size_t BITS_PER_WORD = 64;

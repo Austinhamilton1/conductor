@@ -695,3 +695,56 @@ TEST_CASE("Different component types have independent storage") {
     REQUIRE(positions.get(entity)->x == 10.0f);
     REQUIRE(velocities.get(entity)->x == 1.0f);
 }
+
+TEST_CASE("ComponentStorage iterates across chunk boundaries") {
+    Storage storage;
+
+    for (uint32_t i = 0; i < 10; ++i) {
+        storage.add(
+            conductor::Entity(i, 0),
+            {
+                .x = static_cast<float>(i),
+                .y = 0.0f
+            }
+        );
+    }
+
+    REQUIRE(storage.chunk_count() == 3);
+
+    size_t count = 0;
+
+    for (const Position& position : storage) {
+        REQUIRE(position.x == static_cast<float>(count));
+        ++count;
+    }
+
+    REQUIRE(count == 10);
+}
+
+TEST_CASE("ComponentStorage empty storage has valid iterators") {
+    Storage storage;
+
+    REQUIRE(storage.begin() == storage.end());
+}
+
+TEST_CASE("ComponentStorage single component iterates correctly") {
+    Storage storage;
+
+    storage.add(
+        conductor::Entity(42, 0),
+        {
+            .x = 10.0f,
+            .y = 20.0f
+        }
+    );
+
+    auto it = storage.begin();
+
+    REQUIRE(it != storage.end());
+    REQUIRE(it->x == 10.0f);
+    REQUIRE(it->y == 20.0f);
+
+    ++it;
+
+    REQUIRE(it == storage.end());
+}

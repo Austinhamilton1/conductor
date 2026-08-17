@@ -241,3 +241,28 @@ TEST_CASE("Modifying a copied ComponentSet does not modify the original") {
     REQUIRE_FALSE(original.contains<Mass>());
     REQUIRE(copy.contains<Mass>());
 }
+
+TEST_CASE("ComponentSet contains empty set regardless of bitset size") {
+    conductor::ComponentSet archetype;
+    conductor::ComponentSet empty;
+
+    archetype.add<Position>();
+    archetype.add<Velocity>();
+
+    REQUIRE(archetype.contains(empty));
+    REQUIRE_FALSE(empty.contains(archetype));
+}
+
+TEST_CASE("ComponentSet containment handles different bitset sizes") {
+    conductor::ComponentSet small;
+    conductor::ComponentSet large;
+
+    small.add<Position>();
+
+    large.add<Position>();
+    large.add<Velocity>();
+    large.add<Mass>();
+
+    REQUIRE(large.contains(small));
+    REQUIRE_FALSE(small.contains(large));
+}

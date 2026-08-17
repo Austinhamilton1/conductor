@@ -1,5 +1,7 @@
 #include "ComponentSet.h"
 
+#include <algorithm>
+
 namespace conductor {
     void ComponentSet::add(ComponentTypeId id) {
         const size_t word = word_index(id);
@@ -87,5 +89,30 @@ namespace conductor {
         ComponentTypeId id
     ) noexcept {
         return uint64_t{1} << (id % BITS_PER_WORD);
+    }
+
+    bool ComponentSet::operator==(const ComponentSet& other) const noexcept {
+        const size_t word_count =
+            std::max(
+                m_bits.size(),
+                other.m_bits.size()
+            );
+
+        for (size_t i = 0; i < word_count; ++i) {
+            const uint64_t lhs =
+                i < m_bits.size()
+                    ? m_bits[i]
+                    : 0;
+
+            const uint64_t rhs =
+                i < other.m_bits.size()
+                    ? other.m_bits[i]
+                    : 0;
+
+            if (lhs != rhs)
+                return false;
+        }
+
+        return true;
     }
 }

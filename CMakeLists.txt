@@ -19,12 +19,7 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
 add_subdirectory(external/Catch2)
 
-add_subdirectory(engine)
 add_subdirectory(apps)
+add_subdirectory(benchmarks)
+add_subdirectory(engine)
 add_subdirectory(tests)
-
-add_custom_target(check
-    COMMAND ${CMAKE_CTEST_COMMAND}
-    --output-on-failure
-    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-)
