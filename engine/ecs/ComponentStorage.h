@@ -62,6 +62,18 @@ namespace conductor {
                 return m_current;
             }
 
+            Entity entity() const noexcept {
+                const Chunk& chunk =
+                    m_storage->m_chunks[m_chunk];
+
+                const size_t offset =
+                    static_cast<size_t>(
+                        m_current - chunk.components.get()
+                    );
+
+                return chunk.entities[offset];
+            }
+
             Iterator& operator++() noexcept {
                 ++m_current;
 
@@ -184,6 +196,18 @@ namespace conductor {
 
             pointer operator->() const noexcept {
                 return m_current;
+            }
+
+            Entity entity() const noexcept {
+                const Chunk& chunk =
+                    m_storage->m_chunks[m_chunk];
+
+                const size_t offset =
+                    static_cast<size_t>(
+                        m_current - chunk.components.get()
+                    );
+
+                return chunk.entities[offset];
             }
 
             ConstIterator& operator++() noexcept {
