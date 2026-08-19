@@ -78,9 +78,9 @@ TEST_CASE("Const view is const") {
 }
 
 TEST_CASE("Views work across chunk boundaries") {
-    conductor::ComponentStorage<Position, 4> storage;
+    conductor::ComponentStorage<Position> storage;
 
-    for(uint32_t i = 0; i < 8; i++) {
+    for(uint32_t i = 0; i < 5000; i++) {
         storage.add(conductor::Entity(i, 0), Position{
             static_cast<float>(i),
             static_cast<float>(i * 2),
@@ -90,13 +90,13 @@ TEST_CASE("Views work across chunk boundaries") {
 
     auto view = storage.view();
 
-    REQUIRE(view.size() == 8);
+    REQUIRE(view.size() == 5000);
 
     for(auto& position : view) {
         position.x = 10.0f;
     }
 
-    for(size_t i = 0; i < 8; i++) {
+    for(size_t i = 0; i < 5000; i++) {
         REQUIRE_THAT(storage.data(i)->x, Catch::Matchers::WithinAbs(10.0f, 0.0001));
     }
 }

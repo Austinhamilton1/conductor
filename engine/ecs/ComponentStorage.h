@@ -17,14 +17,15 @@
 
 
 namespace conductor {
-    template<Component T, size_t ChunkSize = 4096>
-    class ComponentStorage : public NonCopyable {
-        static_assert(
-            ChunkSize > 0,
-            "ComponentStorage ChunkSize must be greater than zero"
-        );
+    namespace detail {
+        inline constexpr size_t ComponentChunkSize = 4096;
+    }
 
+    template<Component T>
+    class ComponentStorage : public NonCopyable {
     private:
+        static constexpr size_t ChunkSize = detail::ComponentChunkSize;
+        
         struct Chunk {
             std::unique_ptr<T[]> components;
             std::unique_ptr<Entity[]> entities;

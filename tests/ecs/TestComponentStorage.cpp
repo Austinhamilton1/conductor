@@ -25,7 +25,7 @@ namespace {
     };
 
 
-    using Storage = conductor::ComponentStorage<Position, 4>;
+    using Storage = conductor::ComponentStorage<Position>;
 
 }
 
@@ -413,7 +413,7 @@ TEST_CASE("ComponentStorage removes the only component") {
 TEST_CASE("ComponentStorage allocates a new chunk when full") {
     Storage storage;
 
-    for (uint32_t i = 0; i < 4; ++i) {
+    for (uint32_t i = 0; i < 4096; ++i) {
         storage.add(
             conductor::Entity(i, 0),
             {
@@ -423,18 +423,18 @@ TEST_CASE("ComponentStorage allocates a new chunk when full") {
         );
     }
 
-    REQUIRE(storage.size() == 4);
+    REQUIRE(storage.size() == 4096);
     REQUIRE(storage.chunk_count() == 1);
 
     storage.add(
-        conductor::Entity(4, 0),
+        conductor::Entity(4096, 0),
         {
             .x = 4.0f,
             .y = 4.0f
         }
     );
 
-    REQUIRE(storage.size() == 5);
+    REQUIRE(storage.size() == 4097);
     REQUIRE(storage.chunk_count() == 2);
 }
 
@@ -442,7 +442,7 @@ TEST_CASE("ComponentStorage allocates a new chunk when full") {
 TEST_CASE("ComponentStorage stores components across multiple chunks") {
     Storage storage;
 
-    constexpr uint32_t count = 10;
+    constexpr uint32_t count = 5000;
 
     for (uint32_t i = 0; i < count; ++i) {
         storage.add(
@@ -455,7 +455,7 @@ TEST_CASE("ComponentStorage stores components across multiple chunks") {
     }
 
     REQUIRE(storage.size() == count);
-    REQUIRE(storage.chunk_count() == 3);
+    REQUIRE(storage.chunk_count() == 2);
 
     for (uint32_t i = 0; i < count; ++i) {
         const Position* position =
@@ -674,8 +674,8 @@ TEST_CASE("ComponentStorage remove ignores invalid entity") {
 // -----------------------------------------------------------------------------
 
 TEST_CASE("Different component types have independent storage") {
-    conductor::ComponentStorage<Position, 4> positions;
-    conductor::ComponentStorage<Velocity, 4> velocities;
+    conductor::ComponentStorage<Position> positions;
+    conductor::ComponentStorage<Velocity> velocities;
 
     conductor::Entity entity(0, 0);
 
@@ -699,7 +699,7 @@ TEST_CASE("Different component types have independent storage") {
 TEST_CASE("ComponentStorage iterates across chunk boundaries") {
     Storage storage;
 
-    for (uint32_t i = 0; i < 10; ++i) {
+    for (uint32_t i = 0; i < 5000; ++i) {
         storage.add(
             conductor::Entity(i, 0),
             {
@@ -709,7 +709,7 @@ TEST_CASE("ComponentStorage iterates across chunk boundaries") {
         );
     }
 
-    REQUIRE(storage.chunk_count() == 3);
+    REQUIRE(storage.chunk_count() == 2);
 
     size_t count = 0;
 
@@ -718,7 +718,7 @@ TEST_CASE("ComponentStorage iterates across chunk boundaries") {
         ++count;
     }
 
-    REQUIRE(count == 10);
+    REQUIRE(count == 5000);
 }
 
 TEST_CASE("ComponentStorage empty storage has valid iterators") {
