@@ -2,6 +2,7 @@ add_executable(ecs_tests
     TestComponentRegistry.cpp
     TestComponentSet.cpp
     TestComponentStorage.cpp
+    TestComponentView.cpp
     TestEntityManager.cpp
 )
 

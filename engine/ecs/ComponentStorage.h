@@ -11,12 +11,12 @@
 
 #include "ComponentType.h"
 #include "Entity.h"
+#include "ComponentView.h"
 #include "core/NonCopyable.h"
 #include "core/Prefetch.h"
 
 
 namespace conductor {
-
     template<Component T, size_t ChunkSize = 4096>
     class ComponentStorage : public NonCopyable {
         static_assert(
@@ -179,7 +179,6 @@ namespace conductor {
             T* m_chunk_end = nullptr;
         };
 
-
         class ConstIterator {
         public:
             using iterator_category = std::forward_iterator_tag;
@@ -294,8 +293,9 @@ namespace conductor {
             const T* m_chunk_end = nullptr;
         };
 
-
     public:
+        using component_type = T;
+
         ComponentStorage() = default;
 
         explicit ComponentStorage(size_t entity_capacity) {
@@ -309,7 +309,6 @@ namespace conductor {
         ) noexcept = default;
 
         ~ComponentStorage() = default;
-
 
         void reserve(size_t entity_capacity) {
             m_locations.reserve(entity_capacity);
@@ -326,7 +325,6 @@ namespace conductor {
 
             m_chunks.reserve(chunk_count);
         }
-
 
         T& add(
             Entity entity,
@@ -388,14 +386,12 @@ namespace conductor {
             return chunk.components[offset];
         }
 
-
         void remove(Entity entity) {
             if(!contains(entity))
                 return;
 
             m_pending_removals.push_back(entity);
         }
-
 
         void flush_removals() {
             for(const Entity entity : m_pending_removals) {
@@ -404,7 +400,6 @@ namespace conductor {
 
             m_pending_removals.clear();
         }
-
 
         bool contains(Entity entity) const noexcept {
             if(!entity.valid())
@@ -423,7 +418,6 @@ namespace conductor {
                        entity.generation();
         }
 
-
         T* get(Entity entity) noexcept {
             if(!contains(entity))
                 return nullptr;
@@ -432,7 +426,6 @@ namespace conductor {
                 m_locations[entity.index()]
             );
         }
-
 
         const T* get(Entity entity) const noexcept {
             if(!contains(entity))
@@ -443,21 +436,17 @@ namespace conductor {
             );
         }
 
-
         size_t size() const noexcept {
             return m_size;
         }
-
 
         bool empty() const noexcept {
             return m_size == 0;
         }
 
-
         size_t chunk_count() const noexcept {
             return m_chunks.size();
         }
-
 
         Iterator begin() noexcept {
             if(m_chunks.empty())
@@ -466,14 +455,12 @@ namespace conductor {
             return Iterator(this, 0);
         }
 
-
         Iterator end() noexcept {
             return Iterator(
                 this,
                 m_chunks.size()
             );
         }
-
 
         ConstIterator begin() const noexcept {
             if(m_chunks.empty())
@@ -482,7 +469,6 @@ namespace conductor {
             return ConstIterator(this, 0);
         }
 
-
         ConstIterator end() const noexcept {
             return ConstIterator(
                 this,
@@ -490,16 +476,21 @@ namespace conductor {
             );
         }
 
-
         ConstIterator cbegin() const noexcept {
             return begin();
         }
-
 
         ConstIterator cend() const noexcept {
             return end();
         }
 
+        ComponentView<ComponentStorage> view() noexcept {
+            return ComponentView<ComponentStorage>(this);
+        }
+
+        ComponentView<const ComponentStorage> view() const noexcept {
+            return ComponentView<const ComponentStorage>(this);
+        }
 
         T* data(size_t index) noexcept {
             assert(index < m_size);
@@ -507,13 +498,11 @@ namespace conductor {
             return &component_at(index);
         }
 
-
         const T* data(size_t index) const noexcept {
             assert(index < m_size);
 
             return &component_at(index);
         }
-
 
     private:
         void ensure_location_capacity(
@@ -525,7 +514,6 @@ namespace conductor {
                 );
             }
         }
-
 
         /*
          * Used for random/indexed access.
@@ -543,7 +531,6 @@ namespace conductor {
                 .components[offset];
         }
 
-
         const T& component_at(
             size_t index
         ) const noexcept {
@@ -557,7 +544,6 @@ namespace conductor {
                 .components[offset];
         }
 
-
         T& component_at(
             const Location& location
         ) noexcept {
@@ -565,14 +551,12 @@ namespace conductor {
                 .components[location.offset];
         }
 
-
         const T& component_at(
             const Location& location
         ) const noexcept {
             return m_chunks[location.chunk]
                 .components[location.offset];
         }
-
 
         void remove_immediate(Entity entity) {
             if(!contains(entity))
@@ -634,7 +618,6 @@ namespace conductor {
             }
         }
 
-
         void prefetch_chunk(
             size_t chunk_index
         ) const noexcept {
@@ -649,7 +632,6 @@ namespace conductor {
             );
         }
 
-
     private:
         /*
          * Chunk descriptors are now contiguous.
@@ -659,7 +641,6 @@ namespace conductor {
          */
         std::vector<Chunk> m_chunks;
 
-
         /*
          * Entity index -> physical component location.
          *
@@ -668,18 +649,15 @@ namespace conductor {
          */
         std::vector<Location> m_locations;
 
-
         /*
          * Structural removals are deferred until the end
          * of the simulation frame.
          */
         std::vector<Entity> m_pending_removals;
 
-
         /*
          * Number of components currently stored.
          */
         size_t m_size = 0;
     };
-
 }
