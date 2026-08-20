@@ -288,40 +288,28 @@ TEST_CASE("Query returns only entities containing all components") {
             positions.view()
         );
 
-    std::vector<conductor::Entity> entities;
+    size_t count = 0;
 
     for(auto [velocity, position] : query) {
-        entities.push_back(
-            // The entity is obtained from the query iterator
-            // in the dedicated test below, so just verify data here.
-            make_entity(
-                static_cast<uint32_t>(
-                    position.x
-                ) / 1
-            )
-        );
-
         position.x += velocity.x;
+        position.y += velocity.y;
+
+        ++count;
     }
 
-    REQUIRE(entities.size() == 2);
+    REQUIRE(count == 2);
 
     // Only entity1 and entity4 should have been modified.
-    REQUIRE(
-        positions.get(entity1)->x == 11.0f
-    );
+    REQUIRE(positions.get(entity1)->x == 11.0f);
+    REQUIRE(positions.get(entity1)->y == 11.0f);
 
-    REQUIRE(
-        positions.get(entity2)->x == 2.0f
-    );
+    REQUIRE(positions.get(entity2)->x == 2.0f);
+    REQUIRE(positions.get(entity2)->y == 2.0f);
 
-    REQUIRE(
-        positions.get(entity3) == nullptr
-    );
+    REQUIRE(positions.get(entity3) == nullptr);
 
-    REQUIRE(
-        positions.get(entity4)->x == 44.0f
-    );
+    REQUIRE(positions.get(entity4)->x == 44.0f);
+    REQUIRE(positions.get(entity4)->y == 44.0f);
 }
 
 
