@@ -11,13 +11,27 @@ namespace conductor {
     public:
         using storage_type = Storage;
         using component_type =
-            typename Storage::component_type;
+            typename std::remove_cv_t<Storage>::component_type;
 
         using iterator = 
             decltype(std::declval<Storage&>().begin());
 
         using const_iterator =
             decltype(std::declval<const Storage&>().begin());
+
+        using pointer =
+            std::conditional_t<
+                std::is_const_v<Storage>,
+                const component_type*,
+                component_type*
+            >;
+
+        using reference =
+            std::conditional_t<
+                std::is_const_v<Storage>,
+                const component_type&,
+                component_type&
+            >;
 
         ComponentView() noexcept = default;
 
@@ -52,7 +66,7 @@ namespace conductor {
             return m_storage->contains(entity);
         }
 
-        component_type *get(Entity entity) noexcept {
+        pointer get(Entity entity) noexcept {
             return m_storage->get(entity);
         }
 

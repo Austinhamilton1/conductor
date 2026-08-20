@@ -4,6 +4,7 @@ add_executable(ecs_tests
     TestComponentStorage.cpp
     TestComponentView.cpp
     TestEntityManager.cpp
+    TestQuery.cpp
 )
 
 target_link_libraries(ecs_tests
