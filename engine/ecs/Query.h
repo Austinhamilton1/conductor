@@ -11,6 +11,10 @@
 #include "ComponentView.h"
 
 namespace conductor {
+    // ============================================================
+    // Access declarations
+    // ============================================================
+
     template<Component T>
     struct Read {
         using component_type = T;
@@ -25,15 +29,22 @@ namespace conductor {
         static constexpr bool writable = true;
     };
 
-
     namespace detail {
-        // Access Traits
+        // ========================================================
+        // Access traits
+        // ========================================================
 
         template<typename Access>
         using access_component_t =
             typename Access::component_type;
 
+        template<typename Access>
+        inline constexpr bool access_is_writable_v =
+            Access::writable;
+
+        // ========================================================
         // View traits
+        // ========================================================
 
         template<typename View>
         using view_type_t =
@@ -49,7 +60,9 @@ namespace conductor {
                 typename view_type_t<View>::storage_type
             >;
 
+        // ========================================================
         // Validate an Access/View pair
+        // ========================================================
 
         template<typename Access, typename View>
         inline constexpr bool valid_access_view_v =
@@ -61,11 +74,13 @@ namespace conductor {
             >
             &&
             (
-                !Access::writable ||
+                !access_is_writable_v<Access> ||
                 !view_is_const_v<View>
             );
 
+        // ========================================================
         // Query result reference
+        // ========================================================
 
         template<typename Access>
         using reference_t =
@@ -76,44 +91,166 @@ namespace conductor {
             >;
 
         template<typename... Access>
-        using reference_tuple_t = 
+        using reference_tuple_t =
             std::tuple<
                 reference_t<Access>...
             >;
 
+        // ========================================================
         // Get a component from a view
+        // ========================================================
 
         template<typename Access, typename View>
         decltype(auto) get_component(
             View& view,
             Entity entity
         ) {
-            using Component = 
+            using Component =
                 typename Access::component_type;
 
-            auto *component =
+            auto* component =
                 view.get(entity);
 
             assert(component != nullptr);
 
             if constexpr(Access::writable) {
                 return *component;
-            } else {
+            }
+            else {
                 return static_cast<const Component&>(
                     *component
                 );
             }
         }
+
+        // ========================================================
+        // Convert a storage to its view
+        //
+        // This allows:
+        //
+        //     Query<Read<Position>>::bind(storage)
+        //
+        // as well as:
+        //
+        //     Query<Read<Position>>::bind(storage.view())
+        // ========================================================
+
+        template<typename T>
+        concept HasView =
+            requires(T& storage) {
+                storage.view();
+            };
+
+        template<typename T>
+        auto make_view(T& storage) {
+            return storage.view();
+        }
+
+        // ========================================================
+        // Query validation
+        // ========================================================
+
+        template<typename T>
+        struct is_query_access : std::false_type {};
+
+        template<typename T>
+        struct is_query_access<Read<T>>
+            : std::bool_constant<
+                Component<T>
+            > {};
+
+        template<typename T>
+        struct is_query_access<Write<T>>
+            : std::bool_constant<
+                Component<T>
+            > {};
+
+        template<typename T>
+        inline constexpr bool is_query_access_v =
+            is_query_access<T>::value;
+
+        template<typename... Access>
+        inline constexpr bool unique_components_v = [] {
+            using Components =
+                std::tuple<
+                    typename Access::component_type...
+                >;
+
+            return []<std::size_t... I>(
+                std::index_sequence<I...>
+            ) {
+                return []<std::size_t... J>(
+                    std::index_sequence<J...>
+                ) {
+                    return (
+                        (
+                            I == J ||
+                            !std::is_same_v<
+                                std::tuple_element_t<I, Components>,
+                                std::tuple_element_t<J, Components>
+                            >
+                        )
+                        && ...
+                    );
+                }(
+                    std::make_index_sequence<
+                        sizeof...(Access)
+                    >{}
+                );
+            }(
+                std::make_index_sequence<
+                    sizeof...(Access)
+                >{}
+            );
+        }();
+
+        template<typename Access>
+        struct is_read_access
+            : std::bool_constant<!Access::writable> {};
+
+        template<typename Access>
+        struct is_write_access
+            : std::bool_constant<Access::writable> {};
+
+        template<typename... Access>
+        inline constexpr bool valid_query_accesses_v =
+            (
+                is_query_access<Access>::value
+                && ...
+            )
+            &&
+            unique_components_v<Access...>;
     }
 
-    // =====================================================
+    // ============================================================
     // Query
-    // 
-    // ViewTuple contains the concrete ComponentView types.
     //
-    // Access... describes what the query exposes.
-    // =====================================================
-    template<typename ViewTuple, typename... Access>
+    // Example:
+    //
+    // using MovementQuery =
+    //     Query<
+    //         Read<Velocity>,
+    //         Write<Position>
+    //     >;
+    //
+    // Runtime binding:
+    //
+    // auto query =
+    //     MovementQuery::bind(
+    //         velocity.view(),
+    //         position.view()
+    //     );
+    //
+    // or:
+    //
+    // auto query =
+    //     MovementQuery::bind(
+    //         velocity,
+    //         position
+    //     );
+    // ============================================================
+
+    template<typename... Access>
     class Query {
         static_assert(
             sizeof...(Access) > 0,
@@ -121,258 +258,361 @@ namespace conductor {
         );
 
         static_assert(
-            std::tuple_size_v<ViewTuple> == 
-            sizeof...(Access),
-            "Query requires one ComponentView per access"
+            detail::valid_query_accesses_v<Access...>,
+            "Query contains invalid, duplicate, or non-component access types"
         );
 
     private:
         using AccessTuple =
             std::tuple<Access...>;
 
-        using DriverView =
-            std::tuple_element_t<0, ViewTuple>;
+    public:
+        using reference =
+            detail::reference_tuple_t<Access...>;
 
-        using DriverIterator =
-            decltype(
-                std::declval<DriverView&>().begin()
+    private:
+        // ========================================================
+        // Bound query implementation
+        // ========================================================
+
+        template<typename ViewTuple>
+        class BoundQuery {
+        private:
+            using DriverView =
+                std::tuple_element_t<
+                    0,
+                    ViewTuple
+                >;
+
+            using DriverIterator =
+                decltype(
+                    std::declval<
+                        DriverView&
+                    >().begin()
+                );
+
+            static constexpr std::size_t ViewCount =
+                sizeof...(Access);
+
+        public:
+            class Iterator {
+            public:
+                using iterator_category =
+                    std::forward_iterator_tag;
+
+                using value_type =
+                    reference;
+
+                using difference_type =
+                    std::ptrdiff_t;
+
+                using pointer =
+                    void;
+
+                using reference_type =
+                    reference;
+
+                Iterator() noexcept = default;
+
+                reference_type operator*() const {
+                    return m_query->dereference(
+                        m_iterator
+                    );
+                }
+
+                Iterator& operator++() {
+                    ++m_iterator;
+
+                    m_query->advance(
+                        m_iterator
+                    );
+
+                    return *this;
+                }
+
+                Iterator operator++(int) {
+                    Iterator copy = *this;
+
+                    ++(*this);
+
+                    return copy;
+                }
+
+                bool operator==(
+                    const Iterator& other
+                ) const noexcept {
+                    return
+                        m_query == other.m_query &&
+                        m_iterator == other.m_iterator;
+                }
+
+                bool operator!=(
+                    const Iterator& other
+                ) const noexcept {
+                    return !(*this == other);
+                }
+
+                Entity entity() const noexcept {
+                    return m_iterator.entity();
+                }
+
+            private:
+                friend class BoundQuery;
+
+                Iterator(
+                    BoundQuery* query,
+                    DriverIterator iterator
+                ) noexcept
+                    : m_query(query),
+                      m_iterator(
+                          std::move(iterator)
+                      ) {}
+
+                BoundQuery* m_query = nullptr;
+
+                DriverIterator m_iterator;
+            };
+
+            explicit BoundQuery(
+                ViewTuple views
+            )
+                : m_views(
+                    std::move(views)
+                ) {}
+
+            Iterator begin() {
+                auto iterator =
+                    std::get<0>(
+                        m_views
+                    ).begin();
+
+                advance(iterator);
+
+                return Iterator(
+                    this,
+                    std::move(iterator)
+                );
+            }
+
+            Iterator end() {
+                return Iterator(
+                    this,
+                    std::get<0>(
+                        m_views
+                    ).end()
+                );
+            }
+
+            bool empty() {
+                return begin() == end();
+            }
+
+            std::size_t driver_size() const noexcept {
+                return std::get<0>(
+                    m_views
+                ).size();
+            }
+
+        private:
+            // ====================================================
+            // Matching
+            // ====================================================
+
+            template<std::size_t... Index>
+            bool matches_impl(
+                Entity entity,
+                std::index_sequence<Index...>
+            ) const noexcept {
+                return (
+                    std::get<Index + 1>(
+                        m_views
+                    ).contains(entity)
+                    && ...
+                );
+            }
+
+            bool matches(
+                Entity entity
+            ) const noexcept {
+                if constexpr(ViewCount == 1) {
+                    return true;
+                }
+                else {
+                    return matches_impl(
+                        entity,
+                        std::make_index_sequence<
+                            ViewCount - 1
+                        >{}
+                    );
+                }
+            }
+
+            // ====================================================
+            // Advance
+            // ====================================================
+
+            void advance(
+                DriverIterator& iterator
+            ) {
+                const auto end =
+                    std::get<0>(
+                        m_views
+                    ).end();
+
+                while(iterator != end) {
+
+                    const Entity entity =
+                        iterator.entity();
+
+
+                    if(matches(entity))
+                        return;
+
+
+                    ++iterator;
+                }
+            }
+
+            // ====================================================
+            // Dereference
+            // ====================================================
+
+            template<std::size_t... Index>
+            reference dereference_impl(
+                Entity entity,
+                std::index_sequence<Index...>
+            ) {
+                return reference{
+                    detail::get_component<
+                        std::tuple_element_t<
+                            Index,
+                            AccessTuple
+                        >
+                    >(
+                        std::get<Index>(
+                            m_views
+                        ),
+                        entity
+                    )...
+                };
+            }
+
+            reference dereference(
+                const DriverIterator& iterator
+            ) {
+
+                const Entity entity =
+                    iterator.entity();
+
+
+                return dereference_impl(
+                    entity,
+                    std::make_index_sequence<
+                        ViewCount
+                    >{}
+                );
+            }
+
+            ViewTuple m_views;
+        };
+
+    public:
+        // ========================================================
+        // Bind
+        // ========================================================
+
+        template<typename... Views>
+        requires(
+            sizeof...(Views) == sizeof...(Access)
+        )
+        static auto bind(
+            Views&&... views
+        ) {
+            using ViewTuple =
+                std::tuple<
+                    std::remove_cvref_t<Views>...
+                >;
+
+            static_assert(
+                validate_views<ViewTuple>(),
+                "Query access types do not match supplied ComponentViews"
             );
 
-        static constexpr size_t ViewCount =
-            sizeof...(Access);
+            return BoundQuery<ViewTuple>(
+                ViewTuple(
+                    std::forward<Views>(views)...
+                )
+            );
+        }
 
-        // Validate every Access/View pair
+        // ========================================================
+        // Bind using ComponentStorage directly
+        //
+        // This overload is intentionally provided as a convenience
+        // for the existing ComponentStorage API.
+        // ========================================================
 
-        template<size_t... Index>
+        template<typename... Storage>
+        requires(
+            sizeof...(Storage) == sizeof...(Access)
+            &&
+            (
+                detail::HasView<
+                    Storage
+                >
+                && ...
+            )
+        )
+        static auto bind_storage(
+            Storage&... storage
+        ) {
+            return bind(
+                storage.view()...
+            );
+        }
+
+    private:
+        // ========================================================
+        // Validate views
+        // ========================================================
+
+        template<typename ViewTuple, std::size_t... Index>
         static consteval bool validate_views_impl(
             std::index_sequence<Index...>
         ) {
             return (
                 detail::valid_access_view_v<
-                    std::tuple_element_t<Index, AccessTuple>,
-                    std::tuple_element_t<Index, ViewTuple>
+                    std::tuple_element_t<
+                        Index,
+                        AccessTuple
+                    >,
+                    std::tuple_element_t<
+                        Index,
+                        ViewTuple
+                    >
                 >
                 && ...
             );
         }
 
+        template<typename ViewTuple>
         static consteval bool validate_views() {
-            return validate_views_impl(
-                std::make_index_sequence<ViewCount>{}
+
+            return validate_views_impl<ViewTuple>(
+                std::make_index_sequence<
+                    sizeof...(Access)
+                >{}
             );
         }
-
-        static_assert(
-            validate_views(),
-            "Query access types do not match supplied ComponentViews"
-        );
-
-    public:
-        using reference = 
-            detail::reference_tuple_t<Access...>;
-
-        // Query Iterator
-        class Iterator {
-        public:
-            using iterator_category =
-                std::forward_iterator_tag;
-
-            /*
-             * A query dereference produces a tuple of references.
-             */
-            using value_type = reference;
-            using difference_type = std::ptrdiff_t;
-            using pointer = void;
-            using reference_type = reference;
-
-            Iterator() noexcept = default;
-
-            reference_type operator*() const {
-                return m_query->dereference(m_iterator);
-            }
-
-            Iterator& operator++() {
-                ++m_iterator;
-
-                m_query->advance(m_iterator);
-
-                return *this;
-            }
-
-            Iterator operator++(int) {
-                Iterator copy = *this;
-                ++(*this);
-                return copy;
-            }
-
-            bool operator==(const Iterator& other) const noexcept {
-                return m_query == other.m_query &&
-                       m_iterator == other.m_iterator;
-            }
-
-            bool operator!=(const Iterator& other) const noexcept {
-                return !(*this == other);
-            }
-
-            Entity entity() const noexcept {
-                return m_iterator.entity();
-            }
-
-        private:
-            friend class Query;
-
-            Iterator(
-                Query *query,
-                DriverIterator iterator
-            ) noexcept
-                : m_query(query),
-                  m_iterator(std::move(iterator)) {}
-
-            Query *m_query = nullptr;
-            DriverIterator m_iterator;
-        };
-
-    public:
-        // Construction
-
-        explicit Query(ViewTuple views)
-            : m_views(std::move(views)) {}
-
-        // Iteration
-
-        Iterator begin() {
-            auto iterator =
-                std::get<0>(m_views).begin();
-
-            advance(iterator);
-
-            return Iterator(
-                this,
-                std::move(iterator)
-            );
-        }
-
-        Iterator end() {
-            return Iterator(
-                this,
-                std::get<0>(m_views).end()
-            );
-        }
-
-        bool empty() {
-            return begin() == end();
-        }
-
-        // =======================================================
-        // Number of entities in the driver view.
-        //
-        // This is intentionally not called size(), because it is
-        // not necessarily the number of matching entities.
-        // =======================================================
-        size_t driver_size() const noexcept {
-            return std::get<0>(m_views).size();
-        }
-
-    private:
-        // ========================================================
-        // Determine whether an entity exists in all views.
-        //
-        // The driver view does not need to be checked because the 
-        // driver iterator necessarily points at an entity that
-        // exists in it.
-        // ========================================================
-        template<size_t... Index>
-        bool matches_impl(
-            Entity entity,
-            std::index_sequence<Index...>
-        ) const noexcept {
-            return (
-                std::get<Index + 1>(m_views).contains(entity)
-                && ...
-            );
-        }
-
-        bool matches(Entity entity) const noexcept {
-            // Skip view 0 because it is the driver
-            if constexpr(ViewCount == 1) {
-                return true;
-            } else {
-                return matches_impl(
-                    entity,
-                    std::make_index_sequence<
-                        ViewCount - 1
-                    >{}
-                );
-            }
-        }
-
-        // Advance the driver iterator to the next matching entity
-        void advance(DriverIterator& iterator) {
-            const auto end =
-                std::get<0>(m_views).end();
-
-            while(iterator != end) {
-                const Entity entity =
-                    iterator.entity();
-
-                if(matches(entity))
-                    return;
-
-                ++iterator;
-            }
-        }
-
-        // Dereference
-
-        template<size_t... Index>
-        reference dereference_impl(
-            Entity entity,
-            std::index_sequence<Index...>
-        ) {
-            return reference{
-                detail::get_component<
-                    std::tuple_element_t<
-                        Index,
-                        AccessTuple
-                    >
-                >(
-                    std::get<Index>(m_views),
-                    entity
-                )...
-            };
-        }
-
-        reference dereference(
-            const DriverIterator& iterator
-        ) {
-            const Entity entity =
-                iterator.entity();
-
-            return dereference_impl(
-                entity,
-                std::make_index_sequence<ViewCount>{}
-            );
-        }
-
-        ViewTuple m_views;
     };
 
-    // ================================
-    // make_query
-    // ================================
-    template<typename... QueryAccess, typename... Views>
-    requires(sizeof...(QueryAccess) == sizeof...(Views))
-    auto make_query(Views&&... views) {
-        using ViewTuple =
-            std::tuple<std::remove_cvref_t<Views>...>;
+    // ============================================================
+    // Query concept
+    // ============================================================
 
-        using QueryType =
-            Query<ViewTuple, QueryAccess...>;
-
-        return QueryType(
-            ViewTuple(
-                std::forward<Views>(views)...
-            )
-        );
-    }
+    template<typename T>
+    concept QueryType =
+        requires {
+            typename T::reference;
+        };
 }

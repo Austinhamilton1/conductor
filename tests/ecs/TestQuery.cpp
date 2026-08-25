@@ -66,12 +66,10 @@ TEST_CASE("Query reads a single component") {
         Position{5.0f, 6.0f}
     );
 
-    auto query =
-        conductor::make_query<
-            conductor::Read<Position>
-        >(
-            storage.view()
-        );
+    using Query =
+        conductor::Query<conductor::Read<Position>>;
+
+    auto query = Query::bind(storage.view());
 
     size_t count = 0;
 
@@ -116,12 +114,10 @@ TEST_CASE("Query writes a single component") {
         Position{3.0f, 4.0f}
     );
 
-    auto query =
-        conductor::make_query<
-            conductor::Write<Position>
-        >(
-            storage.view()
-        );
+    using Query = 
+        conductor::Query<conductor::Write<Position>>;
+
+    auto query = Query::bind(storage.view());
 
     for(auto [position] : query) {
         static_assert(
@@ -174,14 +170,16 @@ TEST_CASE("Query reads one component and writes another") {
         Velocity{3.0f, 4.0f}
     );
 
-    auto query =
-        conductor::make_query<
+    using Query =
+        conductor::Query<
             conductor::Read<Velocity>,
             conductor::Write<Position>
-        >(
-            velocities.view(),
-            positions.view()
-        );
+        >;
+
+    auto query = Query::bind(
+        velocities.view(), 
+        positions.view()
+    );
 
     size_t count = 0;
 
@@ -279,14 +277,16 @@ TEST_CASE("Query returns only entities containing all components") {
         Velocity{40.0f, 40.0f}
     );
 
-    auto query =
-        conductor::make_query<
+    using Query = 
+        conductor::Query<
             conductor::Read<Velocity>,
             conductor::Write<Position>
-        >(
-            velocities.view(),
-            positions.view()
-        );
+        >;
+
+    auto query = Query::bind(
+        velocities.view(), 
+        positions.view()
+    );
 
     size_t count = 0;
 
@@ -350,14 +350,16 @@ TEST_CASE("Query uses the first view as the driver",) {
         Velocity{30.0f, 30.0f}
     );
 
-    auto query =
-        conductor::make_query<
+    using Query = 
+        conductor::Query<
             conductor::Read<Velocity>,
             conductor::Read<Position>
-        >(
-            velocities.view(),
-            positions.view()
-        );
+        >;
+
+    auto query = Query::bind(
+        velocities.view(), 
+        positions.view()
+    );
 
     size_t count = 0;
 
@@ -380,12 +382,12 @@ TEST_CASE("Query uses the first view as the driver",) {
 TEST_CASE("Query is empty when the driver view is empty") {
     conductor::ComponentStorage<Position> positions;
 
-    auto query =
-        conductor::make_query<
+    using Query = 
+        conductor::Query<
             conductor::Read<Position>
-        >(
-            positions.view()
-        );
+        >;
+
+    auto query = Query::bind(positions.view());
 
     REQUIRE(query.empty());
 
@@ -417,14 +419,16 @@ TEST_CASE("Query is empty when no entity has all components") {
         Velocity{2.0f, 2.0f}
     );
 
-    auto query =
-        conductor::make_query<
+    using Query = 
+        conductor::Query<
             conductor::Read<Velocity>,
             conductor::Read<Position>
-        >(
-            velocities.view(),
-            positions.view()
-        );
+        >;
+
+    auto query = Query::bind(
+        velocities.view(), 
+        positions.view()
+    );
 
     REQUIRE(query.empty());
 
@@ -471,14 +475,16 @@ TEST_CASE("Query works across multiple component storage chunks") {
     REQUIRE(positions.chunk_count() > 1);
     REQUIRE(velocities.chunk_count() > 1);
 
-    auto query =
-        conductor::make_query<
+    using Query =
+        conductor::Query<
             conductor::Read<Velocity>,
             conductor::Write<Position>
-        >(
-            velocities.view(),
-            positions.view()
-        );
+        >;
+
+    auto query = Query::bind(
+        velocities.view(), 
+        positions.view()
+    );
 
     size_t visited = 0;
 
@@ -550,14 +556,16 @@ TEST_CASE("Query iterator exposes the correct entity") {
         Velocity{20.0f, 20.0f}
     );
 
-    auto query =
-        conductor::make_query<
+    using Query = 
+        conductor::Query<
             conductor::Read<Velocity>,
             conductor::Read<Position>
-        >(
-            velocities.view(),
-            positions.view()
-        );
+        >;
+
+    auto query = Query::bind(
+        velocities.view(),
+        positions.view()
+    );
 
     auto iterator = query.begin();
 
@@ -609,12 +617,12 @@ TEST_CASE("Query can read from const component storage") {
 
     const auto& const_storage = storage;
 
-    auto query =
-        conductor::make_query<
+    using Query =
+        conductor::Query<
             conductor::Read<Position>
-        >(
-            const_storage.view()
-        );
+        >;
+
+    auto query = Query::bind(const_storage.view());
 
     size_t count = 0;
 

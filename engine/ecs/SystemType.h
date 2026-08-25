@@ -1,8 +1,9 @@
 #pragma once
 
 #include <concepts>
-#include <string>
+#include <type_traits>
 
+#include "Query.h"
 #include "SystemContext.h"
 
 namespace conductor {
