@@ -1,5 +1,7 @@
 #pragma once
 
+#include <utility>
+
 #include "Query.h"
 #include "core/SimulationClock.h"
 #include "commands/CommandQueue.h"
@@ -8,38 +10,41 @@ namespace conductor {
     template<typename QueryT>
     class SystemContext {
     public:
-        SystemContext() = default;
-
         SystemContext(
             QueryT& query,
             CommandQueue& commands,
-            const SimulationClock& clock,
-            double step
+            SimulationClock& clock
         ) : m_query(query),
             m_commands(commands),
-            m_clock(clock),
-            m_step(step) {}
+            m_clock(clock) {}
 
-        QueryT& query() {
+        QueryT& query() noexcept {
             return m_query;
         }
 
-        CommandQueue& commands() {
+        const QueryT& query() const noexcept {
+            return m_query;
+        }
+
+        CommandQueue& commands() noexcept {
             return m_commands;
         }
 
-        const SimulationClock& clock() const {
+        const CommandQueue& commands() const noexcept {
+            return m_commands;
+        }
+
+        SimulationClock& clock() noexcept {
             return m_clock;
         }
 
-        double step() const {
-            return m_step;
+        const SimulationClock& clock() const noexcept {
+            return m_clock;
         }
 
     private:
         QueryT m_query;
         CommandQueue m_commands;
         SimulationClock m_clock;
-        double m_step;
     };
 }

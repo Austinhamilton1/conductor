@@ -10,6 +10,7 @@
 #include "ecs/EntityManager.h"
 #include "ecs/ComponentType.h"
 #include "ecs/ComponentRegistry.h"
+#include "ecs/ComponentStorage.h"
 
 namespace conductor {
     class CommandQueue : public NonCopyable {
@@ -40,24 +41,6 @@ namespace conductor {
         void destroy_entity(Entity entity);
 
         /*
-         * Queue addition of a component to an existing entity.
-         */
-        template<Component T>
-        void add_component(
-            Entity entity,
-            const T& component
-        );
-
-        /*
-         * Queue addition of a component to a deferred entity.
-         */
-        template<Component T>
-        void add_component(
-            DeferredEntity entity, 
-            const T& component
-        );
-
-        /*
          * Resolve a DeferredEntity into the actual Entity created
          * during the last apply().
          * 
@@ -75,7 +58,7 @@ namespace conductor {
          * cleared automatically. Call clear() when the synchronization phase
          * is complete.
          */
-        void apply(EntityManager& registry);
+        void apply(EntityManager& manager);
 
         /*
          * Remove all commands and invalidate all DeferredEntity handles
@@ -89,61 +72,15 @@ namespace conductor {
 
         const Command *commands() const noexcept;
 
-        const std::byte *data() const noexcept;
-
-        SizeType data_size() const noexcept;
-
         /*
          * Reserve command storage ahead of time.
          */
         void reserve(SizeType capacity);
 
-        /*
-         * Reserve component data storage.
-         */
-        void reserve_data(SizeType capacity);
-
-    private:
-        void add_component(
-            EntityReference entity,
-            ComponentTypeId component_type,
-            const void *data,
-            SizeType size
-        );
-
     private:
         std::vector<Command> m_commands;
-
-        // Raw component dat associated with AddComponent commands
-        std::vector<std::byte> m_data;
 
         // Maps DeferredEntity::Id -> resolved Entity
         std::vector<Entity> m_resolved_entities;
     };
-}
-
-template<conductor::Component T>
-void conductor::CommandQueue::add_component(
-    Entity entity,
-    const T& component
-) {
-    add_component(
-        EntityReference::from_entity(entity),
-        ComponentRegistry::register_component<T>(),
-        &component,
-        sizeof(T)
-    );
-}
-
-template<conductor::Component T>
-void conductor::CommandQueue::add_component(
-    DeferredEntity entity,
-    const T& component
-) {
-    add_component(
-        EntityReference::from_deferred(entity),
-        ComponentRegistry::register_component<T>(),
-        &component,
-        sizeof(T)
-    );
 }

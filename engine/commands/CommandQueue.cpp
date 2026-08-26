@@ -27,61 +27,6 @@ namespace conductor {
         );
     }
 
-    void CommandQueue::add_component(
-        EntityReference entity,
-        ComponentTypeId component_type,
-        const void *data,
-        CommandQueue::SizeType size
-    ) {
-        if(data == nullptr && size != 0) {
-            throw std::invalid_argument(
-                "Component data cannot be null when size is non-zero"
-            );
-        }
-
-        if(size > 
-            static_cast<SizeType>(
-                std::numeric_limits<uint32_t>::max()
-            )) {
-                throw std::length_error(
-                    "Component data is too large for a command"
-                );
-            }
-
-        if(m_data.size() >
-            static_cast<SizeType>(
-                std::numeric_limits<uint32_t>::max()
-            ) - size) {
-                throw std::length_error(
-                    "CommandQueue data buffer is too large"
-                );
-            }
-
-        const auto offset = 
-            static_cast<uint32_t>(m_data.size());
-
-        const auto data_size = 
-            static_cast<uint32_t>(size);
-
-        const auto *bytes =
-            static_cast<const std::byte *>(data);
-
-        m_data.insert(
-            m_data.end(),
-            bytes,
-            bytes + size
-        );
-
-        m_commands.push_back(
-            Command::add_component(
-                entity,
-                component_type,
-                offset,
-                data_size
-            )
-        );
-    }
-
     Entity CommandQueue::resolve(DeferredEntity deferred) const {
         if(!deferred.valid()) {
             throw std::out_of_range(
@@ -134,24 +79,14 @@ namespace conductor {
                     command.m_destroy_entity.entity
                 );
                 break;
-
-            case CommandType::AddComponent:
-                // Not implemented yet
-                break;
-
-            case CommandType::RemoveComponent:
-                // Not implemented yet
-                break;
             }
         }
 
         m_commands.clear();
-        m_data.clear();
     }
 
     void CommandQueue::clear() {
         m_commands.clear();
-        m_data.clear();
         m_resolved_entities.clear();
     }
 
@@ -167,19 +102,7 @@ namespace conductor {
         m_commands.reserve(capacity);
     }
 
-    void CommandQueue::reserve_data(SizeType capacity) {
-        m_data.reserve(capacity);
-    }
-
     const Command *CommandQueue::commands() const noexcept {
         return m_commands.data();
-    }
-
-    const std::byte *CommandQueue::data() const noexcept {
-        return m_data.data();
-    }
-
-    CommandQueue::SizeType CommandQueue::data_size() const noexcept {
-        return m_data.size();
     }
 }
