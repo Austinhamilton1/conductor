@@ -1,7 +1,5 @@
 #pragma once
 
-#include <utility>
-
 #include "Query.h"
 #include "core/SimulationClock.h"
 #include "commands/CommandQueue.h"
@@ -43,8 +41,8 @@ namespace conductor {
         }
 
     private:
-        QueryT m_query;
-        CommandQueue m_commands;
-        SimulationClock m_clock;
+        QueryT& m_query;
+        CommandQueue& m_commands;
+        SimulationClock& m_clock;
     };
 }

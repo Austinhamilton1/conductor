@@ -1,6 +1,7 @@
 add_library(conductor_ecs
     ComponentRegistry.cpp
     ComponentSet.cpp
+    ComponentStorageRegistry.cpp
     EntityManager.cpp
 )
 
