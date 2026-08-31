@@ -3,6 +3,8 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
+#include <limits>
+#include <stdexcept>
 #include <vector>
 
 #include "Command.h"
@@ -11,6 +13,7 @@
 #include "ecs/ComponentType.h"
 #include "ecs/ComponentRegistry.h"
 #include "ecs/ComponentStorage.h"
+#include "ecs/ComponentStorageRegistry.h"
 
 namespace conductor {
     class CommandQueue : public NonCopyable {
@@ -41,6 +44,88 @@ namespace conductor {
         void destroy_entity(Entity entity);
 
         /*
+         * Queue destruction of a deferred entity.
+         */
+        void destroy_entity(DeferredEntity entity);
+
+        /*
+         * Queue addition of a component to an entity.
+         *
+         * The component value is copied into the command queue.
+         */
+        template<Component T>
+        void add_component(
+            Entity entity,
+            const T& component
+        ) {
+            add_component(
+                EntityReference::from_entity(entity),
+                &component,
+                ComponentRegistry::register_component<T>(),
+                sizeof(T)
+            );
+        }
+
+        /*
+         * Queue addition of a component to a deferred entity.
+         
+         */
+        template<Component T>
+        void add_component(
+            DeferredEntity entity,
+            const T& component
+        ) {
+            add_component(
+                EntityReference::from_deferred(entity),
+                &component,
+                ComponentRegistry::register_component<T>(),
+                sizeof(T)
+            );
+        }
+
+        /*
+         * Queue addition of a component to an EntityReference.
+         */
+        template<Component T>
+        void add_component(
+            EntityReference entity,
+            const T& component
+        ) {
+            add_component(
+                entity,
+                &component,
+                ComponentRegistry::register_component<T>(),
+                sizeof(T)
+            );
+        }
+
+        /*
+         * Queue removal of a component from an entity.
+         */
+        template<Component T>
+        void remove_component(
+            Entity entity
+        ) {
+            remove_component(
+                EntityReference::from_entity(entity),
+                ComponentRegistry::register_component<T>()
+            );
+        }
+
+        /*
+         * Queue removal of a component to a deferred entity.
+         */
+        template<Component T>
+        void remove_component(
+            DeferredEntity entity
+        ) {
+            remove_component(
+                EntityReference::from_deferred(entity),
+                ComponentRegistry::register_component<T>()
+            );
+        }
+
+        /*
          * Resolve a DeferredEntity into the actual Entity created
          * during the last apply().
          * 
@@ -52,13 +137,17 @@ namespace conductor {
         /*
          * Apply all queued commands to the entity registry.
          *
-         * Commands are executed in insertion order.
+         * Entity commands are applied first.
+         * Component commands are applied second.
          * 
          * The queue is cleared but the deferred entity resolutions are NOT 
          * cleared automatically. Call clear() when the synchronization phase
          * is complete.
          */
-        void apply(EntityManager& manager);
+        void apply(
+            EntityManager& manager,
+            ComponentStorageRegistry& storages
+        );
 
         /*
          * Remove all commands and invalidate all DeferredEntity handles
@@ -78,9 +167,38 @@ namespace conductor {
         void reserve(SizeType capacity);
 
     private:
+        void add_component(
+            EntityReference entity,
+            const void *component,
+            ComponentTypeId component_type,
+            SizeType component_size
+        );
+
+        void remove_component(
+            EntityReference entity,
+            ComponentTypeId component
+        );
+
+        Entity resolve_reference(EntityReference reference) const;
+
+        void apply_entity_command(
+            const Command& command,
+            EntityManager& manager
+        );
+
+        void apply_component_command(
+            const Command& command,
+            EntityManager& manager,
+            ComponentStorageRegistry& storages
+        );
+
+    private:
         std::vector<Command> m_commands;
 
-        // Maps DeferredEntity::Id -> resolved Entity
+        // Maps DeferredEntity::Id -> resolved Entity.
         std::vector<Entity> m_resolved_entities;
+
+        // Raw component data owned by the queue.
+        std::vector<std::byte> m_component_data;
     };
 }

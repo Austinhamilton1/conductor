@@ -313,3 +313,83 @@ TEST_CASE("ComponentStorageRegistry starts empty") {
     REQUIRE_FALSE(registry.contains<Position>());
     REQUIRE_FALSE(registry.contains<Velocity>());
 }
+
+// -----------------------------------------------------------------------------
+// Registry updates
+// -----------------------------------------------------------------------------
+
+TEST_CASE("ComponentStorageRegistry creates valid add and remove operations") {
+    ComponentStorageRegistry registry;
+
+    auto& storage =
+        registry.create<Position>();
+
+    const auto id =
+        ComponentRegistry::register_component<Position>();
+
+    auto& entry =
+        registry.entry(id);
+
+    REQUIRE(entry.valid());
+    REQUIRE(entry.add != nullptr);
+    REQUIRE(entry.remove != nullptr);
+
+    const Entity entity{0, 0};
+
+    const Position position{
+        1.0f,
+        2.0f,
+        3.0f
+    };
+
+    entry.add(
+        entry.storage,
+        entity,
+        &position
+    );
+
+    REQUIRE(storage.contains(entity));
+
+    entry.remove(
+        entry.storage,
+        entity
+    );
+
+    entry.flush(entry.storage);
+
+    REQUIRE_FALSE(storage.contains(entity));
+}
+
+TEST_CASE("ComponentStorageRegistry add operation preserves component data") {
+    ComponentStorageRegistry registry;
+
+    auto& storage =
+        registry.create<Position>();
+
+    const auto id =
+        ComponentRegistry::register_component<Position>();
+
+    auto& entry =
+        registry.entry(id);
+
+    const Entity entity{0, 0};
+
+    const Position expected{
+        10.0f,
+        20.0f,
+        30.0f
+    };
+
+    entry.add(
+        entry.storage,
+        entity,
+        &expected
+    );
+
+    const Position& actual =
+        *storage.get(entity);
+
+    REQUIRE(actual.x == expected.x);
+    REQUIRE(actual.y == expected.y);
+    REQUIRE(actual.z == expected.z);
+}

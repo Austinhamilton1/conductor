@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <cstring>
 #include <stdexcept>
 #include <vector>
 
@@ -15,6 +16,16 @@ namespace conductor {
         struct StorageEntry {
             void *storage = nullptr;
             void (*destroy)(void *) noexcept = nullptr;
+            void (*add)(
+                void *,
+                Entity,
+                const void *
+            ) = nullptr;
+            void (*remove)(
+                void *,
+                Entity
+            ) = nullptr;
+            void (*flush)(void *) = nullptr;
 
             bool valid() const noexcept {
                 return storage != nullptr;
@@ -44,8 +55,48 @@ namespace conductor {
                 new ComponentStorage<T>();
 
             entry.storage = storage;
+            
             entry.destroy = [](void *ptr) noexcept {
                 delete static_cast<ComponentStorage<T>*>(ptr);
+            };
+
+            entry.add = [](
+                void *ptr,
+                Entity entity,
+                const void *data
+            ) {
+                auto& typed_storage =
+                    *static_cast<ComponentStorage<T>*>(ptr);
+
+                T component{};
+
+                std::memcpy(
+                    &component,
+                    data,
+                    sizeof(T)
+                );
+
+                typed_storage.add(
+                    entity,
+                    component
+                );
+            };
+
+            entry.remove = [](
+                void *ptr,
+                Entity entity
+            ) {
+                auto& typed_storage = 
+                    *static_cast<ComponentStorage<T>*>(ptr);
+
+                typed_storage.remove(entity);
+            };
+
+            entry.flush = [](void *ptr) {
+                auto& typed_storage =
+                    *static_cast<ComponentStorage<T>*>(ptr);
+
+                typed_storage.flush_removals();
             };
 
             ++m_size;
