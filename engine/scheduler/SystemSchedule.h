@@ -1,31 +1,23 @@
 #pragma once
 
-#include <functional>
-#include <utility>
-#include <string>
 #include <cstdint>
+#include <string>
+#include <utility>
 
-#include "TaskState.h"
+#include "SystemState.h"
 
 namespace conductor {
-    class ScheduledTask {
+    class SystemSchedule {
     public:
-        using Callback = std::function<void(double)>;
-
-        ScheduledTask(
+        SystemSchedule(
             std::string name,
-            Callback callback, 
             double interval
-        )
-        : m_name(std::move(name)),
-          m_callback(std::move(callback)),
-          m_interval(interval) {};
+        ) : m_name(std::move(name)),
+            m_interval(interval) {}
 
         void advance(double dt);
 
         bool due() const;
-
-        void execute();
 
         void pause();
         void resume();
@@ -40,13 +32,16 @@ namespace conductor {
 
         uint64_t generation() const;
 
-        TaskState state() const;
+        SystemState state() const;
 
-        void set_state(TaskState state);
+        void set_state(SystemState state);
+
+        void consume_interval() noexcept;
+
+        void increment_generation() noexcept;
 
     private:
         std::string m_name;
-        Callback m_callback;
 
         bool m_paused = false;
 
@@ -55,6 +50,6 @@ namespace conductor {
 
         uint64_t m_generation = 0;
         
-        TaskState m_state = TaskState::Waiting;
+        SystemState m_state = SystemState::Waiting;
     };
 }

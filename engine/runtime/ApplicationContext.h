@@ -10,6 +10,5 @@ namespace conductor {
         Clock& clock;
         SimulationClock& simulation_clock;
         EventBus& events;
-        Scheduler& scheduler;
     };
 }

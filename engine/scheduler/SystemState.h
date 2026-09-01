@@ -1,9 +1,8 @@
 #pragma once
 
 namespace conductor {
-    enum class TaskState {
+    enum class SystemState {
         Waiting,
-        Ready,
         Running,
         Failed
     };

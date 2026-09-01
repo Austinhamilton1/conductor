@@ -2,11 +2,11 @@
 
 #include <cstdint>
 
-#include "TaskId.h"
+#include "SystemId.h"
 
 namespace conductor {
-    struct TaskDependency {
-        TaskId parent;
+    struct SystemDependency {
+        SystemId parent;
         uint64_t consumed_generation = 0;
     };
 }

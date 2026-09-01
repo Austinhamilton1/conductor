@@ -11,6 +11,11 @@ PUBLIC
     ${PROJECT_SOURCE_DIR}/engine
 )
 
+target_link_libraries(conductor_ecs
+PUBLIC
+    conductor_core
+)
+
 target_compile_features(conductor_ecs
 PUBLIC
     cxx_std_23

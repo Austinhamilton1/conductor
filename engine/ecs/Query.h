@@ -262,6 +262,18 @@ namespace conductor {
             "Query contains invalid, duplicate, or non-component access types"
         );
 
+    public:
+        template<typename ViewTuple>
+        class BoundQuery;
+
+        template<typename... Views>
+        using Bound =
+            BoundQuery<
+                std::tuple<
+                    std::remove_cvref_t<Views>...
+                >
+            >;
+
     private:
         using AccessTuple =
             std::tuple<Access...>;
@@ -270,7 +282,7 @@ namespace conductor {
         using reference =
             detail::reference_tuple_t<Access...>;
 
-    private:
+    public:
         // ========================================================
         // Bound query implementation
         // ========================================================

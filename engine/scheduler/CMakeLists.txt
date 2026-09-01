@@ -1,5 +1,5 @@
 add_library(conductor_scheduler
-    ScheduledTask.cpp
+    SystemSchedule.cpp
     Scheduler.cpp
 )
 
@@ -7,6 +7,11 @@ target_include_directories(conductor_scheduler
 PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${PROJECT_SOURCE_DIR}/engine
+)
+
+target_link_libraries(conductor_scheduler
+PUBLIC
+    conductor_core
 )
 
 target_compile_features(conductor_scheduler

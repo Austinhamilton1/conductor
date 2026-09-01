@@ -3,6 +3,8 @@
 #include "runtime/ApplicationContext.h"
 #include "layers/Layer.h"
 #include "layers/LayerStack.h"
+#include "commands/CommandQueue.h"
+#include "core/SimulationClock.h"
 
 class LayerState {
 public:
@@ -57,13 +59,11 @@ TEST_CASE("Layer is attached when pushed") {
     conductor::Clock clock;
     conductor::SimulationClock simulation_clock;
     conductor::EventBus events;
-    conductor::Scheduler scheduler;
 
     conductor::ApplicationContext context{
         clock,
         simulation_clock,
-        events,
-        scheduler
+        events
     };
 
     conductor::LayerStack stack(context);
@@ -85,13 +85,11 @@ TEST_CASE("Layer is detached when popped") {
     conductor::Clock clock;
     conductor::SimulationClock simulation_clock;
     conductor::EventBus events;
-    conductor::Scheduler scheduler;
 
     conductor::ApplicationContext context{
         clock,
         simulation_clock,
-        events,
-        scheduler
+        events
     };
 
     conductor::LayerStack stack(context);
@@ -117,13 +115,11 @@ TEST_CASE("Layer receives ApplicationContext when attached") {
     conductor::Clock clock;
     conductor::SimulationClock simulation_clock;
     conductor::EventBus events;
-    conductor::Scheduler scheduler;
 
     conductor::ApplicationContext context{
         clock,
         simulation_clock,
-        events,
-        scheduler
+        events
     };
 
     conductor::LayerStack stack(context);
@@ -139,7 +135,6 @@ TEST_CASE("Layer receives ApplicationContext when attached") {
     REQUIRE(&layer_ptr->context->clock == &clock);
     REQUIRE(&layer_ptr->context->simulation_clock == &simulation_clock);
     REQUIRE(&layer_ptr->context->events == &events);
-    REQUIRE(&layer_ptr->context->scheduler == &scheduler);
 }
 
 
@@ -147,13 +142,11 @@ TEST_CASE("Layer receives update calls") {
     conductor::Clock clock;
     conductor::SimulationClock simulation_clock;
     conductor::EventBus events;
-    conductor::Scheduler scheduler;
 
     conductor::ApplicationContext context{
         clock,
         simulation_clock,
-        events,
-        scheduler
+        events
     };
 
     conductor::LayerStack stack(context);
@@ -182,13 +175,11 @@ TEST_CASE("Layers are updated in insertion order") {
     conductor::Clock clock;
     conductor::SimulationClock simulation_clock;
     conductor::EventBus events;
-    conductor::Scheduler scheduler;
 
     conductor::ApplicationContext context{
         clock,
         simulation_clock,
-        events,
-        scheduler
+        events
     };
 
     conductor::LayerStack stack(context);
@@ -220,13 +211,11 @@ TEST_CASE("Popping a layer removes the most recently added layer") {
     conductor::Clock clock;
     conductor::SimulationClock simulation_clock;
     conductor::EventBus events;
-    conductor::Scheduler scheduler;
 
     conductor::ApplicationContext context{
         clock,
         simulation_clock,
-        events,
-        scheduler
+        events
     };
 
     conductor::LayerStack stack(context);
@@ -257,13 +246,11 @@ TEST_CASE("Clearing the layer stack detaches every layer") {
     conductor::Clock clock;
     conductor::SimulationClock simulation_clock;
     conductor::EventBus events;
-    conductor::Scheduler scheduler;
 
     conductor::ApplicationContext context{
         clock,
         simulation_clock,
-        events,
-        scheduler
+        events
     };
 
     conductor::LayerStack stack(context);
@@ -299,13 +286,11 @@ TEST_CASE("Popping an empty layer stack does nothing") {
     conductor::Clock clock;
     conductor::SimulationClock simulation_clock;
     conductor::EventBus events;
-    conductor::Scheduler scheduler;
 
     conductor::ApplicationContext context{
         clock,
         simulation_clock,
-        events,
-        scheduler
+        events
     };
 
     conductor::LayerStack stack(context);
@@ -319,13 +304,11 @@ TEST_CASE("Pushing a null layer does nothing") {
     conductor::Clock clock;
     conductor::SimulationClock simulation_clock;
     conductor::EventBus events;
-    conductor::Scheduler scheduler;
 
     conductor::ApplicationContext context{
         clock,
         simulation_clock,
-        events,
-        scheduler
+        events
     };
 
     conductor::LayerStack stack(context);
@@ -363,13 +346,11 @@ TEST_CASE("Destroying LayerStack detaches layers before destroying them") {
     conductor::Clock clock;
     conductor::SimulationClock simulation_clock;
     conductor::EventBus events;
-    conductor::Scheduler scheduler;
 
     conductor::ApplicationContext context{
         clock,
         simulation_clock,
-        events,
-        scheduler
+        events
     };
 
     LayerState state;

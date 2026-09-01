@@ -1,6 +1,6 @@
 add_executable(scheduler_tests
-    TestScheduledTask.cpp
     TestScheduler.cpp
+    TestSystems.cpp
 )
 
 target_link_libraries(scheduler_tests

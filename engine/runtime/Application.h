@@ -41,13 +41,11 @@ namespace conductor {
         SimulationClock m_simulation_clock;
 
         EventBus m_events;
-        Scheduler m_scheduler;
 
         ApplicationContext m_context {
             m_clock,
             m_simulation_clock,
             m_events,
-            m_scheduler
         };
 
         LayerStack m_layers;

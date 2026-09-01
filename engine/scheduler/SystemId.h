@@ -3,5 +3,5 @@
 #include <cstdint>
 
 namespace conductor {
-    using TaskId = uint64_t;
+    using SystemId = uint64_t;
 }

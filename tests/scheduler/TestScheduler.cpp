@@ -1,935 +1,1218 @@
 #include <catch2/catch_test_macros.hpp>
-#include <vector>
-#include <string>
+
+#include <cmath>
+#include <stdexcept>
+#include <utility>
 
 #include "scheduler/Scheduler.h"
+#include "commands/CommandQueue.h"
+#include "core/SimulationClock.h"
 
-using conductor::DependencyResult;
-using conductor::Scheduler;
+namespace {
+    struct Position {
+        float x;
+        float y;
+        float z;
+    };
 
-TEST_CASE("Scheduler executes a task at its configured frequency") {
-    Scheduler scheduler;
+    struct ExecutionSystem {
+        using Query = conductor::Query<
+            conductor::Read<Position>
+        >;
 
-    int calls = 0;
+        inline static int executions = 0;
+        inline static double last_delta = 0.0;
 
-    auto task = scheduler.schedule(
-        "Test",
-        10.0,
-        [&](double) {
-            ++calls;
+        template<typename BoundQuery>
+        void update(
+            conductor::SystemContext<BoundQuery>& ctx
+        ) {
+            ++executions;
+
+            last_delta =
+                ctx.clock().delta_seconds();
         }
+
+        static void reset() {
+            executions = 0;
+            last_delta = 0.0;
+        }
+    };
+}
+
+using namespace conductor;
+
+// ============================================================
+// Scheduling
+// ============================================================
+
+TEST_CASE("Scheduler creates a valid system handle") {
+    SimulationClock clock;
+    CommandQueue queue;
+    Scheduler scheduler(queue, clock);
+
+    ComponentStorage<Position> positions;
+
+    auto query =
+        ExecutionSystem::Query::bind_storage(positions);
+
+    auto system = scheduler.schedule(
+        "Movement",
+        60.0,
+        ExecutionSystem{},
+        query
+    );
+
+    REQUIRE(system.valid());
+    REQUIRE(system.id() != 0);
+    REQUIRE(system.generation() == 0);
+    REQUIRE(system.state() == SystemState::Waiting);
+    REQUIRE_FALSE(system.paused());
+}
+
+
+TEST_CASE("Scheduler assigns unique system IDs") {
+    SimulationClock clock;
+    CommandQueue queue;
+    Scheduler scheduler(queue, clock);
+
+    ComponentStorage<Position> positions;
+
+    auto query =
+        ExecutionSystem::Query::bind_storage(positions);
+
+    auto first = scheduler.schedule(
+        "First",
+        60.0,
+        ExecutionSystem{},
+        query
+    );
+
+    auto second = scheduler.schedule(
+        "Second",
+        60.0,
+        ExecutionSystem{},
+        query
+    );
+
+    auto third = scheduler.schedule(
+        "Third",
+        60.0,
+        ExecutionSystem{},
+        query
+    );
+
+    REQUIRE(first.id() != second.id());
+    REQUIRE(first.id() != third.id());
+    REQUIRE(second.id() != third.id());
+}
+
+
+TEST_CASE("Scheduler rejects zero frequency") {
+    SimulationClock clock;
+    CommandQueue queue;
+    Scheduler scheduler(queue, clock);
+
+    ComponentStorage<Position> positions;
+
+    auto query =
+        ExecutionSystem::Query::bind_storage(positions);
+
+    REQUIRE_THROWS_AS(
+        scheduler.schedule(
+            "Invalid",
+            0.0,
+            ExecutionSystem{},
+            query
+        ),
+        std::invalid_argument
+    );
+}
+
+
+TEST_CASE("Scheduler rejects negative frequency") {
+    SimulationClock clock;
+    CommandQueue queue;
+    Scheduler scheduler(queue, clock);
+
+    ComponentStorage<Position> positions;
+
+    auto query =
+        ExecutionSystem::Query::bind_storage(positions);
+
+    REQUIRE_THROWS_AS(
+        scheduler.schedule(
+            "Invalid",
+            -60.0,
+            ExecutionSystem{},
+            query
+        ),
+        std::invalid_argument
+    );
+}
+
+
+// ============================================================
+// Timing
+// ============================================================
+
+TEST_CASE("System does not execute before its interval") {
+    SimulationClock clock;
+    CommandQueue queue;
+    Scheduler scheduler(queue, clock);
+
+    ComponentStorage<Position> positions;
+
+    auto query =
+        ExecutionSystem::Query::bind_storage(positions);
+
+    auto system = scheduler.schedule(
+        "System",
+        10.0,
+        ExecutionSystem{},
+        query
+    );
+
+    // Interval = 0.1 seconds.
+    scheduler.update(0.05);
+
+    REQUIRE(system.generation() == 0);
+    REQUIRE(system.state() == SystemState::Waiting);
+
+    scheduler.update(0.049);
+
+    REQUIRE(system.generation() == 0);
+}
+
+
+TEST_CASE("System executes when its interval is reached") {
+    SimulationClock clock;
+    CommandQueue queue;
+    Scheduler scheduler(queue, clock);
+
+    ComponentStorage<Position> positions;
+
+    auto query =
+        ExecutionSystem::Query::bind_storage(positions);
+
+    auto system = scheduler.schedule(
+        "System",
+        10.0,
+        ExecutionSystem{},
+        query
+    );
+
+    // Interval = 0.1 seconds.
+    scheduler.update(0.1);
+
+    REQUIRE(system.generation() == 1);
+    REQUIRE(system.state() == SystemState::Waiting);
+}
+
+
+TEST_CASE("System accumulates delta across updates") {
+    SimulationClock clock;
+    CommandQueue queue;
+    Scheduler scheduler(queue, clock);
+
+    ComponentStorage<Position> positions;
+
+    auto query =
+        ExecutionSystem::Query::bind_storage(positions);
+
+    auto system = scheduler.schedule(
+        "System",
+        10.0,
+        ExecutionSystem{},
+        query
+    );
+
+    scheduler.update(0.03);
+
+    REQUIRE(system.generation() == 0);
+
+    scheduler.update(0.03);
+
+    REQUIRE(system.generation() == 0);
+
+    scheduler.update(0.04);
+
+    REQUIRE(system.generation() == 1);
+}
+
+
+TEST_CASE("System can execute multiple times from accumulated delta") {
+    SimulationClock clock;
+    CommandQueue queue;
+    Scheduler scheduler(queue, clock);
+
+    ComponentStorage<Position> positions;
+
+    auto query =
+        ExecutionSystem::Query::bind_storage(positions);
+
+    auto system = scheduler.schedule(
+        "System",
+        10.0,
+        ExecutionSystem{},
+        query
+    );
+
+    // 0.35 seconds at 10 Hz means three executions
+    // with 0.05 seconds remaining.
+    scheduler.update(0.35);
+
+    REQUIRE(system.generation() == 3);
+}
+
+
+TEST_CASE("System retains fractional accumulated time") {
+    SimulationClock clock;
+    CommandQueue queue;
+    Scheduler scheduler(queue, clock);
+
+    ComponentStorage<Position> positions;
+
+    auto query =
+        ExecutionSystem::Query::bind_storage(positions);
+
+    auto system = scheduler.schedule(
+        "System",
+        10.0,
+        ExecutionSystem{},
+        query
+    );
+
+    scheduler.update(0.35);
+
+    REQUIRE(system.generation() == 3);
+
+    scheduler.update(0.05);
+
+    REQUIRE(system.generation() == 4);
+}
+
+
+TEST_CASE("System frequency can be changed") {
+    SimulationClock clock;
+    CommandQueue queue;
+    Scheduler scheduler(queue, clock);
+
+    ComponentStorage<Position> positions;
+
+    auto query =
+        ExecutionSystem::Query::bind_storage(positions);
+
+    auto system = scheduler.schedule(
+        "System",
+        10.0,
+        ExecutionSystem{},
+        query
+    );
+
+    system.set_frequency(20.0);
+
+    scheduler.update(0.05);
+
+    REQUIRE(system.generation() == 1);
+}
+
+
+TEST_CASE("Invalid frequency change throws") {
+    SimulationClock clock;
+    CommandQueue queue;
+    Scheduler scheduler(queue, clock);
+
+    ComponentStorage<Position> positions;
+
+    auto query =
+        ExecutionSystem::Query::bind_storage(positions);
+
+    auto system = scheduler.schedule(
+        "System",
+        60.0,
+        ExecutionSystem{},
+        query
+    );
+
+    REQUIRE_THROWS_AS(
+        system.set_frequency(0.0),
+        std::invalid_argument
+    );
+
+    REQUIRE_THROWS_AS(
+        system.set_frequency(-10.0),
+        std::invalid_argument
+    );
+}
+
+
+// ============================================================
+// Pause / Resume
+// ============================================================
+
+TEST_CASE("Paused system does not accumulate time") {
+    SimulationClock clock;
+    CommandQueue queue;
+    Scheduler scheduler(queue, clock);
+
+    ComponentStorage<Position> positions;
+
+    auto query =
+        ExecutionSystem::Query::bind_storage(positions);
+
+    auto system = scheduler.schedule(
+        "System",
+        10.0,
+        ExecutionSystem{},
+        query
+    );
+
+    system.pause();
+
+    REQUIRE(system.paused());
+
+    scheduler.update(1.0);
+
+    REQUIRE(system.generation() == 0);
+}
+
+
+TEST_CASE("Resuming system allows scheduling to continue") {
+    SimulationClock clock;
+    CommandQueue queue;
+    Scheduler scheduler(queue, clock);
+
+    ComponentStorage<Position> positions;
+
+    auto query =
+        ExecutionSystem::Query::bind_storage(positions);
+
+    auto system = scheduler.schedule(
+        "System",
+        10.0,
+        ExecutionSystem{},
+        query
+    );
+
+    system.pause();
+
+    scheduler.update(1.0);
+
+    REQUIRE(system.generation() == 0);
+
+    system.resume();
+
+    REQUIRE_FALSE(system.paused());
+
+    scheduler.update(0.1);
+
+    REQUIRE(system.generation() == 1);
+}
+
+
+TEST_CASE("Pausing preserves accumulated time") {
+    SimulationClock clock;
+    CommandQueue queue;
+    Scheduler scheduler(queue, clock);
+
+    ComponentStorage<Position> positions;
+
+    auto query =
+        ExecutionSystem::Query::bind_storage(positions);
+
+    auto system = scheduler.schedule(
+        "System",
+        10.0,
+        ExecutionSystem{},
+        query
     );
 
     scheduler.update(0.05);
 
-    REQUIRE(calls == 0);
+    system.pause();
+
+    scheduler.update(1.0);
+
+    REQUIRE(system.generation() == 0);
+
+    system.resume();
 
     scheduler.update(0.05);
 
-    REQUIRE(calls == 1);
+    REQUIRE(system.generation() == 1);
+}
+
+
+// ============================================================
+// Dependencies
+// ============================================================
+
+TEST_CASE("System can depend on another system") {
+    SimulationClock clock;
+    CommandQueue queue;
+    Scheduler scheduler(queue, clock);
+
+    ComponentStorage<Position> positions;
+
+    auto query =
+        ExecutionSystem::Query::bind_storage(positions);
+
+    auto parent = scheduler.schedule(
+        "Physics",
+        60.0,
+        ExecutionSystem{},
+        query
+    );
+
+    auto child = scheduler.schedule(
+        "Rendering",
+        60.0,
+        ExecutionSystem{},
+        query
+    );
+
+    REQUIRE(
+        child.depends_on(parent) ==
+        DependencyResult::Success
+    );
+}
+
+
+TEST_CASE("System cannot depend on itself") {
+    SimulationClock clock;
+    CommandQueue queue;
+    Scheduler scheduler(queue, clock);
+
+    ComponentStorage<Position> positions;
+
+    auto query =
+        ExecutionSystem::Query::bind_storage(positions);
+
+    auto system = scheduler.schedule(
+        "System",
+        60.0,
+        ExecutionSystem{},
+        query
+    );
+
+    REQUIRE(
+        system.depends_on(system) ==
+        DependencyResult::SelfDependency
+    );
+}
+
+
+TEST_CASE("Duplicate dependency is rejected") {
+    SimulationClock clock;
+    CommandQueue queue;
+    Scheduler scheduler(queue, clock);
+
+    ComponentStorage<Position> positions;
+
+    auto query =
+        ExecutionSystem::Query::bind_storage(positions);
+
+    auto parent = scheduler.schedule(
+        "Parent",
+        60.0,
+        ExecutionSystem{},
+        query
+    );
+
+    auto child = scheduler.schedule(
+        "Child",
+        60.0,
+        ExecutionSystem{},
+        query
+    );
+
+    REQUIRE(
+        child.depends_on(parent) ==
+        DependencyResult::Success
+    );
+
+    REQUIRE(
+        child.depends_on(parent) ==
+        DependencyResult::DuplicateDependency
+    );
+}
+
+
+TEST_CASE("Dependency between different schedulers is rejected") {
+    SimulationClock first_clock;
+    CommandQueue first_queue;
+    Scheduler first(first_queue, first_clock);
+
+    SimulationClock second_clock;
+    CommandQueue second_queue;
+    Scheduler second(second_queue, second_clock);
+
+    ComponentStorage<Position> positions;
+
+    auto query =
+        ExecutionSystem::Query::bind_storage(positions);
+
+    auto parent = first.schedule(
+        "Parent",
+        60.0,
+        ExecutionSystem{},
+        query
+    );
+
+    auto child = second.schedule(
+        "Child",
+        60.0,
+        ExecutionSystem{},
+        query
+    );
+
+    REQUIRE(
+        child.depends_on(parent) ==
+        DependencyResult::InvalidParent
+    );
+}
+
+
+// ============================================================
+// Dependency ordering
+// ============================================================
+
+TEST_CASE("Child waits for parent generation") {
+    SimulationClock clock;
+    CommandQueue queue;
+    Scheduler scheduler(queue, clock);
+
+    ComponentStorage<Position> positions;
+
+    auto query =
+        ExecutionSystem::Query::bind_storage(positions);
+
+    auto parent = scheduler.schedule(
+        "Parent",
+        10.0,
+        ExecutionSystem{},
+        query
+    );
+
+    auto child = scheduler.schedule(
+        "Child",
+        10.0,
+        ExecutionSystem{},
+        query
+    );
+
+    REQUIRE(
+        child.depends_on(parent) ==
+        DependencyResult::Success
+    );
+
+    REQUIRE(parent.generation() == 0);
+    REQUIRE(child.generation() == 0);
 
     scheduler.update(0.1);
 
-    REQUIRE(calls == 2);
+    REQUIRE(parent.generation() == 1);
+    REQUIRE(child.generation() == 1);
 }
 
-TEST_CASE("Scheduler can run multiple independent tasks") {
-    Scheduler scheduler;
 
-    int a_calls = 0;
-    int b_calls = 0;
+TEST_CASE("Child cannot execute twice without a new parent generation") { 
+    SimulationClock clock;
+    CommandQueue queue;
+    Scheduler scheduler(queue, clock);
+
+    ComponentStorage<Position> positions;
+
+    auto query =
+        ExecutionSystem::Query::bind_storage(positions);
+
+    auto parent = scheduler.schedule(
+        "Parent",
+        10.0,
+        ExecutionSystem{},
+        query
+    );
+
+    auto child = scheduler.schedule(
+        "Child",
+        10.0,
+        ExecutionSystem{},
+        query
+    );
+
+    REQUIRE(
+        child.depends_on(parent) ==
+        DependencyResult::Success
+    );
+
+    scheduler.update(0.1);
+
+    REQUIRE(parent.generation() == 1);
+    REQUIRE(child.generation() == 1);
+
+    // Both are now waiting for another interval.
+    scheduler.update(0.1);
+
+    REQUIRE(parent.generation() == 2);
+    REQUIRE(child.generation() == 2);
+}
+
+
+TEST_CASE("Dependency chain executes in generation order") {
+    SimulationClock clock;
+    CommandQueue queue;
+    Scheduler scheduler(queue, clock);
+
+    ComponentStorage<Position> positions;
+
+    auto query =
+        ExecutionSystem::Query::bind_storage(positions);
 
     auto a = scheduler.schedule(
         "A",
         10.0,
-        [&](double) {
-            ++a_calls;
-        }
+        ExecutionSystem{},
+        query
+    );
+
+    auto b = scheduler.schedule(
+        "B",
+        10.0,
+        ExecutionSystem{},
+        query
+    );
+
+    auto c = scheduler.schedule(
+        "C",
+        10.0,
+        ExecutionSystem{},
+        query
+    );
+
+    REQUIRE(
+        b.depends_on(a) ==
+        DependencyResult::Success
+    );
+
+    REQUIRE(
+        c.depends_on(b) ==
+        DependencyResult::Success
+    );
+
+    scheduler.update(0.1);
+
+    REQUIRE(a.generation() == 1);
+    REQUIRE(b.generation() == 1);
+    REQUIRE(c.generation() == 1);
+}
+
+
+TEST_CASE("System with multiple dependencies waits for all parents") {
+    SimulationClock clock;
+    CommandQueue queue;
+    Scheduler scheduler(queue, clock);
+
+    ComponentStorage<Position> positions;
+
+    auto query =
+        ExecutionSystem::Query::bind_storage(positions);
+
+    auto a = scheduler.schedule(
+        "A",
+        10.0,
+        ExecutionSystem{},
+        query
     );
 
     auto b = scheduler.schedule(
         "B",
         20.0,
-        [&](double) {
-            ++b_calls;
-        }
+        ExecutionSystem{},
+        query
     );
 
+    auto c = scheduler.schedule(
+        "C",
+        10.0,
+        ExecutionSystem{},
+        query
+    );
+
+    REQUIRE(
+        c.depends_on(a) ==
+        DependencyResult::Success
+    );
+
+    REQUIRE(
+        c.depends_on(b) ==
+        DependencyResult::Success
+    );
+
+    // At 0.05:
+    // A: not due
+    // B: due
+    // C: not due
     scheduler.update(0.05);
 
-    REQUIRE(a_calls == 0);
-    REQUIRE(b_calls == 1);
+    REQUIRE(a.generation() == 0);
+    REQUIRE(b.generation() == 1);
+    REQUIRE(c.generation() == 0);
 
+    // At another 0.05:
+    // A: due
+    // B: due
+    // C: now has both generations available.
     scheduler.update(0.05);
 
-    REQUIRE(a_calls == 1);
-    REQUIRE(b_calls == 2);
+    REQUIRE(a.generation() == 1);
+    REQUIRE(b.generation() == 2);
+    REQUIRE(c.generation() == 1);
 }
 
-TEST_CASE("TaskHandle is valid after scheduling") {
-    Scheduler scheduler;
 
-    auto handle = scheduler.schedule(
-        "Test",
-        10.0,
-        [](double) {}
+// ============================================================
+// Different frequency dependency chains
+// ============================================================
+
+TEST_CASE("Faster child waits for slower parent") {
+    SimulationClock clock;
+    CommandQueue queue;
+    Scheduler scheduler(queue, clock);
+
+    ComponentStorage<Position> positions;
+
+    auto query =
+        ExecutionSystem::Query::bind_storage(positions);
+
+    auto physics = scheduler.schedule(
+        "Physics",
+        20.0,
+        ExecutionSystem{},
+        query
     );
 
-    REQUIRE(handle.valid());
-    REQUIRE(handle.id() != 0);
-}
-
-TEST_CASE("TaskHandle cancellation removes task") {
-    Scheduler scheduler;
-
-    int calls = 0;
-
-    auto handle = scheduler.schedule(
-        "Test",
-        10.0,
-        [&](double) {
-            ++calls;
-        }
+    auto rendering = scheduler.schedule(
+        "Rendering",
+        60.0,
+        ExecutionSystem{},
+        query
     );
 
-    handle.cancel();
-
-    REQUIRE_FALSE(handle.valid());
-
-    scheduler.update(1.0);
-
-    REQUIRE(calls == 0);
-}
-
-TEST_CASE("Scheduler can pause a task") {
-    Scheduler scheduler;
-
-    int calls = 0;
-
-    auto task = scheduler.schedule(
-        "Test",
-        10.0,
-        [&](double) {
-            ++calls;
-        }
+    REQUIRE(
+        rendering.depends_on(physics) ==
+        DependencyResult::Success
     );
 
-    task.pause();
+    // 1/60 second.
+    scheduler.update(1.0 / 60.0);
 
-    scheduler.update(1.0);
+    REQUIRE(physics.generation() == 0);
+    REQUIRE(rendering.generation() == 0);
 
-    REQUIRE(calls == 0);
+    // 1/60 more.
+    scheduler.update(1.0 / 60.0);
+
+    REQUIRE(physics.generation() == 0);
+    REQUIRE(rendering.generation() == 0);
+
+    // Third frame crosses the 20 Hz interval.
+    scheduler.update(1.0 / 60.0);
+
+    REQUIRE(physics.generation() == 1);
+    REQUIRE(rendering.generation() == 1);
 }
 
-TEST_CASE("Scheduler can resume a task") {
-    Scheduler scheduler;
 
-    int calls = 0;
+TEST_CASE("Slower child does not consume parent generation prematurely") {
+    SimulationClock clock;
+    CommandQueue queue;
+    Scheduler scheduler(queue, clock);
 
-    auto task = scheduler.schedule(
-        "Test",
-        10.0,
-        [&](double) {
-            ++calls;
-        }
+    ComponentStorage<Position> positions;
+
+    auto query =
+        ExecutionSystem::Query::bind_storage(positions);
+
+    auto physics = scheduler.schedule(
+        "Physics",
+        60.0,
+        ExecutionSystem{},
+        query
     );
 
-    task.pause();
+    auto ai = scheduler.schedule(
+        "AI",
+        20.0,
+        ExecutionSystem{},
+        query
+    );
 
-    scheduler.update(1.0);
+    REQUIRE(
+        ai.depends_on(physics) ==
+        DependencyResult::Success
+    );
 
-    REQUIRE(calls == 0);
+    scheduler.update(1.0 / 60.0);
 
-    task.resume();
+    REQUIRE(physics.generation() == 1);
+    REQUIRE(ai.generation() == 0);
 
-    scheduler.update(0.1);
+    scheduler.update(1.0 / 60.0);
 
-    REQUIRE(calls == 1);
+    REQUIRE(physics.generation() == 2);
+    REQUIRE(ai.generation() == 0);
+
+    scheduler.update(1.0 / 60.0);
+
+    REQUIRE(physics.generation() == 3);
+    REQUIRE(ai.generation() == 1);
 }
 
-TEST_CASE("Scheduler can create a dependency") {
-    Scheduler scheduler;
+
+// ============================================================
+// Dependency graph / cycle detection
+// ============================================================
+
+TEST_CASE("Direct dependency cycle is rejected") {
+    SimulationClock clock;
+    CommandQueue queue;
+    Scheduler scheduler(queue, clock);
+
+    ComponentStorage<Position> positions;
+
+    auto query =
+        ExecutionSystem::Query::bind_storage(positions);
+
+    auto a = scheduler.schedule("A", 60.0, ExecutionSystem{}, query);
+    auto b = scheduler.schedule("B", 60.0, ExecutionSystem{}, query);
+
+    REQUIRE(
+        b.depends_on(a) ==
+        DependencyResult::Success
+    );
+
+    REQUIRE(
+        a.depends_on(b) ==
+        DependencyResult::CycleDetected
+    );
+}
+
+
+TEST_CASE("Indirect dependency cycle is rejected") {
+    SimulationClock clock;
+    CommandQueue queue;
+    Scheduler scheduler(queue, clock);
+
+    ComponentStorage<Position> positions;
+
+    auto query =
+        ExecutionSystem::Query::bind_storage(positions);
+
+    auto a = scheduler.schedule("A", 60.0, ExecutionSystem{}, query);
+    auto b = scheduler.schedule("B", 60.0, ExecutionSystem{}, query);
+    auto c = scheduler.schedule("C", 60.0, ExecutionSystem{}, query);
+
+    REQUIRE(
+        b.depends_on(a) ==
+        DependencyResult::Success
+    );
+
+    REQUIRE(
+        c.depends_on(b) ==
+        DependencyResult::Success
+    );
+
+    REQUIRE(
+        a.depends_on(c) ==
+        DependencyResult::CycleDetected
+    );
+}
+
+
+TEST_CASE("Long dependency cycle is rejected") {
+    SimulationClock clock;
+    CommandQueue queue;
+    Scheduler scheduler(queue, clock);
+
+    ComponentStorage<Position> positions;
+
+    auto query =
+        ExecutionSystem::Query::bind_storage(positions);
+
+    auto a = scheduler.schedule("A", 60.0, ExecutionSystem{}, query);
+    auto b = scheduler.schedule("B", 60.0, ExecutionSystem{}, query);
+    auto c = scheduler.schedule("C", 60.0, ExecutionSystem{}, query);
+    auto d = scheduler.schedule("D", 60.0, ExecutionSystem{}, query);
+
+    REQUIRE(
+        b.depends_on(a) ==
+        DependencyResult::Success
+    );
+
+    REQUIRE(
+        c.depends_on(b) ==
+        DependencyResult::Success
+    );
+
+    REQUIRE(
+        d.depends_on(c) ==
+        DependencyResult::Success
+    );
+
+    REQUIRE(
+        a.depends_on(d) ==
+        DependencyResult::CycleDetected
+    );
+}
+
+
+// ============================================================
+// Dependency graph variants
+// ============================================================
+
+TEST_CASE("Multiple children can depend on the same parent") {
+    SimulationClock clock;
+    CommandQueue queue;
+    Scheduler scheduler(queue, clock);
+
+    ComponentStorage<Position> positions;
+
+    auto query =
+        ExecutionSystem::Query::bind_storage(positions);
+
+    auto parent = scheduler.schedule(
+        "Physics",
+        60.0,
+        ExecutionSystem{},
+        query
+    );
+
+    auto ai = scheduler.schedule(
+        "AI",
+        60.0,
+        ExecutionSystem{},
+        query
+    );
+
+    auto rendering = scheduler.schedule(
+        "Rendering",
+        60.0,
+        ExecutionSystem{},
+        query
+    );
+
+    REQUIRE(
+        ai.depends_on(parent) ==
+        DependencyResult::Success
+    );
+
+    REQUIRE(
+        rendering.depends_on(parent) ==
+        DependencyResult::Success
+    );
+
+    scheduler.update(1.0 / 60.0);
+
+    REQUIRE(parent.generation() == 1);
+    REQUIRE(ai.generation() == 1);
+    REQUIRE(rendering.generation() == 1);
+}
+
+
+// ============================================================
+// Cancellation
+// ============================================================
+
+TEST_CASE("Cancelling a system invalidates its handle") {
+    SimulationClock clock;
+    CommandQueue queue;
+    Scheduler scheduler(queue, clock);
+
+    ComponentStorage<Position> positions;
+
+    auto query =
+        ExecutionSystem::Query::bind_storage(positions);
+
+    auto system = scheduler.schedule(
+        "System",
+        60.0,
+        ExecutionSystem{},
+        query
+    );
+
+    REQUIRE(system.valid());
+
+    system.cancel();
+
+    REQUIRE_FALSE(system.valid());
+}
+
+
+TEST_CASE("Cancelling a system twice is safe") {
+    SimulationClock clock;
+    CommandQueue queue;
+    Scheduler scheduler(queue, clock);
+
+    ComponentStorage<Position> positions;
+
+    auto query =
+        ExecutionSystem::Query::bind_storage(positions);
+
+    auto system = scheduler.schedule(
+        "System",
+        60.0,
+        ExecutionSystem{},
+        query
+    );
+
+    system.cancel();
+    system.cancel();
+
+    REQUIRE_FALSE(system.valid());
+}
+
+
+TEST_CASE("Cancelling a parent removes it from child dependencies") {
+    SimulationClock clock;
+    CommandQueue queue;
+    Scheduler scheduler(queue, clock);
+
+    ComponentStorage<Position> positions;
+
+    auto query =
+        ExecutionSystem::Query::bind_storage(positions);
 
     auto parent = scheduler.schedule(
         "Parent",
-        10.0,
-        [](double) {}
+        60.0,
+        ExecutionSystem{},
+        query
     );
 
     auto child = scheduler.schedule(
         "Child",
-        10.0,
-        [](double) {}
+        60.0,
+        ExecutionSystem{},
+        query
     );
 
     REQUIRE(
-        child.depends_on(parent) == DependencyResult::Success
-    );
-}
-
-TEST_CASE("Scheduler rejects self dependencies") {
-    Scheduler scheduler;
-
-    auto task = scheduler.schedule(
-        "Task",
-        10.0,
-        [](double) {}
-    );
-
-    REQUIRE(
-        task.depends_on(task) == DependencyResult::SelfDependency
-    );
-}
-
-TEST_CASE("Scheduler rejects invalid child") {
-    Scheduler scheduler;
-
-    auto parent = scheduler.schedule(
-        "Parent",
-        10.0,
-        [](double) {}
-    );
-
-    REQUIRE(
-        scheduler.depends_on(
-            9999,
-            parent.id()
-        ) == DependencyResult::InvalidChild
-    );
-}
-
-TEST_CASE("Scheduler rejects invalid parent") {
-    Scheduler scheduler;
-
-    auto child = scheduler.schedule(
-        "Child",
-        10.0,
-        [](double) {}
-    );
-
-    REQUIRE(
-        scheduler.depends_on(
-            child.id(),
-            9999
-        ) == DependencyResult::InvalidParent
-    );
-}
-
-TEST_CASE("Scheduler rejects duplicate dependencies") {
-    Scheduler scheduler;
-
-    auto parent = scheduler.schedule(
-        "Parent",
-        10.0,
-        [](double) {}
-    );
-
-    auto child = scheduler.schedule(
-        "Child",
-        10.0,
-        [](double) {}
-    );
-
-    REQUIRE(
-        child.depends_on(parent) == DependencyResult::Success
-    );
-
-    REQUIRE(
-        child.depends_on(parent) == DependencyResult::DuplicateDependency
-    );
-}
-
-TEST_CASE("Child cannot execute before parent produces a generation") {
-    Scheduler scheduler;
-
-    int parent_calls = 0;
-    int child_calls = 0;
-
-    auto parent = scheduler.schedule(
-        "Parent",
-        10.0,
-        [&](double) {
-            ++parent_calls;
-        }
-    );
-
-    auto child = scheduler.schedule(
-        "Child",
-        10.0,
-        [&](double) {
-            ++child_calls;
-        }
-    );
-
-    REQUIRE(
-        child.depends_on(parent) == DependencyResult::Success
-    );
-
-    scheduler.update(0.1);
-
-    REQUIRE(parent_calls == 1);
-    REQUIRE(child_calls == 1);
-}
-
-TEST_CASE("Child waits when its dependency has not generated") {
-    Scheduler scheduler;
-
-    int parent_calls = 0;
-    int child_calls = 0;
-
-    auto parent = scheduler.schedule(
-        "Parent",
-        1.0,
-        [&](double) {
-            ++parent_calls;
-        }
-    );
-
-    auto child = scheduler.schedule(
-        "Child",
-        10.0,
-        [&](double) {
-            ++child_calls;
-        }
-    );
-
-    child.depends_on(parent);
-
-    scheduler.update(0.1);
-
-    REQUIRE(parent_calls == 0);
-    REQUIRE(child_calls == 0);
-
-    scheduler.update(0.9);
-
-    REQUIRE(parent_calls == 1);
-    REQUIRE(child_calls == 1);
-}
-
-TEST_CASE("One parent generation permits one child execution") {
-    Scheduler scheduler;
-
-    int parent_calls = 0;
-    int child_calls = 0;
-
-    auto parent = scheduler.schedule(
-        "Parent",
-        1.0,
-        [&](double) {
-            ++parent_calls;
-        }
-    );
-
-    auto child = scheduler.schedule(
-        "Child",
-        100.0,
-        [&](double) {
-            ++child_calls;
-        }
-    );
-
-    child.depends_on(parent);
-
-    // Parent produces generation 1.
-    scheduler.update(1.0);
-
-    REQUIRE(parent_calls == 1);
-    REQUIRE(child_calls == 1);
-
-    // Child is extremely fast, but parent has not
-    // produced another generation.
-    scheduler.update(1.0);
-
-    REQUIRE(parent_calls == 2);
-    REQUIRE(child_calls == 2);
-}
-
-TEST_CASE("Dependency limits a faster child") {
-    Scheduler scheduler;
-
-    int parent_calls = 0;
-    int child_calls = 0;
-
-    auto parent = scheduler.schedule(
-        "Parent",
-        10.0,
-        [&](double) {
-            ++parent_calls;
-        }
-    );
-
-    auto child = scheduler.schedule(
-        "Child",
-        100.0,
-        [&](double) {
-            ++child_calls;
-        }
-    );
-
-    child.depends_on(parent);
-
-    scheduler.update(0.1);
-
-    REQUIRE(parent_calls == 1);
-    REQUIRE(child_calls == 1);
-
-    scheduler.update(0.1);
-
-    REQUIRE(parent_calls == 2);
-    REQUIRE(child_calls == 2);
-
-    scheduler.update(0.1);
-
-    REQUIRE(parent_calls == 3);
-    REQUIRE(child_calls == 3);
-}
-
-TEST_CASE("Dependency does not force a slower child to run faster") {
-    Scheduler scheduler;
-
-    int parent_calls = 0;
-    int child_calls = 0;
-
-    auto parent = scheduler.schedule(
-        "Parent",
-        100.0,
-        [&](double) {
-            ++parent_calls;
-        }
-    );
-
-    auto child = scheduler.schedule(
-        "Child",
-        10.0,
-        [&](double) {
-            ++child_calls;
-        }
-    );
-
-    child.depends_on(parent);
-
-    scheduler.update(0.1);
-
-    REQUIRE(parent_calls == 10);
-    REQUIRE(child_calls == 1);
-
-    scheduler.update(0.1);
-
-    REQUIRE(parent_calls == 20);
-    REQUIRE(child_calls == 2);
-
-    scheduler.update(0.1);
-
-    REQUIRE(parent_calls == 30);
-    REQUIRE(child_calls == 3);
-}
-
-TEST_CASE("Child requires a fresh generation from every dependency") {
-    Scheduler scheduler;
-
-    int a_calls = 0;
-    int b_calls = 0;
-    int c_calls = 0;
-
-    auto a = scheduler.schedule(
-        "A",
-        10.0,
-        [&](double) {
-            ++a_calls;
-        }
-    );
-
-    auto b = scheduler.schedule(
-        "B",
-        10.0,
-        [&](double) {
-            ++b_calls;
-        }
-    );
-
-    auto c = scheduler.schedule(
-        "C",
-        10.0,
-        [&](double) {
-            ++c_calls;
-        }
-    );
-
-    scheduler.depends_on(c.id(), a.id());
-    scheduler.depends_on(c.id(), b.id());
-
-    scheduler.update(0.1);
-
-    REQUIRE(a_calls == 1);
-    REQUIRE(b_calls == 1);
-
-    // Both dependencies have generated.
-    REQUIRE(c_calls == 1);
-}
-
-TEST_CASE("Child remains blocked if one dependency has not generated") {
-    Scheduler scheduler;
-
-    int a_calls = 0;
-    int b_calls = 0;
-    int c_calls = 0;
-
-    auto a = scheduler.schedule(
-        "A",
-        10.0,
-        [&](double) {
-            ++a_calls;
-        }
-    );
-
-    auto b = scheduler.schedule(
-        "B",
-        1.0,
-        [&](double) {
-            ++b_calls;
-        }
-    );
-
-    auto c = scheduler.schedule(
-        "C",
-        10.0,
-        [&](double) {
-            ++c_calls;
-        }
-    );
-
-    scheduler.depends_on(c.id(), a.id());
-    scheduler.depends_on(c.id(), b.id());
-
-    scheduler.update(0.1);
-
-    REQUIRE(a_calls == 1);
-    REQUIRE(b_calls == 0);
-    REQUIRE(c_calls == 0);
-
-    scheduler.update(0.9);
-
-    REQUIRE(a_calls == 10);
-    REQUIRE(b_calls == 1);
-    REQUIRE(c_calls == 1);
-}
-
-TEST_CASE("Dependency chain executes in order") {
-    Scheduler scheduler;
-
-    std::vector<std::string> execution_order;
-
-    auto a = scheduler.schedule(
-        "A",
-        10.0,
-        [&](double) {
-            execution_order.push_back("A");
-        }
-    );
-
-    auto b = scheduler.schedule(
-        "B",
-        10.0,
-        [&](double) {
-            execution_order.push_back("B");
-        }
-    );
-
-    auto c = scheduler.schedule(
-        "C",
-        10.0,
-        [&](double) {
-            execution_order.push_back("C");
-        }
-    );
-
-    scheduler.depends_on(b.id(), a.id());
-    scheduler.depends_on(c.id(), b.id());
-
-    scheduler.update(0.1);
-
-    REQUIRE(execution_order.size() == 3);
-
-    REQUIRE(execution_order[0] == "A");
-    REQUIRE(execution_order[1] == "B");
-    REQUIRE(execution_order[2] == "C");
-}
-
-TEST_CASE("Scheduler rejects dependency cycles") {
-    Scheduler scheduler;
-
-    auto a = scheduler.schedule(
-        "A",
-        10.0,
-        [](double) {}
-    );
-
-    auto b = scheduler.schedule(
-        "B",
-        10.0,
-        [](double) {}
-    );
-
-    auto c = scheduler.schedule(
-        "C",
-        10.0,
-        [](double) {}
-    );
-
-    REQUIRE(
-        b.depends_on(a)
-        == DependencyResult::Success
-    );
-
-    REQUIRE(
-        c.depends_on(b)
-        == DependencyResult::Success
-    );
-
-    REQUIRE(
-        a.depends_on(c)
-        == DependencyResult::CycleDetected
-    );
-}
-
-TEST_CASE("Scheduler rejects direct dependency cycle") {
-    Scheduler scheduler;
-
-    auto a = scheduler.schedule(
-        "A",
-        10.0,
-        [](double) {}
-    );
-
-    auto b = scheduler.schedule(
-        "B",
-        10.0,
-        [](double) {}
-    );
-
-    REQUIRE(
-        scheduler.depends_on(b.id(), a.id())
-        == DependencyResult::Success
-    );
-
-    REQUIRE(
-        scheduler.depends_on(a.id(), b.id())
-        == DependencyResult::CycleDetected
-    );
-}
-
-TEST_CASE("Independent tasks do not block each other") {
-    Scheduler scheduler;
-
-    int a_calls = 0;
-    int b_calls = 0;
-
-    auto a = scheduler.schedule(
-        "A",
-        1.0,
-        [&](double) {
-            ++a_calls;
-        }
-    );
-
-    auto b = scheduler.schedule(
-        "B",
-        10.0,
-        [&](double) {
-            ++b_calls;
-        }
-    );
-
-    scheduler.update(0.1);
-
-    REQUIRE(a_calls == 0);
-    REQUIRE(b_calls == 1);
-
-    scheduler.update(0.9);
-
-    REQUIRE(a_calls == 1);
-    REQUIRE(b_calls == 10);
-}
-
-TEST_CASE("Cancelling a parent removes its dependency from child") {
-    Scheduler scheduler;
-
-    int child_calls = 0;
-
-    auto parent = scheduler.schedule(
-        "Parent",
-        10.0,
-        [](double) {}
-    );
-
-    auto child = scheduler.schedule(
-        "Child",
-        10.0,
-        [&](double) {
-            ++child_calls;
-        }
-    );
-
-    scheduler.depends_on(
-        child.id(),
-        parent.id()
+        child.depends_on(parent) ==
+        DependencyResult::Success
     );
 
     parent.cancel();
 
-    scheduler.update(1.0);
+    REQUIRE_FALSE(parent.valid());
+    REQUIRE(child.valid());
 
-    // The dependency should have been removed.
-    REQUIRE(child_calls > 0);
+    scheduler.update(1.0 / 60.0);
+
+    REQUIRE(child.generation() == 1);
 }
 
-TEST_CASE("Paused parent prevents child from receiving new generations") {
-    Scheduler scheduler;
 
-    int parent_calls = 0;
-    int child_calls = 0;
+TEST_CASE("Cancelling a child preserves its parent") {
+    SimulationClock clock;
+    CommandQueue queue;
+    Scheduler scheduler(queue, clock);
+
+    ComponentStorage<Position> positions;
+
+    auto query =
+        ExecutionSystem::Query::bind_storage(positions);
 
     auto parent = scheduler.schedule(
         "Parent",
-        10.0,
-        [&](double) {
-            ++parent_calls;
-        }
+        60.0,
+        ExecutionSystem{},
+        query
     );
 
     auto child = scheduler.schedule(
         "Child",
-        10.0,
-        [&](double) {
-            ++child_calls;
-        }
-    );
-
-    scheduler.depends_on(
-        child.id(),
-        parent.id()
-    );
-
-    scheduler.update(0.1);
-
-    REQUIRE(parent_calls == 1);
-    REQUIRE(child_calls == 1);
-
-    parent.pause();
-
-    scheduler.update(1.0);
-
-    REQUIRE(parent_calls == 1);
-    REQUIRE(child_calls == 1);
-
-    parent.resume();
-
-    scheduler.update(0.1);
-
-    REQUIRE(parent_calls == 2);
-    REQUIRE(child_calls == 2);
-}
-
-TEST_CASE("Child consumes parent generation after execution") {
-    Scheduler scheduler;
-
-    int child_calls = 0;
-
-    auto parent = scheduler.schedule(
-        "Parent",
-        1.0,
-        [](double) {}
-    );
-
-    auto child = scheduler.schedule(
-        "Child",
-        100.0,
-        [&](double) {
-            ++child_calls;
-        }
-    );
-
-    scheduler.depends_on(
-        child.id(),
-        parent.id()
-    );
-
-    scheduler.update(1.0);
-
-    REQUIRE(child_calls == 1);
-
-    // Parent hasn't generated anything new.
-    scheduler.update(0.01);
-    scheduler.update(0.01);
-    scheduler.update(0.01);
-
-    REQUIRE(child_calls == 1);
-}
-
-TEST_CASE("Blocked child does not execute stale accumulated work") {
-    Scheduler scheduler;
-
-    int parent_calls = 0;
-    int child_calls = 0;
-
-    auto parent = scheduler.schedule(
-        "Parent",
-        1.0,
-        [&](double) {
-            ++parent_calls;
-        }
-    );
-
-    auto child = scheduler.schedule(
-        "Child",
-        100.0,
-        [&](double) {
-            ++child_calls;
-        }
-    );
-
-    scheduler.depends_on(
-        child.id(),
-        parent.id()
-    );
-
-    // Child becomes very far behind while parent
-    // has produced nothing.
-    scheduler.update(0.5);
-
-    REQUIRE(parent_calls == 0);
-    REQUIRE(child_calls == 0);
-
-    // Parent generates exactly once.
-    scheduler.update(0.5);
-
-    REQUIRE(parent_calls == 1);
-    REQUIRE(child_calls == 1);
-
-    // Even though the child has accumulated a lot
-    // of elapsed time, it cannot execute again without
-    // another parent generation.
-    scheduler.update(0.01);
-
-    REQUIRE(child_calls == 1);
-}
-
-TEST_CASE("Changing task frequency affects scheduling") {
-    Scheduler scheduler;
-
-    int calls = 0;
-
-    auto task = scheduler.schedule(
-        "Test",
-        10.0,
-        [&](double) {
-            ++calls;
-        }
-    );
-
-    scheduler.update(0.1);
-
-    REQUIRE(calls == 1);
-
-    task.set_frequency(20.0);
-
-    scheduler.update(0.05);
-
-    REQUIRE(calls == 2);
-}
-
-TEST_CASE("Failed task does not produce a generation") {
-    Scheduler scheduler;
-
-    int child_calls = 0;
-
-    auto parent = scheduler.schedule(
-        "Parent",
-        10.0,
-        [](double) {
-            throw std::runtime_error("failure");
-        }
-    );
-
-    auto child = scheduler.schedule(
-        "Child",
-        10.0,
-        [&](double) {
-            ++child_calls;
-        }
-    );
-
-    scheduler.depends_on(
-        child.id(),
-        parent.id()
-    );
-
-    REQUIRE_THROWS(
-        scheduler.update(0.1)
-    );
-
-    REQUIRE(child_calls == 0);
-}
-
-TEST_CASE("Scheduler handles branching and converging dependency graph") {
-    Scheduler scheduler;
-
-    std::vector<std::string> execution;
-
-    auto sensor = scheduler.schedule(
-        "Sensor",
-        10.0,
-        [&](double) {
-            execution.push_back("Sensor");
-        }
-    );
-
-    auto physics = scheduler.schedule(
-        "Physics",
-        10.0,
-        [&](double) {
-            execution.push_back("Physics");
-        }
-    );
-
-    auto controller = scheduler.schedule(
-        "Controller",
-        10.0,
-        [&](double) {
-            execution.push_back("Controller");
-        }
-    );
-
-    auto renderer = scheduler.schedule(
-        "Renderer",
-        10.0,
-        [&](double) {
-            execution.push_back("Renderer");
-        }
-    );
-
-    scheduler.depends_on(physics.id(), sensor.id());
-    scheduler.depends_on(controller.id(), sensor.id());
-    scheduler.depends_on(renderer.id(), physics.id());
-    scheduler.depends_on(renderer.id(), controller.id());
-
-    scheduler.update(0.1);
-
-    REQUIRE(execution.size() == 4);
-
-    // Sensor must happen first.
-    REQUIRE(execution[0] == "Sensor");
-
-    // Physics and Controller can occur in either order.
-    REQUIRE(
-        (execution[1] == "Physics" ||
-         execution[1] == "Controller")
+        60.0,
+        ExecutionSystem{},
+        query
     );
 
     REQUIRE(
-        (execution[2] == "Physics" ||
-         execution[2] == "Controller")
+        child.depends_on(parent) ==
+        DependencyResult::Success
     );
 
-    REQUIRE(execution[3] == "Renderer");
+    child.cancel();
+
+    REQUIRE(parent.valid());
+    REQUIRE_FALSE(child.valid());
+
+    scheduler.update(1.0 / 60.0);
+
+    REQUIRE(parent.generation() == 1);
+}
+
+
+// ============================================================
+// Handle movement
+// ============================================================
+
+TEST_CASE("Moving a system handle transfers ownership") {
+    SimulationClock clock;
+    CommandQueue queue;
+    Scheduler scheduler(queue, clock);
+
+    ComponentStorage<Position> positions;
+
+    auto query =
+        ExecutionSystem::Query::bind_storage(positions);
+
+    auto original = scheduler.schedule(
+        "System",
+        60.0,
+        ExecutionSystem{},
+        query
+    );
+
+    const auto id = original.id();
+
+    auto moved = std::move(original);
+
+    REQUIRE_FALSE(original.valid());
+    REQUIRE(moved.valid());
+    REQUIRE(moved.id() == id);
+}
+
+
+TEST_CASE("Move assignment transfers system handle") {
+    SimulationClock clock;
+    CommandQueue queue;
+    Scheduler scheduler(queue, clock);
+
+    ComponentStorage<Position> positions;
+
+    auto query =
+        ExecutionSystem::Query::bind_storage(positions);
+
+    auto first = scheduler.schedule(
+        "First",
+        60.0,
+        ExecutionSystem{},
+        query
+    );
+
+    auto second = scheduler.schedule(
+        "Second",
+        60.0,
+        ExecutionSystem{},
+        query
+    );
+
+    const auto second_id = second.id();
+
+    first = std::move(second);
+
+    REQUIRE(first.valid());
+    REQUIRE(first.id() == second_id);
+    REQUIRE_FALSE(second.valid());
 }

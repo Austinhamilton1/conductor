@@ -5,22 +5,24 @@
 #include "commands/CommandQueue.h"
 
 namespace conductor {
-    template<typename QueryT>
+    template<typename BoundQueryT>
     class SystemContext {
     public:
+        using query_type = BoundQueryT;
+
         SystemContext(
-            QueryT& query,
+            BoundQueryT& query,
             CommandQueue& commands,
             SimulationClock& clock
         ) : m_query(query),
             m_commands(commands),
             m_clock(clock) {}
 
-        QueryT& query() noexcept {
+        BoundQueryT& query() noexcept {
             return m_query;
         }
 
-        const QueryT& query() const noexcept {
+        const BoundQueryT& query() const noexcept {
             return m_query;
         }
 
@@ -41,7 +43,7 @@ namespace conductor {
         }
 
     private:
-        QueryT& m_query;
+        BoundQueryT& m_query;
         CommandQueue& m_commands;
         SimulationClock& m_clock;
     };

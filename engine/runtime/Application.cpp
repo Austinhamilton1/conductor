@@ -15,10 +15,6 @@ namespace conductor {
         return m_events;
     }
 
-    Scheduler& Application::scheduler() {
-        return m_scheduler;
-    }
-
     void Application::run() {
         initialize();
 
@@ -33,9 +29,6 @@ namespace conductor {
 
             // Process events from last frame
             m_events.process();
-
-            // Scheduler handles complex time-based tasks
-            m_scheduler.update(simulation_dt);
 
             // LayerStack handles domain specific updates (e.g., Physics)
             m_layers.update(simulation_dt); 
