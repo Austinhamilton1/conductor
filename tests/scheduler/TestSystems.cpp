@@ -78,39 +78,6 @@ namespace {
         }
     };
 
-    struct MovementSystem {
-        using Query = conductor::Query<
-            conductor::Read<Velocity>,
-            conductor::Write<Position>
-        >;
-
-        inline static int executions = 0;
-
-        template<typename BoundQuery>
-        void update(
-            conductor::SystemContext<BoundQuery>& ctx
-        ) {
-            ++executions;
-
-            for(auto [velocity, position] :
-                ctx.query())
-            {
-                position.x += velocity.x *
-                              ctx.clock().delta_seconds();
-
-                position.y += velocity.y *
-                              ctx.clock().delta_seconds();
-
-                position.z += velocity.z *
-                              ctx.clock().delta_seconds();
-            }
-        }
-
-        static void reset() {
-            executions = 0;
-        }
-    };
-
     struct FailingSystem {
         using Query = conductor::Query<
             conductor::Read<Position>

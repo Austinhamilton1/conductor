@@ -1,11 +1,18 @@
 add_library(conductor_simulation
-    
+    World.cpp
 )
 
 target_include_directories(conductor_simulation
 PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${PROJECT_SOURCE_DIR}/engine
+)
+
+target_link_libraries(conductor_simulation
+PUBLIC
+    conductor_core
+    conductor_ecs
+    conductor_scheduler
 )
 
 target_compile_features(conductor_simulation
