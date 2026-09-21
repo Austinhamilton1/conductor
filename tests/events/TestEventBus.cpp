@@ -3,7 +3,7 @@
 #include "events/EventBus.h"
 #include "TestEvent.h"
 
-TEST_CASE("Publish dispatches event") {
+TEST_CASE("Publish dispatches event", "[events]") {
     conductor::EventBus bus;
 
     int value = 0;
@@ -21,7 +21,7 @@ TEST_CASE("Publish dispatches event") {
     REQUIRE(value == 42);
 }
 
-TEST_CASE("Multiple events processed") {
+TEST_CASE("Multiple events processed", "[events]") {
     conductor::EventBus bus;
 
     int sum = 0;
@@ -41,7 +41,7 @@ TEST_CASE("Multiple events processed") {
     REQUIRE(sum == 6);
 }
 
-TEST_CASE("Different event types dispatch independently") {
+TEST_CASE("Different event types dispatch independently", "[events]") {
     conductor::EventBus bus;
 
     bool a = false;
@@ -67,7 +67,7 @@ TEST_CASE("Different event types dispatch independently") {
     REQUIRE_FALSE(b);
 }
 
-TEST_CASE("Events published during dispatch are processed next cycle") {
+TEST_CASE("Events published during dispatch are processed next cycle", "[events]") {
     conductor::EventBus bus;
 
     int calls = 0;

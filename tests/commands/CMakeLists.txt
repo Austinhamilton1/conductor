@@ -10,4 +10,7 @@ PRIVATE
 
 include(Catch)
 
-catch_discover_tests(commands_tests)
+catch_discover_tests(commands_tests
+PROPERTIES
+    LABELS "commands"
+)

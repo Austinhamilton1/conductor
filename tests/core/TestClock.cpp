@@ -4,7 +4,7 @@
 
 #include "core/Clock.h"
 
-TEST_CASE("Clock moves forward") {
+TEST_CASE("Clock moves forward", "[core]") {
     auto a = conductor::Clock::now();
 
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
@@ -14,7 +14,7 @@ TEST_CASE("Clock moves forward") {
     REQUIRE(b > a);
 }
 
-TEST_CASE("Ticking clock moves clock forward") {
+TEST_CASE("Ticking clock moves clock forward", "[core]") {
     conductor::Clock c;
 
     std::this_thread::sleep_for(std::chrono::milliseconds(10));

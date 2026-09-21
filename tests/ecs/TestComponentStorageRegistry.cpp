@@ -28,7 +28,7 @@ namespace {
 // Creation
 // -----------------------------------------------------------------------------
 
-TEST_CASE("ComponentStorageRegistry creates component storage") {
+TEST_CASE("ComponentStorageRegistry creates component storage", "[ecs]") {
     ComponentStorageRegistry registry;
 
     auto& storage =
@@ -44,7 +44,7 @@ TEST_CASE("ComponentStorageRegistry creates component storage") {
 // Multiple component types
 // -----------------------------------------------------------------------------
 
-TEST_CASE("ComponentStorageRegistry stores multiple component types") {
+TEST_CASE("ComponentStorageRegistry stores multiple component types", "[ecs]") {
     ComponentStorageRegistry registry;
 
     auto& position =
@@ -70,7 +70,7 @@ TEST_CASE("ComponentStorageRegistry stores multiple component types") {
 // Component IDs map to storage entries
 // -----------------------------------------------------------------------------
 
-TEST_CASE("ComponentStorageRegistry maps component IDs to storage") {
+TEST_CASE("ComponentStorageRegistry maps component IDs to storage", "[ecs]") {
     ComponentStorageRegistry registry;
 
     auto position_id =
@@ -106,7 +106,7 @@ TEST_CASE("ComponentStorageRegistry maps component IDs to storage") {
 // Lookup by ComponentTypeId
 // -----------------------------------------------------------------------------
 
-TEST_CASE("ComponentStorageRegistry supports lookup by component ID") {
+TEST_CASE("ComponentStorageRegistry supports lookup by component ID", "[ecs]") {
     ComponentStorageRegistry registry;
 
     auto position_id =
@@ -127,7 +127,7 @@ TEST_CASE("ComponentStorageRegistry supports lookup by component ID") {
 // Missing storage
 // -----------------------------------------------------------------------------
 
-TEST_CASE("ComponentStorageRegistry reports missing storage") {
+TEST_CASE("ComponentStorageRegistry reports missing storage", "[ecs]") {
     ComponentStorageRegistry registry;
 
     REQUIRE_FALSE(
@@ -135,7 +135,7 @@ TEST_CASE("ComponentStorageRegistry reports missing storage") {
     );
 }
 
-TEST_CASE("ComponentStorageRegistry get throws when storage does not exist") {
+TEST_CASE("ComponentStorageRegistry get throws when storage does not exist", "[ecs]") {
     ComponentStorageRegistry registry;
 
     REQUIRE_THROWS_AS(
@@ -149,7 +149,7 @@ TEST_CASE("ComponentStorageRegistry get throws when storage does not exist") {
 // Invalid IDs
 // -----------------------------------------------------------------------------
 
-TEST_CASE("ComponentStorageRegistry rejects invalid component IDs") {
+TEST_CASE("ComponentStorageRegistry rejects invalid component IDs", "[ecs]") {
     ComponentStorageRegistry registry;
 
     const ComponentTypeId invalid_id = 999999;
@@ -169,7 +169,7 @@ TEST_CASE("ComponentStorageRegistry rejects invalid component IDs") {
 // Duplicate storage
 // -----------------------------------------------------------------------------
 
-TEST_CASE("ComponentStorageRegistry rejects duplicate storage") {
+TEST_CASE("ComponentStorageRegistry rejects duplicate storage", "[ecs]") {
     ComponentStorageRegistry registry;
 
     registry.create<Position>();
@@ -187,7 +187,7 @@ TEST_CASE("ComponentStorageRegistry rejects duplicate storage") {
 // Destruction
 // -----------------------------------------------------------------------------
 
-TEST_CASE("ComponentStorageRegistry destroys component storage") {
+TEST_CASE("ComponentStorageRegistry destroys component storage", "[ecs]") {
     ComponentStorageRegistry registry;
 
     registry.create<Position>();
@@ -206,7 +206,7 @@ TEST_CASE("ComponentStorageRegistry destroys component storage") {
 // Destruction by ID
 // -----------------------------------------------------------------------------
 
-TEST_CASE("ComponentStorageRegistry destroys storage by component ID") {
+TEST_CASE("ComponentStorageRegistry destroys storage by component ID", "[ecs]") {
     ComponentStorageRegistry registry;
 
     const auto position_id =
@@ -227,7 +227,7 @@ TEST_CASE("ComponentStorageRegistry destroys storage by component ID") {
 // Destroying missing storage
 // -----------------------------------------------------------------------------
 
-TEST_CASE("ComponentStorageRegistry rejects destroying missing storage") {
+TEST_CASE("ComponentStorageRegistry rejects destroying missing storage", "[ecs]") {
     ComponentStorageRegistry registry;
 
     REQUIRE_THROWS_AS(
@@ -241,7 +241,7 @@ TEST_CASE("ComponentStorageRegistry rejects destroying missing storage") {
 // Recreate after destruction
 // -----------------------------------------------------------------------------
 
-TEST_CASE("ComponentStorageRegistry can recreate destroyed storage") {
+TEST_CASE("ComponentStorageRegistry can recreate destroyed storage", "[ecs]") {
     ComponentStorageRegistry registry;
 
     auto& first =
@@ -266,7 +266,7 @@ TEST_CASE("ComponentStorageRegistry can recreate destroyed storage") {
 // Const access
 // -----------------------------------------------------------------------------
 
-TEST_CASE("ComponentStorageRegistry supports const storage access") {
+TEST_CASE("ComponentStorageRegistry supports const storage access", "[ecs]") {
     ComponentStorageRegistry registry;
 
     registry.create<Position>();
@@ -286,7 +286,7 @@ TEST_CASE("ComponentStorageRegistry supports const storage access") {
 // Registry capacity
 // -----------------------------------------------------------------------------
 
-TEST_CASE("ComponentStorageRegistry capacity tracks component ID space") {
+TEST_CASE("ComponentStorageRegistry capacity tracks component ID space", "[ecs]") {
     ComponentStorageRegistry registry;
 
     const auto position_id =
@@ -305,7 +305,7 @@ TEST_CASE("ComponentStorageRegistry capacity tracks component ID space") {
 // Empty registry
 // -----------------------------------------------------------------------------
 
-TEST_CASE("ComponentStorageRegistry starts empty") {
+TEST_CASE("ComponentStorageRegistry starts empty", "[ecs]") {
     ComponentStorageRegistry registry;
 
     REQUIRE(registry.size() == 0);
@@ -318,7 +318,7 @@ TEST_CASE("ComponentStorageRegistry starts empty") {
 // Registry updates
 // -----------------------------------------------------------------------------
 
-TEST_CASE("ComponentStorageRegistry creates valid add and remove operations") {
+TEST_CASE("ComponentStorageRegistry creates valid add and remove operations", "[ecs]") {
     ComponentStorageRegistry registry;
 
     auto& storage =
@@ -360,7 +360,7 @@ TEST_CASE("ComponentStorageRegistry creates valid add and remove operations") {
     REQUIRE_FALSE(storage.contains(entity));
 }
 
-TEST_CASE("ComponentStorageRegistry add operation preserves component data") {
+TEST_CASE("ComponentStorageRegistry add operation preserves component data", "[ecs]") {
     ComponentStorageRegistry registry;
 
     auto& storage =

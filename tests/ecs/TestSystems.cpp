@@ -57,7 +57,7 @@ namespace {
 
 using namespace conductor;
 
-TEST_CASE("SystemExecutor provides functional query") {
+TEST_CASE("SystemExecutor provides functional query", "[ecs]") {
     MovementSystem::reset();
 
     ComponentStorage<Velocity> velocities;

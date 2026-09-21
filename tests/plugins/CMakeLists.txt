@@ -40,4 +40,7 @@ PRIVATE
 
 include(Catch)
 
-catch_discover_tests(plugin_tests)
+catch_discover_tests(plugin_tests
+PROPERTIES
+    LABELS "plugins"
+)

@@ -122,7 +122,7 @@ namespace {
 
 using namespace conductor;
 
-TEST_CASE("Scheduler executes systems when due") {
+TEST_CASE("Scheduler executes systems when due", "[scheduler]") {
     ExecutionSystem::reset();
 
     CommandQueue commands;
@@ -163,7 +163,7 @@ TEST_CASE("Scheduler executes systems when due") {
     );
 }
 
-TEST_CASE("Scheduler accumulates partial intervals") {
+TEST_CASE("Scheduler accumulates partial intervals", "[scheduler]") {
     ExecutionSystem::reset();
 
     CommandQueue commands;
@@ -203,7 +203,7 @@ TEST_CASE("Scheduler accumulates partial intervals") {
     );
 }
 
-TEST_CASE("Scheduler executes multiple intervals from large delta") {
+TEST_CASE("Scheduler executes multiple intervals from large delta", "[scheduler]") {
     ExecutionSystem::reset();
 
     CommandQueue commands;
@@ -235,7 +235,7 @@ TEST_CASE("Scheduler executes multiple intervals from large delta") {
     );
 }
 
-TEST_CASE("Scheduler pauses and resumes systems") {
+TEST_CASE("Scheduler pauses and resumes systems", "[scheduler]") {
     ExecutionSystem::reset();
 
     CommandQueue commands;
@@ -278,7 +278,7 @@ TEST_CASE("Scheduler pauses and resumes systems") {
     );
 }
 
-TEST_CASE("Cancelling a system prevents future execution") {
+TEST_CASE("Cancelling a system prevents future execution", "[scheduler]") {
     ExecutionSystem::reset();
 
     CommandQueue commands;
@@ -317,7 +317,7 @@ TEST_CASE("Cancelling a system prevents future execution") {
     );
 }
 
-TEST_CASE("Scheduler respects system dependencies") {
+TEST_CASE("Scheduler respects system dependencies", "[scheduler]") {
     std::vector<int> order;
 
     OrderSystemA::order = &order;
@@ -374,7 +374,7 @@ TEST_CASE("Scheduler respects system dependencies") {
     REQUIRE(order[1] == 2);
 }
 
-TEST_CASE("System dependency requires parent execution") {
+TEST_CASE("System dependency requires parent execution", "[scheduler]") {
     std::vector<int> order;
 
     OrderSystemA::order = &order;
@@ -437,7 +437,7 @@ TEST_CASE("System dependency requires parent execution") {
     REQUIRE(order.empty());
 }
 
-TEST_CASE("Failed system enters failed state") {
+TEST_CASE("Failed system enters failed state", "[scheduler]") {
     FailingSystem::reset();
 
     CommandQueue commands;
@@ -485,7 +485,7 @@ TEST_CASE("Failed system enters failed state") {
     );
 }
 
-TEST_CASE("Failed system does not satisfy dependencies") {
+TEST_CASE("Failed system does not satisfy dependencies", "[scheduler]") {
     FailingSystem::reset();
     DependentSystem::reset();
 

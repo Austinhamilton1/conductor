@@ -11,4 +11,7 @@ PRIVATE
 
 include(Catch)
 
-catch_discover_tests(scheduler_tests)
+catch_discover_tests(scheduler_tests
+PROPERTIES
+    LABELS "scheduler"
+)

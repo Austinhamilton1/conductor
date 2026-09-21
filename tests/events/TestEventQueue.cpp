@@ -3,13 +3,13 @@
 #include "events/EventQueue.h"
 #include "TestEvent.h"
 
-TEST_CASE("EventQueue starts empty") {
+TEST_CASE("EventQueue starts empty", "[events]") {
     conductor::EventQueue queue;
 
     REQUIRE(queue.empty());
 }
 
-TEST_CASE("Push adds event") {
+TEST_CASE("Push adds event", "[events]") {
     conductor::EventQueue queue;
 
     queue.push(TestEvent{5});
@@ -17,7 +17,7 @@ TEST_CASE("Push adds event") {
     REQUIRE_FALSE(queue.empty());
 }
 
-TEST_CASE("Pop returns correct payload") {
+TEST_CASE("Pop returns correct payload", "[events]") {
     conductor::EventQueue queue;
 
     queue.push(TestEvent{42});
@@ -31,7 +31,7 @@ TEST_CASE("Pop returns correct payload") {
     event.destroy(event.payload);
 }
 
-TEST_CASE("Queue preserves FIFO order") {
+TEST_CASE("Queue preserves FIFO order", "[events]") {
     conductor::EventQueue queue;
 
     queue.push(TestEvent{1});
@@ -51,7 +51,7 @@ TEST_CASE("Queue preserves FIFO order") {
     e3.destroy(e3.payload);
 }
 
-TEST_CASE("Clear removes all events") {
+TEST_CASE("Clear removes all events", "[events]") {
     conductor::EventQueue queue;
 
     queue.push(TestEvent{1});

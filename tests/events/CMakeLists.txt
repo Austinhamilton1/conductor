@@ -13,4 +13,7 @@ PRIVATE
 
 include(Catch)
 
-catch_discover_tests(event_tests)
+catch_discover_tests(event_tests
+PROPERTIES
+    LABELS "events"
+)

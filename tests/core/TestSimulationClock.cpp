@@ -2,7 +2,7 @@
 
 #include "core/SimulationClock.h"
 
-TEST_CASE("Clock update updates correctly") {
+TEST_CASE("Clock update updates correctly", "[core]") {
     conductor::SimulationClock c;
 
     c.update(20.0);
@@ -11,7 +11,7 @@ TEST_CASE("Clock update updates correctly") {
     REQUIRE(c.total_seconds() == 20.0);
 }
 
-TEST_CASE("Pausing clock disables update") {
+TEST_CASE("Pausing clock disables update", "[core]") {
     conductor::SimulationClock c;
 
     c.update(20.0);
@@ -30,7 +30,7 @@ TEST_CASE("Pausing clock disables update") {
     REQUIRE(c.total_seconds() == 40.0);
 }
 
-TEST_CASE("Clock scales update deltas") {
+TEST_CASE("Clock scales update deltas", "[core]") {
     conductor::SimulationClock c;
 
     c.set_time_scale(2.0);

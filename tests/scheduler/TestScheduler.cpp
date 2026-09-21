@@ -46,7 +46,7 @@ using namespace conductor;
 // Scheduling
 // ============================================================
 
-TEST_CASE("Scheduler creates a valid system handle") {
+TEST_CASE("Scheduler creates a valid system handle", "[scheduler]") {
     SimulationClock clock;
     CommandQueue queue;
     Scheduler scheduler(queue, clock);
@@ -71,7 +71,7 @@ TEST_CASE("Scheduler creates a valid system handle") {
 }
 
 
-TEST_CASE("Scheduler assigns unique system IDs") {
+TEST_CASE("Scheduler assigns unique system IDs", "[scheduler]") {
     SimulationClock clock;
     CommandQueue queue;
     Scheduler scheduler(queue, clock);
@@ -108,7 +108,7 @@ TEST_CASE("Scheduler assigns unique system IDs") {
 }
 
 
-TEST_CASE("Scheduler rejects zero frequency") {
+TEST_CASE("Scheduler rejects zero frequency", "[scheduler]") {
     SimulationClock clock;
     CommandQueue queue;
     Scheduler scheduler(queue, clock);
@@ -130,7 +130,7 @@ TEST_CASE("Scheduler rejects zero frequency") {
 }
 
 
-TEST_CASE("Scheduler rejects negative frequency") {
+TEST_CASE("Scheduler rejects negative frequency", "[scheduler]") {
     SimulationClock clock;
     CommandQueue queue;
     Scheduler scheduler(queue, clock);
@@ -156,7 +156,7 @@ TEST_CASE("Scheduler rejects negative frequency") {
 // Timing
 // ============================================================
 
-TEST_CASE("System does not execute before its interval") {
+TEST_CASE("System does not execute before its interval", "[scheduler]") {
     SimulationClock clock;
     CommandQueue queue;
     Scheduler scheduler(queue, clock);
@@ -185,7 +185,7 @@ TEST_CASE("System does not execute before its interval") {
 }
 
 
-TEST_CASE("System executes when its interval is reached") {
+TEST_CASE("System executes when its interval is reached", "[scheduler]") {
     SimulationClock clock;
     CommandQueue queue;
     Scheduler scheduler(queue, clock);
@@ -210,7 +210,7 @@ TEST_CASE("System executes when its interval is reached") {
 }
 
 
-TEST_CASE("System accumulates delta across updates") {
+TEST_CASE("System accumulates delta across updates", "[scheduler]") {
     SimulationClock clock;
     CommandQueue queue;
     Scheduler scheduler(queue, clock);
@@ -241,7 +241,7 @@ TEST_CASE("System accumulates delta across updates") {
 }
 
 
-TEST_CASE("System can execute multiple times from accumulated delta") {
+TEST_CASE("System can execute multiple times from accumulated delta", "[scheduler]") {
     SimulationClock clock;
     CommandQueue queue;
     Scheduler scheduler(queue, clock);
@@ -266,7 +266,7 @@ TEST_CASE("System can execute multiple times from accumulated delta") {
 }
 
 
-TEST_CASE("System retains fractional accumulated time") {
+TEST_CASE("System retains fractional accumulated time", "[scheduler]") {
     SimulationClock clock;
     CommandQueue queue;
     Scheduler scheduler(queue, clock);
@@ -293,7 +293,7 @@ TEST_CASE("System retains fractional accumulated time") {
 }
 
 
-TEST_CASE("System frequency can be changed") {
+TEST_CASE("System frequency can be changed", "[scheduler]") {
     SimulationClock clock;
     CommandQueue queue;
     Scheduler scheduler(queue, clock);
@@ -318,7 +318,7 @@ TEST_CASE("System frequency can be changed") {
 }
 
 
-TEST_CASE("Invalid frequency change throws") {
+TEST_CASE("Invalid frequency change throws", "[scheduler]") {
     SimulationClock clock;
     CommandQueue queue;
     Scheduler scheduler(queue, clock);
@@ -351,7 +351,7 @@ TEST_CASE("Invalid frequency change throws") {
 // Pause / Resume
 // ============================================================
 
-TEST_CASE("Paused system does not accumulate time") {
+TEST_CASE("Paused system does not accumulate time", "[scheduler]") {
     SimulationClock clock;
     CommandQueue queue;
     Scheduler scheduler(queue, clock);
@@ -378,7 +378,7 @@ TEST_CASE("Paused system does not accumulate time") {
 }
 
 
-TEST_CASE("Resuming system allows scheduling to continue") {
+TEST_CASE("Resuming system allows scheduling to continue", "[scheduler]") {
     SimulationClock clock;
     CommandQueue queue;
     Scheduler scheduler(queue, clock);
@@ -411,7 +411,7 @@ TEST_CASE("Resuming system allows scheduling to continue") {
 }
 
 
-TEST_CASE("Pausing preserves accumulated time") {
+TEST_CASE("Pausing preserves accumulated time", "[scheduler]") {
     SimulationClock clock;
     CommandQueue queue;
     Scheduler scheduler(queue, clock);
@@ -448,7 +448,7 @@ TEST_CASE("Pausing preserves accumulated time") {
 // Dependencies
 // ============================================================
 
-TEST_CASE("System can depend on another system") {
+TEST_CASE("System can depend on another system", "[scheduler]") {
     SimulationClock clock;
     CommandQueue queue;
     Scheduler scheduler(queue, clock);
@@ -479,7 +479,7 @@ TEST_CASE("System can depend on another system") {
 }
 
 
-TEST_CASE("System cannot depend on itself") {
+TEST_CASE("System cannot depend on itself", "[scheduler]") {
     SimulationClock clock;
     CommandQueue queue;
     Scheduler scheduler(queue, clock);
@@ -503,7 +503,7 @@ TEST_CASE("System cannot depend on itself") {
 }
 
 
-TEST_CASE("Duplicate dependency is rejected") {
+TEST_CASE("Duplicate dependency is rejected", "[scheduler]") {
     SimulationClock clock;
     CommandQueue queue;
     Scheduler scheduler(queue, clock);
@@ -539,7 +539,7 @@ TEST_CASE("Duplicate dependency is rejected") {
 }
 
 
-TEST_CASE("Dependency between different schedulers is rejected") {
+TEST_CASE("Dependency between different schedulers is rejected", "[scheduler]") {
     SimulationClock first_clock;
     CommandQueue first_queue;
     Scheduler first(first_queue, first_clock);
@@ -578,7 +578,7 @@ TEST_CASE("Dependency between different schedulers is rejected") {
 // Dependency ordering
 // ============================================================
 
-TEST_CASE("Child waits for parent generation") {
+TEST_CASE("Child waits for parent generation", "[scheduler]") {
     SimulationClock clock;
     CommandQueue queue;
     Scheduler scheduler(queue, clock);
@@ -659,7 +659,7 @@ TEST_CASE("Child cannot execute twice without a new parent generation") {
 }
 
 
-TEST_CASE("Dependency chain executes in generation order") {
+TEST_CASE("Dependency chain executes in generation order", "[scheduler]") {
     SimulationClock clock;
     CommandQueue queue;
     Scheduler scheduler(queue, clock);
@@ -708,7 +708,7 @@ TEST_CASE("Dependency chain executes in generation order") {
 }
 
 
-TEST_CASE("System with multiple dependencies waits for all parents") {
+TEST_CASE("System with multiple dependencies waits for all parents", "[scheduler]") {
     SimulationClock clock;
     CommandQueue queue;
     Scheduler scheduler(queue, clock);
@@ -775,7 +775,7 @@ TEST_CASE("System with multiple dependencies waits for all parents") {
 // Different frequency dependency chains
 // ============================================================
 
-TEST_CASE("Faster child waits for slower parent") {
+TEST_CASE("Faster child waits for slower parent", "[scheduler]") {
     SimulationClock clock;
     CommandQueue queue;
     Scheduler scheduler(queue, clock);
@@ -824,7 +824,7 @@ TEST_CASE("Faster child waits for slower parent") {
 }
 
 
-TEST_CASE("Slower child does not consume parent generation prematurely") {
+TEST_CASE("Slower child does not consume parent generation prematurely", "[scheduler]") {
     SimulationClock clock;
     CommandQueue queue;
     Scheduler scheduler(queue, clock);
@@ -874,7 +874,7 @@ TEST_CASE("Slower child does not consume parent generation prematurely") {
 // Dependency graph / cycle detection
 // ============================================================
 
-TEST_CASE("Direct dependency cycle is rejected") {
+TEST_CASE("Direct dependency cycle is rejected", "[scheduler]") {
     SimulationClock clock;
     CommandQueue queue;
     Scheduler scheduler(queue, clock);
@@ -899,7 +899,7 @@ TEST_CASE("Direct dependency cycle is rejected") {
 }
 
 
-TEST_CASE("Indirect dependency cycle is rejected") {
+TEST_CASE("Indirect dependency cycle is rejected", "[scheduler]") {
     SimulationClock clock;
     CommandQueue queue;
     Scheduler scheduler(queue, clock);
@@ -930,7 +930,7 @@ TEST_CASE("Indirect dependency cycle is rejected") {
 }
 
 
-TEST_CASE("Long dependency cycle is rejected") {
+TEST_CASE("Long dependency cycle is rejected", "[scheduler]") {
     SimulationClock clock;
     CommandQueue queue;
     Scheduler scheduler(queue, clock);
@@ -971,7 +971,7 @@ TEST_CASE("Long dependency cycle is rejected") {
 // Dependency graph variants
 // ============================================================
 
-TEST_CASE("Multiple children can depend on the same parent") {
+TEST_CASE("Multiple children can depend on the same parent", "[scheduler]") {
     SimulationClock clock;
     CommandQueue queue;
     Scheduler scheduler(queue, clock);
@@ -1024,7 +1024,7 @@ TEST_CASE("Multiple children can depend on the same parent") {
 // Cancellation
 // ============================================================
 
-TEST_CASE("Cancelling a system invalidates its handle") {
+TEST_CASE("Cancelling a system invalidates its handle", "[scheduler]") {
     SimulationClock clock;
     CommandQueue queue;
     Scheduler scheduler(queue, clock);
@@ -1049,7 +1049,7 @@ TEST_CASE("Cancelling a system invalidates its handle") {
 }
 
 
-TEST_CASE("Cancelling a system twice is safe") {
+TEST_CASE("Cancelling a system twice is safe", "[scheduler]") {
     SimulationClock clock;
     CommandQueue queue;
     Scheduler scheduler(queue, clock);
@@ -1073,7 +1073,7 @@ TEST_CASE("Cancelling a system twice is safe") {
 }
 
 
-TEST_CASE("Cancelling a parent removes it from child dependencies") {
+TEST_CASE("Cancelling a parent removes it from child dependencies", "[scheduler]") {
     SimulationClock clock;
     CommandQueue queue;
     Scheduler scheduler(queue, clock);
@@ -1113,7 +1113,7 @@ TEST_CASE("Cancelling a parent removes it from child dependencies") {
 }
 
 
-TEST_CASE("Cancelling a child preserves its parent") {
+TEST_CASE("Cancelling a child preserves its parent", "[scheduler]") {
     SimulationClock clock;
     CommandQueue queue;
     Scheduler scheduler(queue, clock);
@@ -1157,7 +1157,7 @@ TEST_CASE("Cancelling a child preserves its parent") {
 // Handle movement
 // ============================================================
 
-TEST_CASE("Moving a system handle transfers ownership") {
+TEST_CASE("Moving a system handle transfers ownership", "[scheduler]") {
     SimulationClock clock;
     CommandQueue queue;
     Scheduler scheduler(queue, clock);
@@ -1184,7 +1184,7 @@ TEST_CASE("Moving a system handle transfers ownership") {
 }
 
 
-TEST_CASE("Move assignment transfers system handle") {
+TEST_CASE("Move assignment transfers system handle", "[scheduler]") {
     SimulationClock clock;
     CommandQueue queue;
     Scheduler scheduler(queue, clock);

@@ -31,7 +31,7 @@ namespace {
 // Entity creation
 // =============================================================================
 
-TEST_CASE("CommandQueue defers entity creation") {
+TEST_CASE("CommandQueue defers entity creation", "[commands]") {
     EntityManager entities;
     ComponentStorageRegistry storages;
     CommandQueue commands;
@@ -64,7 +64,7 @@ TEST_CASE("CommandQueue defers entity creation") {
 // Deferred entity resolution
 // =============================================================================
 
-TEST_CASE("CommandQueue resolves deferred entities after apply") {
+TEST_CASE("CommandQueue resolves deferred entities after apply", "[commands]") {
     EntityManager entities;
     ComponentStorageRegistry storages;
     CommandQueue commands;
@@ -110,7 +110,7 @@ TEST_CASE("CommandQueue resolves deferred entities after apply") {
 // Entity destruction
 // =============================================================================
 
-TEST_CASE("CommandQueue defers entity destruction") {
+TEST_CASE("CommandQueue defers entity destruction", "[commands]") {
     EntityManager entities;
     ComponentStorageRegistry storages;
     CommandQueue commands;
@@ -142,7 +142,7 @@ TEST_CASE("CommandQueue defers entity destruction") {
 // Deferred entity destruction
 // =============================================================================
 
-TEST_CASE("CommandQueue can destroy a deferred entity") {
+TEST_CASE("CommandQueue can destroy a deferred entity", "[commands]") {
     EntityManager entities;
     ComponentStorageRegistry storages;
     CommandQueue commands;
@@ -170,7 +170,7 @@ TEST_CASE("CommandQueue can destroy a deferred entity") {
 // Component addition
 // =============================================================================
 
-TEST_CASE("CommandQueue defers component addition") {
+TEST_CASE("CommandQueue defers component addition", "[commands]") {
     EntityManager entities;
     ComponentStorageRegistry storages;
     CommandQueue commands;
@@ -220,7 +220,7 @@ TEST_CASE("CommandQueue defers component addition") {
 // Component data is copied
 // =============================================================================
 
-TEST_CASE("CommandQueue copies component data when queued") {
+TEST_CASE("CommandQueue copies component data when queued", "[commands]") {
     EntityManager entities;
     ComponentStorageRegistry storages;
     CommandQueue commands;
@@ -265,7 +265,7 @@ TEST_CASE("CommandQueue copies component data when queued") {
 // Deferred entity + component
 // =============================================================================
 
-TEST_CASE("CommandQueue can add a component to a deferred entity") {
+TEST_CASE("CommandQueue can add a component to a deferred entity", "[commands]") {
     EntityManager entities;
     ComponentStorageRegistry storages;
     CommandQueue commands;
@@ -311,7 +311,7 @@ TEST_CASE("CommandQueue can add a component to a deferred entity") {
 // Multiple components
 // =============================================================================
 
-TEST_CASE("CommandQueue can add multiple components to an entity") {
+TEST_CASE("CommandQueue can add multiple components to an entity", "[commands]") {
     EntityManager entities;
     ComponentStorageRegistry storages;
     CommandQueue commands;
@@ -362,7 +362,7 @@ TEST_CASE("CommandQueue can add multiple components to an entity") {
 // Component removal
 // =============================================================================
 
-TEST_CASE("CommandQueue defers component removal") {
+TEST_CASE("CommandQueue defers component removal", "[commands]") {
     EntityManager entities;
     ComponentStorageRegistry storages;
     CommandQueue commands;
@@ -403,7 +403,7 @@ TEST_CASE("CommandQueue defers component removal") {
 // Deferred entity + component removal
 // =============================================================================
 
-TEST_CASE("CommandQueue can remove components from deferred entity") {
+TEST_CASE("CommandQueue can remove components from deferred entity", "[commands]") {
     EntityManager entities;
     ComponentStorageRegistry storages;
     CommandQueue commands;
@@ -454,7 +454,7 @@ TEST_CASE("CommandQueue can remove components from deferred entity") {
 // Entity commands execute before component commands
 // =============================================================================
 
-TEST_CASE("CommandQueue applies entity commands before component commands") {
+TEST_CASE("CommandQueue applies entity commands before component commands", "[commands]") {
     EntityManager entities;
     ComponentStorageRegistry storages;
     CommandQueue commands;
@@ -487,7 +487,7 @@ TEST_CASE("CommandQueue applies entity commands before component commands") {
 // Multiple deferred entities
 // =============================================================================
 
-TEST_CASE("CommandQueue supports multiple deferred entities with components") {
+TEST_CASE("CommandQueue supports multiple deferred entities with components", "[commands]") {
     EntityManager entities;
     ComponentStorageRegistry storages;
     CommandQueue commands;
@@ -542,7 +542,7 @@ TEST_CASE("CommandQueue supports multiple deferred entities with components") {
 // Clear
 // =============================================================================
 
-TEST_CASE("CommandQueue clear removes queued commands") {
+TEST_CASE("CommandQueue clear removes queued commands", "[commands]") {
     CommandQueue commands;
 
     commands.create_entity();
@@ -561,7 +561,7 @@ TEST_CASE("CommandQueue clear removes queued commands") {
 // Clear invalidates deferred entities
 // =============================================================================
 
-TEST_CASE("CommandQueue clear invalidates deferred entities") {
+TEST_CASE("CommandQueue clear invalidates deferred entities", "[commands]") {
     CommandQueue commands;
 
     const auto deferred =
@@ -580,7 +580,7 @@ TEST_CASE("CommandQueue clear invalidates deferred entities") {
 // Apply clears commands
 // =============================================================================
 
-TEST_CASE("CommandQueue apply clears commands") {
+TEST_CASE("CommandQueue apply clears commands", "[commands]") {
     EntityManager entities;
     ComponentStorageRegistry storages;
     CommandQueue commands;
@@ -603,7 +603,7 @@ TEST_CASE("CommandQueue apply clears commands") {
 // Deferred entities remain resolvable after apply
 // =============================================================================
 
-TEST_CASE("CommandQueue retains deferred resolutions after apply") {
+TEST_CASE("CommandQueue retains deferred resolutions after apply", "[commands]") {
     EntityManager entities;
     ComponentStorageRegistry storages;
     CommandQueue commands;
@@ -632,7 +632,7 @@ TEST_CASE("CommandQueue retains deferred resolutions after apply") {
 // Invalid DeferredEntity
 // =============================================================================
 
-TEST_CASE("CommandQueue rejects invalid DeferredEntity") {
+TEST_CASE("CommandQueue rejects invalid DeferredEntity", "[commands]") {
     CommandQueue commands;
 
     const DeferredEntity invalid{};
@@ -648,7 +648,7 @@ TEST_CASE("CommandQueue rejects invalid DeferredEntity") {
 // DeferredEntity from another queue
 // =============================================================================
 
-TEST_CASE("CommandQueue rejects DeferredEntity from another queue") {
+TEST_CASE("CommandQueue rejects DeferredEntity from another queue", "[commands]") {
     EntityManager entities;
     ComponentStorageRegistry storages;
 
@@ -679,7 +679,7 @@ TEST_CASE("CommandQueue rejects DeferredEntity from another queue") {
 // Missing storage
 // =============================================================================
 
-TEST_CASE("CommandQueue rejects adding a component without storage") {
+TEST_CASE("CommandQueue rejects adding a component without storage", "[commands]") {
     EntityManager entities;
     ComponentStorageRegistry storages;
     CommandQueue commands;
@@ -706,7 +706,7 @@ TEST_CASE("CommandQueue rejects adding a component without storage") {
 // Missing component during removal
 // =============================================================================
 
-TEST_CASE("CommandQueue rejects removing a component without storage") {
+TEST_CASE("CommandQueue rejects removing a component without storage", "[commands]") {
     EntityManager entities;
     ComponentStorageRegistry storages;
     CommandQueue commands;

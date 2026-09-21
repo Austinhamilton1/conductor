@@ -10,4 +10,7 @@ PRIVATE
 
 include(Catch)
 
-catch_discover_tests(runtime_tests)
+catch_discover_tests(runtime_tests
+PROPERTIES
+    LABELS "runtime"
+)

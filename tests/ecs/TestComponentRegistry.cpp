@@ -39,7 +39,7 @@ namespace {
     static_assert(conductor::Component<Mass>);
 }
 
-TEST_CASE("Component types receive unique IDs") {
+TEST_CASE("Component types receive unique IDs", "[ecs]") {
     const auto position =
         conductor::ComponentRegistry::register_component<Position>();
 
@@ -54,7 +54,7 @@ TEST_CASE("Component types receive unique IDs") {
     REQUIRE(velocity != health);
 }
 
-TEST_CASE("Registering the same component type returns the same ID") {
+TEST_CASE("Registering the same component type returns the same ID", "[ecs]") {
     const auto first =
         conductor::ComponentRegistry::register_component<Position>();
 
@@ -64,7 +64,7 @@ TEST_CASE("Registering the same component type returns the same ID") {
     REQUIRE(first == second);
 }
 
-TEST_CASE("Component info contains correct metadata") {
+TEST_CASE("Component info contains correct metadata", "[ecs]") {
     const auto& info =
         conductor::ComponentRegistry::info<Position>();
 
@@ -77,7 +77,7 @@ TEST_CASE("Component info contains correct metadata") {
     REQUIRE(info.alignment == alignof(Position));
 }
 
-TEST_CASE("Component info can be retrieved by ID") {
+TEST_CASE("Component info can be retrieved by ID", "[ecs]") {
     const auto id =
         conductor::ComponentRegistry::register_component<Velocity>();
 
@@ -92,7 +92,7 @@ TEST_CASE("Component info can be retrieved by ID") {
     REQUIRE(id_info.alignment == typed_info.alignment);
 }
 
-TEST_CASE("Component registry reports registered component count") {
+TEST_CASE("Component registry reports registered component count", "[ecs]") {
     const auto initial_size =
         conductor::ComponentRegistry::size();
 
@@ -105,7 +105,7 @@ TEST_CASE("Component registry reports registered component count") {
     );
 }
 
-TEST_CASE("Component registry can reserve capacity") {
+TEST_CASE("Component registry can reserve capacity", "[ecs]") {
     REQUIRE_FALSE(
         conductor::ComponentRegistry::frozen()
     );

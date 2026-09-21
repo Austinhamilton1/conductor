@@ -2,7 +2,7 @@
 
 #include "core/Random.h"
 
-TEST_CASE("Random produces deterministic sequences") {
+TEST_CASE("Random produces deterministic sequences", "[core]") {
     conductor::Random a(1234);
     conductor::Random b(1234);
 
@@ -19,7 +19,7 @@ TEST_CASE("Random produces deterministic sequences") {
     REQUIRE(a.next_double() == b.next_double());
 }
 
-TEST_CASE("Random produces sufficient randomness") {
+TEST_CASE("Random produces sufficient randomness", "[core]") {
     conductor::Random a(6467);
     conductor::Random b(5678);
 
@@ -51,7 +51,7 @@ TEST_CASE("Random produces sufficient randomness") {
     REQUIRE(same != 100);
 }
 
-TEST_CASE("Chance of 0 is always false") {
+TEST_CASE("Chance of 0 is always false", "[core]") {
     conductor::Random a(9473);
 
     REQUIRE(a.chance(0.0f) == false);
@@ -61,7 +61,7 @@ TEST_CASE("Chance of 0 is always false") {
     REQUIRE(a.chance(0.0f) == false);
 }
 
-TEST_CASE("Change of 1 is always true") {
+TEST_CASE("Change of 1 is always true", "[core]") {
     conductor::Random a(2034);
 
     REQUIRE(a.chance(1.0f) == true);
@@ -71,7 +71,7 @@ TEST_CASE("Change of 1 is always true") {
     REQUIRE(a.chance(1.0f) == true);
 }
 
-TEST_CASE("Integer range stays within bounds") {
+TEST_CASE("Integer range stays within bounds", "[core]") {
     conductor::Random a(2954);
 
     for(int i = 0; i < 100; i++) {
@@ -81,7 +81,7 @@ TEST_CASE("Integer range stays within bounds") {
     }
 }
 
-TEST_CASE("Float range stays within bounds") {
+TEST_CASE("Float range stays within bounds", "[core]") {
     conductor::Random a(6458);
 
     for(int i = 0; i < 100; i++) {
@@ -91,7 +91,7 @@ TEST_CASE("Float range stays within bounds") {
     }
 }
 
-TEST_CASE("Double range stays within bounds") {
+TEST_CASE("Double range stays within bounds", "[core]") {
     conductor::Random a(3548);
 
     for(int i = 0; i < 100; i++) {

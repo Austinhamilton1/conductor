@@ -29,7 +29,7 @@ namespace {
     static_assert(conductor::Component<Health>);
 }
 
-TEST_CASE("ComponentSet starts empty") {
+TEST_CASE("ComponentSet starts empty", "[ecs]") {
     conductor::ComponentSet set;
 
     REQUIRE(set.empty());
@@ -44,7 +44,7 @@ TEST_CASE("ComponentSet starts empty") {
     );
 }
 
-TEST_CASE("ComponentSet can add a component") {
+TEST_CASE("ComponentSet can add a component", "[ecs]") {
     conductor::ComponentSet set;
 
     set.add<Position>();
@@ -56,7 +56,7 @@ TEST_CASE("ComponentSet can add a component") {
     REQUIRE_FALSE(set.contains<Velocity>());
 }
 
-TEST_CASE("ComponentSet can contain multiple components") {
+TEST_CASE("ComponentSet can contain multiple components", "[ecs]") {
     conductor::ComponentSet set;
 
     set.add<Position>();
@@ -71,7 +71,7 @@ TEST_CASE("ComponentSet can contain multiple components") {
     REQUIRE_FALSE(set.contains<Health>());
 }
 
-TEST_CASE("Adding the same component twice does not duplicate it") {
+TEST_CASE("Adding the same component twice does not duplicate it", "[ecs]") {
     conductor::ComponentSet set;
 
     set.add<Position>();
@@ -81,7 +81,7 @@ TEST_CASE("Adding the same component twice does not duplicate it") {
     REQUIRE(set.contains<Position>());
 }
 
-TEST_CASE("ComponentSet can be cleared") {
+TEST_CASE("ComponentSet can be cleared", "[ecs]") {
     conductor::ComponentSet set;
 
     set.add<Position>();
@@ -100,7 +100,7 @@ TEST_CASE("ComponentSet can be cleared") {
     REQUIRE_FALSE(set.contains<Mass>());
 }
 
-TEST_CASE("ComponentSets with the same components are equal") {
+TEST_CASE("ComponentSets with the same components are equal", "[ecs]") {
     conductor::ComponentSet a;
     conductor::ComponentSet b;
 
@@ -113,7 +113,7 @@ TEST_CASE("ComponentSets with the same components are equal") {
     REQUIRE(a == b);
 }
 
-TEST_CASE("ComponentSet equality is independent of insertion order") {
+TEST_CASE("ComponentSet equality is independent of insertion order", "[ecs]") {
     conductor::ComponentSet a;
     conductor::ComponentSet b;
 
@@ -128,7 +128,7 @@ TEST_CASE("ComponentSet equality is independent of insertion order") {
     REQUIRE(a == b);
 }
 
-TEST_CASE("ComponentSets with different components are not equal") {
+TEST_CASE("ComponentSets with different components are not equal", "[ecs]") {
     conductor::ComponentSet a;
     conductor::ComponentSet b;
 
@@ -141,7 +141,7 @@ TEST_CASE("ComponentSets with different components are not equal") {
     REQUIRE_FALSE(a == b);
 }
 
-TEST_CASE("ComponentSet can contain another ComponentSet") {
+TEST_CASE("ComponentSet can contain another ComponentSet", "[ecs]") {
     conductor::ComponentSet archetype;
     conductor::ComponentSet query;
 
@@ -155,7 +155,7 @@ TEST_CASE("ComponentSet can contain another ComponentSet") {
     REQUIRE(archetype.contains(query));
 }
 
-TEST_CASE("ComponentSet does not contain a larger set") {
+TEST_CASE("ComponentSet does not contain a larger set", "[ecs]") {
     conductor::ComponentSet archetype;
     conductor::ComponentSet query;
 
@@ -169,7 +169,7 @@ TEST_CASE("ComponentSet does not contain a larger set") {
     REQUIRE_FALSE(archetype.contains(query));
 }
 
-TEST_CASE("ComponentSet containment fails when a component is missing") {
+TEST_CASE("ComponentSet containment fails when a component is missing", "[ecs]") {
     conductor::ComponentSet archetype;
     conductor::ComponentSet query;
 
@@ -182,7 +182,7 @@ TEST_CASE("ComponentSet containment fails when a component is missing") {
     REQUIRE_FALSE(archetype.contains(query));
 }
 
-TEST_CASE("Every ComponentSet contains an empty ComponentSet") {
+TEST_CASE("Every ComponentSet contains an empty ComponentSet", "[ecs]") {
     conductor::ComponentSet archetype;
     conductor::ComponentSet empty;
 
@@ -192,14 +192,14 @@ TEST_CASE("Every ComponentSet contains an empty ComponentSet") {
     REQUIRE(archetype.contains(empty));
 }
 
-TEST_CASE("Empty ComponentSet contains itself") {
+TEST_CASE("Empty ComponentSet contains itself", "[ecs]") {
     conductor::ComponentSet a;
     conductor::ComponentSet b;
 
     REQUIRE(a.contains(b));
 }
 
-TEST_CASE("ComponentSet contains itself") {
+TEST_CASE("ComponentSet contains itself", "[ecs]") {
     conductor::ComponentSet set;
 
     set.add<Position>();
@@ -209,7 +209,7 @@ TEST_CASE("ComponentSet contains itself") {
     REQUIRE(set.contains(set));
 }
 
-TEST_CASE("ComponentSet can be copied") {
+TEST_CASE("ComponentSet can be copied", "[ecs]") {
     conductor::ComponentSet original;
 
     original.add<Position>();
@@ -225,7 +225,7 @@ TEST_CASE("ComponentSet can be copied") {
     REQUIRE(copy.contains<Mass>());
 }
 
-TEST_CASE("Modifying a copied ComponentSet does not modify the original") {
+TEST_CASE("Modifying a copied ComponentSet does not modify the original", "[ecs]") {
     conductor::ComponentSet original;
 
     original.add<Position>();
@@ -242,7 +242,7 @@ TEST_CASE("Modifying a copied ComponentSet does not modify the original") {
     REQUIRE(copy.contains<Mass>());
 }
 
-TEST_CASE("ComponentSet contains empty set regardless of bitset size") {
+TEST_CASE("ComponentSet contains empty set regardless of bitset size", "[ecs]") {
     conductor::ComponentSet archetype;
     conductor::ComponentSet empty;
 
@@ -253,7 +253,7 @@ TEST_CASE("ComponentSet contains empty set regardless of bitset size") {
     REQUIRE_FALSE(empty.contains(archetype));
 }
 
-TEST_CASE("ComponentSet containment handles different bitset sizes") {
+TEST_CASE("ComponentSet containment handles different bitset sizes", "[ecs]") {
     conductor::ComponentSet small;
     conductor::ComponentSet large;
 

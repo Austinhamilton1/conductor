@@ -14,7 +14,7 @@ namespace {
     using Storage = conductor::ComponentStorage<Position>;
 }
 
-TEST_CASE("Empty storage returns empty view") {
+TEST_CASE("Empty storage returns empty view", "[ecs]") {
     Storage storage;
 
     auto view = storage.view();
@@ -24,7 +24,7 @@ TEST_CASE("Empty storage returns empty view") {
     REQUIRE(view.begin() == view.end());
 }
 
-TEST_CASE("Adding components changes view") {
+TEST_CASE("Adding components changes view", "[ecs]") {
     Storage storage;
 
     conductor::Entity e0(0, 0);
@@ -48,7 +48,7 @@ TEST_CASE("Adding components changes view") {
     REQUIRE(count == 3);
 }
 
-TEST_CASE("Mutating through view mutates underlying component") {
+TEST_CASE("Mutating through view mutates underlying component", "[ecs]") {
     Storage storage;
 
     conductor::Entity e0(0, 0);
@@ -67,7 +67,7 @@ TEST_CASE("Mutating through view mutates underlying component") {
     REQUIRE_THAT(storage.get(e1)->x, Catch::Matchers::WithinAbs(14.0f, 0.0001));
 }
 
-TEST_CASE("Const view is const") {
+TEST_CASE("Const view is const", "[ecs]") {
     Storage storage;
 
     const auto& const_storage = storage;
@@ -77,7 +77,7 @@ TEST_CASE("Const view is const") {
     REQUIRE(std::is_same_v<decltype(*view.begin()), const Position&>);
 }
 
-TEST_CASE("Views work across chunk boundaries") {
+TEST_CASE("Views work across chunk boundaries", "[ecs]") {
     conductor::ComponentStorage<Position> storage;
 
     for(uint32_t i = 0; i < 5000; i++) {
@@ -101,7 +101,7 @@ TEST_CASE("Views work across chunk boundaries") {
     }
 }
 
-TEST_CASE("ComponentView can lookup components by entity") {
+TEST_CASE("ComponentView can lookup components by entity", "[ecs]") {
     Storage storage;
 
     conductor::Entity entity(0, 0);
@@ -120,7 +120,7 @@ TEST_CASE("ComponentView can lookup components by entity") {
     REQUIRE(position->z == 3.0f);
 }
 
-TEST_CASE("ComponentView returns null for missing entity") {
+TEST_CASE("ComponentView returns null for missing entity", "[ecs]") {
     Storage storage;
 
     conductor::Entity entity(0, 0);

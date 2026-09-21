@@ -28,7 +28,7 @@ protected:
     }
 };
 
-TEST_CASE("Application initializes and shuts down") {
+TEST_CASE("Application initializes and shuts down", "[runtime]") {
     TestApplication app;
 
     app.run();
@@ -37,7 +37,7 @@ TEST_CASE("Application initializes and shuts down") {
     REQUIRE(app.shutdown_called);
 }
 
-TEST_CASE("Update is called") {
+TEST_CASE("Update is called", "[runtime]") {
     TestApplication app;
 
     app.run();
@@ -46,7 +46,7 @@ TEST_CASE("Update is called") {
     REQUIRE(app.update_count == 5);
 }
 
-TEST_CASE("Clock advances") {
+TEST_CASE("Clock advances", "[runtime]") {
     TestApplication app;
 
     double before = app.clock().total_seconds();
@@ -58,7 +58,7 @@ TEST_CASE("Clock advances") {
     REQUIRE(after > before);
 }
 
-TEST_CASE("Simulation clock advances") {
+TEST_CASE("Simulation clock advances", "[runtime]") {
     TestApplication app;
 
     double before = app.simulation_clock().total_seconds();
@@ -70,7 +70,7 @@ TEST_CASE("Simulation clock advances") {
     REQUIRE(after > before);
 }
 
-TEST_CASE("Simulation time scale works") {
+TEST_CASE("Simulation time scale works", "[runtime]") {
     TestApplication app;
 
     app.run();

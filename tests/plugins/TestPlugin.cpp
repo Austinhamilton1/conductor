@@ -19,7 +19,7 @@ TEST_CASE("Plugin can be loaded", "[plugins]") {
     REQUIRE(app.plugins().loaded("hello"));
 }
 
-TEST_CASE("Duplicate plugin names are rejected") {
+TEST_CASE("Duplicate plugin names are rejected", "[plugins]") {
     conductor::Application app;
 
     app.plugins().load(
@@ -38,7 +38,7 @@ TEST_CASE("Duplicate plugin names are rejected") {
     REQUIRE(app.plugins().loaded("hello"));
 }
 
-TEST_CASE("Plugin can register components") {
+TEST_CASE("Plugin can register components", "[plugins]") {
     conductor::Application app;
 
     app.plugins().load(
@@ -59,7 +59,7 @@ TEST_CASE("Plugin can register components") {
     REQUIRE(velocity.alignment == alignof(PluginVelocity));
 }
 
-TEST_CASE("Plugin system executes during simulation") {
+TEST_CASE("Plugin system executes during simulation", "[plugins]") {
     conductor::World world;
 
     conductor::PluginManager plugins;

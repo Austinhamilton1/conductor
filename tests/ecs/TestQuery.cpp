@@ -44,7 +44,7 @@ namespace {
 // Single component - Read
 // ============================================================
 
-TEST_CASE("Query reads a single component") {
+TEST_CASE("Query reads a single component", "[ecs]") {
     conductor::ComponentStorage<Position> storage;
 
     const auto entity1 = make_entity(0);
@@ -98,7 +98,7 @@ TEST_CASE("Query reads a single component") {
 // Single component - Write
 // ============================================================
 
-TEST_CASE("Query writes a single component") {
+TEST_CASE("Query writes a single component", "[ecs]") {
     conductor::ComponentStorage<Position> storage;
 
     const auto entity1 = make_entity(0);
@@ -143,7 +143,7 @@ TEST_CASE("Query writes a single component") {
 // Read + Write
 // ============================================================
 
-TEST_CASE("Query reads one component and writes another") {
+TEST_CASE("Query reads one component and writes another", "[ecs]") {
     conductor::ComponentStorage<Position> positions;
     conductor::ComponentStorage<Velocity> velocities;
 
@@ -228,7 +228,7 @@ TEST_CASE("Query reads one component and writes another") {
 // Intersection
 // ============================================================
 
-TEST_CASE("Query returns only entities containing all components") {
+TEST_CASE("Query returns only entities containing all components", "[ecs]") {
     conductor::ComponentStorage<Position> positions;
     conductor::ComponentStorage<Velocity> velocities;
 
@@ -317,7 +317,7 @@ TEST_CASE("Query returns only entities containing all components") {
 // Driver view
 // ============================================================
 
-TEST_CASE("Query uses the first view as the driver",) {
+TEST_CASE("Query uses the first view as the driver", "[ecs]") {
     conductor::ComponentStorage<Position> positions;
     conductor::ComponentStorage<Velocity> velocities;
 
@@ -379,7 +379,7 @@ TEST_CASE("Query uses the first view as the driver",) {
 // Empty query
 // ============================================================
 
-TEST_CASE("Query is empty when the driver view is empty") {
+TEST_CASE("Query is empty when the driver view is empty", "[ecs]") {
     conductor::ComponentStorage<Position> positions;
 
     using Query = 
@@ -402,7 +402,7 @@ TEST_CASE("Query is empty when the driver view is empty") {
 // Empty intersection
 // ============================================================
 
-TEST_CASE("Query is empty when no entity has all components") {
+TEST_CASE("Query is empty when no entity has all components", "[ecs]") {
     conductor::ComponentStorage<Position> positions;
     conductor::ComponentStorage<Velocity> velocities;
 
@@ -443,7 +443,7 @@ TEST_CASE("Query is empty when no entity has all components") {
 // Multiple chunks
 // ============================================================
 
-TEST_CASE("Query works across multiple component storage chunks") {
+TEST_CASE("Query works across multiple component storage chunks", "[ecs]") {
     conductor::ComponentStorage<Position> positions;
     conductor::ComponentStorage<Velocity> velocities;
 
@@ -529,7 +529,7 @@ TEST_CASE("Query works across multiple component storage chunks") {
 // Query preserves entity identity
 // ============================================================
 
-TEST_CASE("Query iterator exposes the correct entity") {
+TEST_CASE("Query iterator exposes the correct entity", "[ecs]") {
     conductor::ComponentStorage<Position> positions;
     conductor::ComponentStorage<Velocity> velocities;
 
@@ -605,7 +605,7 @@ TEST_CASE("Query iterator exposes the correct entity") {
 // Read-only query from const storage
 // ============================================================
 
-TEST_CASE("Query can read from const component storage") {
+TEST_CASE("Query can read from const component storage", "[ecs]") {
     conductor::ComponentStorage<Position> storage;
 
     const auto entity = make_entity(0);

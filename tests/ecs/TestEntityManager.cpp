@@ -2,7 +2,7 @@
 
 #include "ecs/EntityManager.h"
 
-TEST_CASE("Registry creates entities") {
+TEST_CASE("Registry creates entities", "[ecs]") {
     conductor::EntityManager registry;
 
     auto a = registry.create();
@@ -14,7 +14,7 @@ TEST_CASE("Registry creates entities") {
     REQUIRE(registry.size() == 2);
 }
 
-TEST_CASE("Registry destroys entities") {
+TEST_CASE("Registry destroys entities", "[ecs]") {
     conductor::EntityManager registry;
 
     auto entity = registry.create();
@@ -27,7 +27,7 @@ TEST_CASE("Registry destroys entities") {
     REQUIRE(registry.size() == 0);
 }
 
-TEST_CASE("Destroyed entity handle remains invalid after slot reuse") {
+TEST_CASE("Destroyed entity handle remains invalid after slot reuse", "[ecs]") {
     conductor::EntityManager registry;
 
     auto old_entity = registry.create();
@@ -43,7 +43,7 @@ TEST_CASE("Destroyed entity handle remains invalid after slot reuse") {
     REQUIRE(registry.alive(new_entity));
 }
 
-TEST_CASE("Destroying an already destroyed entity is harmless") {
+TEST_CASE("Destroying an already destroyed entity is harmless", "[ecs]") {
     conductor::EntityManager registry;
 
     auto entity = registry.create();

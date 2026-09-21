@@ -4,7 +4,7 @@
 
 #include "core/Logger.h"
 
-TEST_CASE("Log prints something") {
+TEST_CASE("Log prints something", "[core]") {
     std::ostringstream out;
 
     conductor::Logger logger(conductor::LogLevel::Debug, out);

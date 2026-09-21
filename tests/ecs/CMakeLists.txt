@@ -17,4 +17,7 @@ PRIVATE
 
 include(Catch)
 
-catch_discover_tests(ecs_tests)
+catch_discover_tests(ecs_tests
+PROPERTIES
+    LABELS "ecs"
+)

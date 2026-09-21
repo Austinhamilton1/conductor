@@ -5,7 +5,7 @@
 #include "events/EventDispatcher.h"
 #include "TestEvent.h"
 
-TEST_CASE("Dispatcher invokes listener") {
+TEST_CASE("Dispatcher invokes listener", "[events]") {
     conductor::EventDispatcher dispatcher;
 
     int value = 0;
@@ -28,7 +28,7 @@ TEST_CASE("Dispatcher invokes listener") {
     REQUIRE(value == 10);
 }
 
-TEST_CASE("Multiple listeners receive event") {
+TEST_CASE("Multiple listeners receive event", "[events]") {
     conductor::EventDispatcher dispatcher;
 
     int calls = 0;
@@ -58,7 +58,7 @@ TEST_CASE("Multiple listeners receive event") {
     REQUIRE(calls == 2);
 }
 
-TEST_CASE("Dispatcher ignores different event types") {
+TEST_CASE("Dispatcher ignores different event types", "[events]") {
     conductor::EventDispatcher dispatcher;
 
     bool called = false;

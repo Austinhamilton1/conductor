@@ -7,7 +7,7 @@
 #include "events/Subscription.h"
 #include "TestEvent.h"
 
-TEST_CASE("Subscription automatically unsubscribes") {
+TEST_CASE("Subscription automatically unsubscribes", "[events]") {
     conductor::EventDispatcher dispatcher;
 
     int calls = 0;
@@ -33,7 +33,7 @@ TEST_CASE("Subscription automatically unsubscribes") {
     REQUIRE(calls == 0);
 }
 
-TEST_CASE("Subscription move constructor transfers ownership") {
+TEST_CASE("Subscription move constructor transfers ownership", "[events]") {
     conductor::EventDispatcher dispatcher;
 
     auto sub = dispatcher.subscribe<TestEvent>(
@@ -45,7 +45,7 @@ TEST_CASE("Subscription move constructor transfers ownership") {
     SUCCEED();
 }
 
-TEST_CASE("Subscription move assignment") {
+TEST_CASE("Subscription move assignment", "[events]") {
     conductor::EventDispatcher dispatcher;
 
     auto a = dispatcher.subscribe<TestEvent>(

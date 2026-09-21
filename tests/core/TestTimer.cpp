@@ -4,7 +4,7 @@
 
 #include "core/Timer.h"
 
-TEST_CASE("Timer measures elapsed time") {
+TEST_CASE("Timer measures elapsed time", "[core]") {
     conductor::Timer timer;
 
     std::this_thread::sleep_for(std::chrono::milliseconds(100));

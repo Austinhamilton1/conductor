@@ -34,7 +34,7 @@ namespace {
 // Basic storage
 // -----------------------------------------------------------------------------
 
-TEST_CASE("ComponentStorage starts empty") {
+TEST_CASE("ComponentStorage starts empty", "[ecs]") {
     Storage storage;
 
     REQUIRE(storage.empty());
@@ -43,7 +43,7 @@ TEST_CASE("ComponentStorage starts empty") {
 }
 
 
-TEST_CASE("ComponentStorage adds a component") {
+TEST_CASE("ComponentStorage adds a component", "[ecs]") {
     Storage storage;
 
     conductor::Entity entity(0, 0);
@@ -63,7 +63,7 @@ TEST_CASE("ComponentStorage adds a component") {
 }
 
 
-TEST_CASE("ComponentStorage retrieves a component") {
+TEST_CASE("ComponentStorage retrieves a component", "[ecs]") {
     Storage storage;
 
     conductor::Entity entity(0, 0);
@@ -81,7 +81,7 @@ TEST_CASE("ComponentStorage retrieves a component") {
 }
 
 
-TEST_CASE("ComponentStorage returns nullptr for missing component") {
+TEST_CASE("ComponentStorage returns nullptr for missing component", "[ecs]") {
     Storage storage;
 
     conductor::Entity entity(0, 0);
@@ -91,7 +91,7 @@ TEST_CASE("ComponentStorage returns nullptr for missing component") {
 }
 
 
-TEST_CASE("ComponentStorage component can be modified") {
+TEST_CASE("ComponentStorage component can be modified", "[ecs]") {
     Storage storage;
 
     conductor::Entity entity(0, 0);
@@ -117,7 +117,7 @@ TEST_CASE("ComponentStorage component can be modified") {
 // Multiple entities
 // -----------------------------------------------------------------------------
 
-TEST_CASE("ComponentStorage stores multiple components") {
+TEST_CASE("ComponentStorage stores multiple components", "[ecs]") {
     Storage storage;
 
     conductor::Entity first(0, 0);
@@ -152,7 +152,7 @@ TEST_CASE("ComponentStorage stores multiple components") {
 }
 
 
-TEST_CASE("ComponentStorage supports different entity indices") {
+TEST_CASE("ComponentStorage supports different entity indices", "[ecs]") {
     Storage storage;
 
     conductor::Entity first(10, 0);
@@ -175,7 +175,7 @@ TEST_CASE("ComponentStorage supports different entity indices") {
 // Duplicate components
 // -----------------------------------------------------------------------------
 
-TEST_CASE("Adding an existing component returns existing component") {
+TEST_CASE("Adding an existing component returns existing component", "[ecs]") {
     Storage storage;
 
     conductor::Entity entity(0, 0);
@@ -203,7 +203,7 @@ TEST_CASE("Adding an existing component returns existing component") {
 // Generation handling
 // -----------------------------------------------------------------------------
 
-TEST_CASE("ComponentStorage rejects stale entity generation") {
+TEST_CASE("ComponentStorage rejects stale entity generation", "[ecs]") {
     Storage storage;
 
     conductor::Entity old_entity(0, 0);
@@ -221,7 +221,7 @@ TEST_CASE("ComponentStorage rejects stale entity generation") {
 }
 
 
-TEST_CASE("ComponentStorage allows reused entity index with new generation") {
+TEST_CASE("ComponentStorage allows reused entity index with new generation", "[ecs]") {
     Storage storage;
 
     conductor::Entity old_entity(0, 0);
@@ -252,7 +252,7 @@ TEST_CASE("ComponentStorage allows reused entity index with new generation") {
 // Deferred removal
 // -----------------------------------------------------------------------------
 
-TEST_CASE("ComponentStorage removal is deferred") {
+TEST_CASE("ComponentStorage removal is deferred", "[ecs]") {
     Storage storage;
 
     conductor::Entity entity(0, 0);
@@ -270,7 +270,7 @@ TEST_CASE("ComponentStorage removal is deferred") {
 }
 
 
-TEST_CASE("ComponentStorage flush removes pending components") {
+TEST_CASE("ComponentStorage flush removes pending components", "[ecs]") {
     Storage storage;
 
     conductor::Entity entity(0, 0);
@@ -291,7 +291,7 @@ TEST_CASE("ComponentStorage flush removes pending components") {
 }
 
 
-TEST_CASE("ComponentStorage can flush removals multiple times") {
+TEST_CASE("ComponentStorage can flush removals multiple times", "[ecs]") {
     Storage storage;
 
     conductor::Entity first(0, 0);
@@ -316,7 +316,7 @@ TEST_CASE("ComponentStorage can flush removals multiple times") {
 // Swap removal
 // -----------------------------------------------------------------------------
 
-TEST_CASE("ComponentStorage preserves remaining components after removal") {
+TEST_CASE("ComponentStorage preserves remaining components after removal", "[ecs]") {
     Storage storage;
 
     conductor::Entity first(0, 0);
@@ -343,7 +343,7 @@ TEST_CASE("ComponentStorage preserves remaining components after removal") {
 }
 
 
-TEST_CASE("ComponentStorage updates moved entity location after removal") {
+TEST_CASE("ComponentStorage updates moved entity location after removal", "[ecs]") {
     Storage storage;
 
     conductor::Entity first(0, 0);
@@ -367,7 +367,7 @@ TEST_CASE("ComponentStorage updates moved entity location after removal") {
 }
 
 
-TEST_CASE("ComponentStorage can remove last component") {
+TEST_CASE("ComponentStorage can remove last component", "[ecs]") {
     Storage storage;
 
     conductor::Entity first(0, 0);
@@ -389,7 +389,7 @@ TEST_CASE("ComponentStorage can remove last component") {
 }
 
 
-TEST_CASE("ComponentStorage removes the only component") {
+TEST_CASE("ComponentStorage removes the only component", "[ecs]") {
     Storage storage;
 
     conductor::Entity entity(0, 0);
@@ -410,7 +410,7 @@ TEST_CASE("ComponentStorage removes the only component") {
 // Chunk behavior
 // -----------------------------------------------------------------------------
 
-TEST_CASE("ComponentStorage allocates a new chunk when full") {
+TEST_CASE("ComponentStorage allocates a new chunk when full", "[ecs]") {
     Storage storage;
 
     for (uint32_t i = 0; i < 4096; ++i) {
@@ -439,7 +439,7 @@ TEST_CASE("ComponentStorage allocates a new chunk when full") {
 }
 
 
-TEST_CASE("ComponentStorage stores components across multiple chunks") {
+TEST_CASE("ComponentStorage stores components across multiple chunks", "[ecs]") {
     Storage storage;
 
     constexpr uint32_t count = 5000;
@@ -472,7 +472,7 @@ TEST_CASE("ComponentStorage stores components across multiple chunks") {
 // Iteration
 // -----------------------------------------------------------------------------
 
-TEST_CASE("ComponentStorage iterates over all components") {
+TEST_CASE("ComponentStorage iterates over all components", "[ecs]") {
     Storage storage;
 
     for (uint32_t i = 0; i < 10; ++i) {
@@ -498,7 +498,7 @@ TEST_CASE("ComponentStorage iterates over all components") {
 }
 
 
-TEST_CASE("ComponentStorage iteration remains dense after removal") {
+TEST_CASE("ComponentStorage iteration remains dense after removal", "[ecs]") {
     Storage storage;
 
     for (uint32_t i = 0; i < 6; ++i) {
@@ -531,7 +531,7 @@ TEST_CASE("ComponentStorage iteration remains dense after removal") {
 }
 
 
-TEST_CASE("ComponentStorage supports const iteration") {
+TEST_CASE("ComponentStorage supports const iteration", "[ecs]") {
     Storage storage;
 
     storage.add(
@@ -561,7 +561,7 @@ TEST_CASE("ComponentStorage supports const iteration") {
 // Dense indexing
 // -----------------------------------------------------------------------------
 
-TEST_CASE("ComponentStorage data provides dense access") {
+TEST_CASE("ComponentStorage data provides dense access", "[ecs]") {
     Storage storage;
 
     for (uint32_t i = 0; i < 10; ++i) {
@@ -580,7 +580,7 @@ TEST_CASE("ComponentStorage data provides dense access") {
 }
 
 
-TEST_CASE("ComponentStorage remains densely indexed after swap removal") {
+TEST_CASE("ComponentStorage remains densely indexed after swap removal", "[ecs]") {
     Storage storage;
 
     for (uint32_t i = 0; i < 5; ++i) {
@@ -623,7 +623,7 @@ TEST_CASE("ComponentStorage remains densely indexed after swap removal") {
 // Reserve
 // -----------------------------------------------------------------------------
 
-TEST_CASE("ComponentStorage reserve accepts entity capacity") {
+TEST_CASE("ComponentStorage reserve accepts entity capacity", "[ecs]") {
     Storage storage;
 
     storage.reserve(1000);
@@ -646,7 +646,7 @@ TEST_CASE("ComponentStorage reserve accepts entity capacity") {
 // Invalid entities
 // -----------------------------------------------------------------------------
 
-TEST_CASE("ComponentStorage rejects invalid entity") {
+TEST_CASE("ComponentStorage rejects invalid entity", "[ecs]") {
     Storage storage;
 
     const conductor::Entity invalid;
@@ -656,7 +656,7 @@ TEST_CASE("ComponentStorage rejects invalid entity") {
 }
 
 
-TEST_CASE("ComponentStorage remove ignores invalid entity") {
+TEST_CASE("ComponentStorage remove ignores invalid entity", "[ecs]") {
     Storage storage;
 
     const conductor::Entity invalid;
@@ -673,7 +673,7 @@ TEST_CASE("ComponentStorage remove ignores invalid entity") {
 // Multiple component storage types
 // -----------------------------------------------------------------------------
 
-TEST_CASE("Different component types have independent storage") {
+TEST_CASE("Different component types have independent storage", "[ecs]") {
     conductor::ComponentStorage<Position> positions;
     conductor::ComponentStorage<Velocity> velocities;
 
@@ -696,7 +696,7 @@ TEST_CASE("Different component types have independent storage") {
     REQUIRE(velocities.get(entity)->x == 1.0f);
 }
 
-TEST_CASE("ComponentStorage iterates across chunk boundaries") {
+TEST_CASE("ComponentStorage iterates across chunk boundaries", "[ecs]") {
     Storage storage;
 
     for (uint32_t i = 0; i < 5000; ++i) {
@@ -721,13 +721,13 @@ TEST_CASE("ComponentStorage iterates across chunk boundaries") {
     REQUIRE(count == 5000);
 }
 
-TEST_CASE("ComponentStorage empty storage has valid iterators") {
+TEST_CASE("ComponentStorage empty storage has valid iterators", "[ecs]") {
     Storage storage;
 
     REQUIRE(storage.begin() == storage.end());
 }
 
-TEST_CASE("ComponentStorage single component iterates correctly") {
+TEST_CASE("ComponentStorage single component iterates correctly", "[ecs]") {
     Storage storage;
 
     storage.add(

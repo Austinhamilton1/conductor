@@ -15,4 +15,7 @@ PRIVATE
 
 include(Catch)
 
-catch_discover_tests(core_tests)
+catch_discover_tests(core_tests
+PROPERTIES
+    LABELS "core"
+)
