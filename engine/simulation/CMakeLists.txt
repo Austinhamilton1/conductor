@@ -10,6 +10,7 @@ PUBLIC
 
 target_link_libraries(conductor_simulation
 PUBLIC
+    conductor_commands
     conductor_core
     conductor_ecs
     conductor_scheduler

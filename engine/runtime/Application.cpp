@@ -15,10 +15,20 @@ namespace conductor {
         return m_events;
     }
 
+    PluginManager& Application::plugins() {
+        return m_plugins;
+    }
+
+    World& Application::world() {
+        return m_world;
+    }
+
     void Application::run() {
+        m_running = true;
+        
         initialize();
 
-        m_running = true;
+        m_world.finalize();
 
         while(m_running) {
             m_clock.tick();
@@ -30,25 +40,18 @@ namespace conductor {
             // Process events from last frame
             m_events.process();
 
-            // LayerStack handles domain specific updates (e.g., Physics)
-            m_layers.update(simulation_dt); 
-
             // Application manages global updates
             update(simulation_dt);
+
+            // Update simulation world (ECS)
+            m_world.update(simulation_dt);
         }
 
+        m_plugins.shutdown(m_world);
         shutdown();
     }
 
     void Application::stop() {
         m_running = false;
-    }
-
-    void Application::add_layer(std::unique_ptr<Layer> layer) {
-        m_layers.push(std::move(layer));
-    }
-
-    void Application::pop_layer() {
-        m_layers.pop();
     }
 }

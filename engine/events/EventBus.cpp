@@ -3,7 +3,7 @@
 #include "EventBus.h"
 
 namespace conductor {
-    void conductor::EventBus::process() {
+    void EventBus::process() {
         const std::size_t count = queue.size();
 
         for(std::size_t i = 0; i < count; i++) {

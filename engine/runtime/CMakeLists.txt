@@ -12,8 +12,9 @@ target_link_libraries(conductor_runtime
 PUBLIC
     conductor_core
     conductor_events
+    conductor_plugins
     conductor_scheduler
-    conductor_layers
+    conductor_simulation
 )
 
 target_compile_features(conductor_runtime

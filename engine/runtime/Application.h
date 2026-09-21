@@ -2,14 +2,14 @@
 
 #include <memory>
 
+#include "ApplicationContext.h"
 #include "core/Clock.h"
 #include "core/SimulationClock.h"
 #include "core/NonCopyable.h"
 #include "events/EventBus.h"
+#include "plugins/PluginManager.h"
 #include "scheduler/Scheduler.h"
-#include "layers/Layer.h"
-#include "layers/LayerStack.h"
-#include "ApplicationContext.h"
+#include "simulation/World.h"
 
 namespace conductor {
     class Application : public NonCopyable {
@@ -19,35 +19,28 @@ namespace conductor {
         virtual void shutdown() {};
 
     public:
-        Application() : m_layers(m_context) {};
+        Application() {};
         virtual ~Application() = default;
 
         Clock& clock();
         SimulationClock& simulation_clock();
-
         EventBus& events();
-        Scheduler& scheduler();
+        World& world();
+        PluginManager& plugins();
 
         void run();
         void stop();
-
-        void add_layer(std::unique_ptr<Layer> layer);
-        void pop_layer();
         
     private:
         bool m_running = false;
+
+        // This needs to be declared first so that World
+        // is destroyed before this (plugin lifecycles)
+        PluginManager m_plugins;
         
         Clock m_clock;
         SimulationClock m_simulation_clock;
-
         EventBus m_events;
-
-        ApplicationContext m_context {
-            m_clock,
-            m_simulation_clock,
-            m_events,
-        };
-
-        LayerStack m_layers;
+        World m_world;
     };
 }

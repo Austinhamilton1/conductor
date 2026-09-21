@@ -78,7 +78,6 @@ TEST_CASE("World creates component storage") {
     conductor::World world;
 
     world.register_component<Position>();
-    world.create_storage<Position>();
 
     auto& storage = world.storage();
 
@@ -89,7 +88,6 @@ TEST_CASE("World adds components to entities") {
     conductor::World world;
 
     world.register_component<Position>();
-    world.create_storage<Position>();
 
     auto entity = world.create_entity();
 
@@ -118,9 +116,6 @@ TEST_CASE("World can add a system") {
     world.register_component<Position>();
     world.register_component<Velocity>();
 
-    world.create_storage<Position>();
-    world.create_storage<Velocity>();
-
     auto system = world.add_system(
         "Movement",
         60.0,
@@ -135,9 +130,6 @@ TEST_CASE("World updates systems") {
 
     world.register_component<Position>();
     world.register_component<Velocity>();
-
-    world.create_storage<Position>();
-    world.create_storage<Velocity>();
 
     auto entity = world.create_entity();
 
@@ -186,28 +178,11 @@ TEST_CASE("World prevents component registration after finalization") {
     );
 }
 
-TEST_CASE("World prevents storage creation after finalization") {
-    conductor::World world;
-
-    world.register_component<Position>();
-    world.create_storage<Position>();
-
-    world.finalize();
-
-    REQUIRE_THROWS_AS(
-        world.create_storage<Velocity>(),
-        std::logic_error
-    );
-}
-
 TEST_CASE("World prevents adding systems after finalization") {
     conductor::World world;
 
     world.register_component<Position>();
     world.register_component<Velocity>();
-
-    world.create_storage<Position>();
-    world.create_storage<Velocity>();
 
     world.finalize();
 

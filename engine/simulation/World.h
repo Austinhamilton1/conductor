@@ -47,9 +47,6 @@ namespace conductor {
         template<Component T>
         void add_component(Entity entity, T& component);
 
-        template<Component T>
-        void create_storage();
-
         template<System T>
         Scheduler::SystemHandle add_system(
             std::string name,
@@ -98,6 +95,7 @@ namespace conductor {
         }
 
         m_components.register_component<T>();
+        m_storages.create<T>();
     }
 
     template<Component T>
@@ -110,17 +108,6 @@ namespace conductor {
 
         ComponentStorage<T>& storage = m_storages.get<T>();
         storage.add(entity, component);
-    }
-
-    template<Component T>
-    void World::create_storage() {
-        if(m_finalized) {
-            throw std::logic_error(
-                "Cannot create storage after world finalization"
-            );
-        }
-
-        m_storages.create<T>();
     }
 
     template<System T>
