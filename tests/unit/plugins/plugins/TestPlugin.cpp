@@ -20,13 +20,13 @@ namespace {
 
             for(auto [velocity, position] : ctx.query()) {
                 position.x += velocity.x * 
-                              ctx.clock().delta_seconds();
+                              ctx.delta_seconds();
 
                 position.y += velocity.y *
-                              ctx.clock().delta_seconds();
+                              ctx.delta_seconds();
 
                 position.z += velocity.z *
-                              ctx.clock().delta_seconds();
+                              ctx.delta_seconds();
             }
         }
 
@@ -47,7 +47,7 @@ namespace {
 
             handle = world.add_system<PluginMovementSystem>(
                 "plugin_movement",
-                1.0,
+                60.0,
                 PluginMovementSystem{}
             );
         }

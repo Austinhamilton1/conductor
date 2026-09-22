@@ -28,6 +28,8 @@ namespace conductor {
 
         double frequency() const;
 
+        double interval() const;
+
         const std::string& name() const;
 
         uint64_t generation() const;

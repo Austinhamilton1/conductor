@@ -15,6 +15,7 @@
 #include "core/NonCopyable.h"
 #include "ecs/SystemType.h"
 #include "ecs/SystemExecutor.h"
+#include "ecs/Query.h"
 
 namespace conductor {  
     class CommandQueue;
@@ -74,17 +75,19 @@ namespace conductor {
                 );
             }
 
+            using QueryT = typename BoundQueryT::query_type;
+
             const SystemId id = m_next_id++;
 
             const double interval = 1.0 / frequency;
 
             auto executor =
-                std::make_unique<
-                    SystemExecutor<T, BoundQueryT>
-                >(
+                std::make_unique<SystemExecutor<T, BoundQueryT>>(
                     std::move(system),
                     std::move(query)
                 );
+
+            auto accesses = query_accesses<QueryT>();
 
             m_systems.emplace(
                 std::piecewise_construct,
@@ -94,9 +97,12 @@ namespace conductor {
                         std::move(name),
                         interval
                     ),
-                    std::move(executor)
+                    std::move(executor),
+                    std::move(accesses)
                 )
             );
+
+            m_dependencies_resolved = false;
 
             return SystemHandle(this, id);
         }
@@ -107,6 +113,17 @@ namespace conductor {
         );
 
         void update(double delta);
+        void resolve_dependencies();
+
+        bool has_dependency(
+            SystemId child,
+            SystemId parent
+        ) const;
+
+        bool has_dependency_path(
+            SystemId child,
+            SystemId parent
+        ) const noexcept;
 
     private:
         struct SystemNode {
@@ -114,24 +131,38 @@ namespace conductor {
 
             std::unique_ptr<ISystemExecutor> executor;
 
+            std::vector<ComponentAccess> accesses;
+
             std::vector<SystemDependency> dependencies;
             std::vector<SystemId> dependents;
 
             SystemNode(
                 SystemSchedule schedule,
-                std::unique_ptr<ISystemExecutor> executor
+                std::unique_ptr<ISystemExecutor> executor,
+                std::vector<ComponentAccess> accesses
             )
                 : schedule(std::move(schedule)),
-                  executor(std::move(executor)) {}
+                  executor(std::move(executor)),
+                  accesses(std::move(accesses)) {}
+        };
+
+        struct InferredCycle {
+            SystemId first;
+            SystemId second;
+            bool resolved = false;
         };
 
         SystemId m_next_id = 1;
         
         std::unordered_map<SystemId, SystemNode> m_systems;
+        std::vector<InferredCycle> m_inferred_cycles;
 
         CommandQueue& m_commands;
         SimulationClock& m_clock;
 
+        bool m_dependencies_resolved = false;
+
+    private:
         void remove(SystemId id);
         void pause(SystemId id);
         void resume(SystemId id);
@@ -143,10 +174,19 @@ namespace conductor {
 
         bool dependencies_ready(SystemId id) const;
 
-        bool has_dependency(
+        bool add_inferred_dependency(
             SystemId child,
             SystemId parent
-        ) const;
+        );
+
+        void infer_dependency(
+            SystemId first,
+            SystemId second
+        );
+
+        void infer_dependencies();
+
+        void validate_write_conflicts() const;
 
         bool creates_cycle(
             SystemId child,
@@ -156,5 +196,63 @@ namespace conductor {
         void consume_dependencies(SystemId id);
 
         bool execute_system(SystemId id);
+
+        bool remove_dependency(
+            SystemId child,
+            SystemId parent
+        );
+
+        bool has_inferred_cycle(
+            SystemId first,
+            SystemId second
+        ) const;
+
+        bool has_unresolved_inferred_cycle(
+            SystemId first,
+            SystemId second
+        ) const;
+
+        DependencyResult add_inferred_dependency_edge(
+            SystemId child,
+            SystemId parent
+        );
+
+        bool is_inferred_dependency(
+            SystemId child,
+            SystemId parent
+        ) const;
+
+    private:
+        template<typename... Access>
+        std::vector<ComponentAccess> query_accesses_impl(std::tuple<Access...>*) {
+            std::vector<ComponentAccess> accesses;
+            accesses.reserve(sizeof...(Access));
+
+            (
+                accesses.push_back(
+                    ComponentAccess{
+                        ComponentRegistry::register_component<
+                            typename Access::component_type
+                        >(),
+                        Access::writable
+                            ? AccessMode::Write
+                            : AccessMode::Read
+                    }
+                ),
+                ...
+            );
+
+            return accesses;
+        }
+
+        template<typename QueryT>
+        requires QueryType<QueryT>
+        std::vector<ComponentAccess> query_accesses() {
+            using AccessTypes = typename QueryT::access_types;
+
+            return query_accesses_impl(
+                static_cast<AccessTypes*>(nullptr)
+            );
+        }
     };
 }

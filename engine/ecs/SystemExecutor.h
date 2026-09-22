@@ -28,12 +28,12 @@ namespace conductor {
 
         void execute(
             CommandQueue& commands,
-            SimulationClock& clock
+            double delta_seconds
         ) override {
             SystemContext<BoundQueryT> context(
                 m_query,
                 commands,
-                clock
+                delta_seconds
             );
 
             m_system.update(context);

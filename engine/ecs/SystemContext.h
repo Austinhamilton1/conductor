@@ -13,10 +13,10 @@ namespace conductor {
         SystemContext(
             BoundQueryT& query,
             CommandQueue& commands,
-            SimulationClock& clock
+            double delta_seconds
         ) : m_query(query),
             m_commands(commands),
-            m_clock(clock) {}
+            m_delta_seconds(delta_seconds) {}
 
         BoundQueryT& query() noexcept {
             return m_query;
@@ -34,17 +34,13 @@ namespace conductor {
             return m_commands;
         }
 
-        SimulationClock& clock() noexcept {
-            return m_clock;
-        }
-
-        const SimulationClock& clock() const noexcept {
-            return m_clock;
+        double delta_seconds() const noexcept {
+            return m_delta_seconds;
         }
 
     private:
         BoundQueryT& m_query;
         CommandQueue& m_commands;
-        SimulationClock& m_clock;
+        double m_delta_seconds;
     };
 }

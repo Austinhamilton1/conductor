@@ -58,6 +58,7 @@ namespace conductor {
 
         // Simulation
         Entity create_entity();
+        Entity get_entity(size_t index);
         void destroy_entity(Entity entity);
 
         void update(double delta);
@@ -76,12 +77,13 @@ namespace conductor {
         const SimulationClock& clock() const;
 
     private:
-        EntityManager m_entities;
+        EntityManager m_entity_manager;
         ComponentRegistry m_components;
         ComponentStorageRegistry m_storages;
         SimulationClock m_clock;
         CommandQueue m_commands;
         Scheduler m_scheduler;
+        std::vector<Entity> m_entities;
 
         bool m_finalized{false};
     };

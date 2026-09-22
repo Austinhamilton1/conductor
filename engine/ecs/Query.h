@@ -12,6 +12,20 @@
 
 namespace conductor {
     // ============================================================
+    // Access Types
+    // ============================================================
+
+    enum class AccessMode {
+        Read,
+        Write
+    };
+
+    struct ComponentAccess {
+        ComponentTypeId component;
+        AccessMode mode;
+    };
+    
+    // ============================================================
     // Access declarations
     // ============================================================
 
@@ -274,6 +288,9 @@ namespace conductor {
                 >
             >;
 
+        using access_types = 
+            std::tuple<Access...>;
+
     private:
         using AccessTuple =
             std::tuple<Access...>;
@@ -289,6 +306,9 @@ namespace conductor {
 
         template<typename ViewTuple>
         class BoundQuery {
+        public:
+            using query_type = Query;
+        
         private:
             using DriverView =
                 std::tuple_element_t<

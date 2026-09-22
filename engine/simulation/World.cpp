@@ -12,8 +12,13 @@ namespace conductor {
             );
         }
 
-        Entity e = m_entities.create();
+        Entity e = m_entity_manager.create();
+        m_entities.push_back(e);
         return e;
+    }
+
+    Entity World::get_entity(size_t i) {
+        return m_entities[i];
     }
 
     void World::destroy_entity(Entity entity) {
@@ -23,21 +28,21 @@ namespace conductor {
             );
         }
 
-        m_entities.destroy(entity);
+        m_entity_manager.destroy(entity);
     }
 
     void World::update(double delta) {
         m_clock.update(delta);
         m_scheduler.update(delta);
-        m_commands.apply(m_entities, m_storages);
+        m_commands.apply(m_entity_manager, m_storages);
     }
 
     EntityManager& World::entities() {
-        return m_entities;
+        return m_entity_manager;
     }
 
     const EntityManager& World::entities() const {
-        return m_entities;
+        return m_entity_manager;
     }
 
     ComponentRegistry& World::components() {

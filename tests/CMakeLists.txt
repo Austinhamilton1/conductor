@@ -1,10 +1,4 @@
 include(CTest)
 
-add_subdirectory(commands)
-add_subdirectory(core)
-add_subdirectory(ecs)
-add_subdirectory(events)
-add_subdirectory(plugins)
-add_subdirectory(runtime)
-add_subdirectory(scheduler)
-add_subdirectory(simulation)
+add_subdirectory(unit)
+add_subdirectory(integration)

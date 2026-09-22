@@ -42,6 +42,10 @@ namespace conductor {
         return 1.0 / m_interval;
     }
 
+    double SystemSchedule::interval() const {
+        return m_interval;
+    }
+
     const std::string& SystemSchedule::name() const {
         return m_name;
     }

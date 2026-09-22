@@ -12,6 +12,7 @@ PUBLIC
 target_link_libraries(conductor_scheduler
 PUBLIC
     conductor_core
+    conductor_ecs
 )
 
 target_compile_features(conductor_scheduler

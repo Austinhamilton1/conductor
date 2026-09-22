@@ -4,6 +4,8 @@
 #include <stdexcept>
 #include <utility>
 
+#include <cmath>
+
 #include "scheduler/Scheduler.h"
 #include "commands/CommandQueue.h"
 #include "core/SimulationClock.h"
@@ -13,6 +15,16 @@ namespace {
         float x;
         float y;
         float z;
+    };
+
+    struct Velocity {
+        float x;
+        float y;
+        float z;
+    };
+
+    struct Health {
+        float hp;
     };
 
     struct ExecutionSystem {
@@ -30,12 +42,121 @@ namespace {
             ++executions;
 
             last_delta =
-                ctx.clock().delta_seconds();
+                ctx.delta_seconds();
         }
 
         static void reset() {
             executions = 0;
             last_delta = 0.0;
+        }
+    };
+
+    struct ReaderSystem {
+        using Query = conductor::Query<
+            conductor::Read<Position>
+        >;
+
+        template<typename BoundQuery>
+        void update(
+            conductor::SystemContext<BoundQuery>& ctx
+        ) {
+            return;
+        }
+    };
+
+    struct WriterSystem {
+        using Query = conductor::Query<
+            conductor::Write<Position>
+        >;
+
+        template<typename BoundQuery>
+        void update(
+            conductor::SystemContext<BoundQuery>& ctx
+        ) {
+            return;
+        }
+    };
+
+    struct PhysicsSystem {
+        using Query = conductor::Query<
+            conductor::Write<Position>,
+            conductor::Read<Velocity>
+        >;
+
+        template<typename BoundQuery>
+        void update(
+            conductor::SystemContext<BoundQuery>& ctx
+        ) {
+            return;
+        }
+    };
+
+    struct RenderSystem {
+        using Query = conductor::Query<
+            conductor::Read<Position>,
+            conductor::Read<Velocity>
+        >;
+
+        template<typename BoundQuery>
+        void update(
+            conductor::SystemContext<BoundQuery>& ctx
+        ) {
+            return;
+        }
+    };
+
+    struct MovementSystem {
+        using Query = conductor::Query<
+            conductor::Read<Position>,
+            conductor::Write<Velocity>
+        >;
+
+        template<typename BoundQuery>
+        void update(
+            conductor::SystemContext<BoundQuery>& ctx
+        ) {
+            return;
+        }
+    };
+
+    struct ConsumerSystem {
+        using Query = conductor::Query<
+            conductor::Read<Velocity>
+        >;
+
+        template<typename BoundQuery>
+        void update(
+            conductor::SystemContext<BoundQuery>& ctx
+        ) {
+            return;
+        }
+    };
+
+    struct HealthSystem {
+        using Query = conductor::Query<
+            conductor::Read<Position>,
+            conductor::Write<Health>
+        >;
+
+        template<typename BoundQuery>
+        void update(
+            conductor::SystemContext<BoundQuery>& ctx
+        ) {
+            return;
+        }
+    };
+
+    struct VigorSystem {
+        using Query = conductor::Query<
+            conductor::Read<Health>,
+            conductor::Write<Velocity>
+        >;
+
+        template<typename BoundQuery>
+        void update(
+            conductor::SystemContext<BoundQuery>& ctx
+        ) {
+            return;
         }
     };
 }
@@ -1215,4 +1336,423 @@ TEST_CASE("Move assignment transfers system handle", "[scheduler]") {
     REQUIRE(first.valid());
     REQUIRE(first.id() == second_id);
     REQUIRE_FALSE(second.valid());
+}
+
+TEST_CASE("Read/Read access does not create dependency", "[scheduler]") {
+    SimulationClock clock;
+    CommandQueue queue;
+    Scheduler scheduler(queue, clock);
+
+    ComponentStorage<Position> storage;
+
+    auto a = scheduler.schedule(
+        "reader_a",
+        60.0,
+        ReaderSystem{},
+        Query<Read<Position>>{}.bind_storage(storage)
+    );
+
+    auto b = scheduler.schedule(
+        "reader_b",
+        60.00,
+        ReaderSystem{},
+        Query<Read<Position>>{}.bind_storage(storage)
+    );
+
+    scheduler.resolve_dependencies();
+
+    REQUIRE_FALSE(scheduler.has_dependency_path(b.id(), a.id()));
+    REQUIRE_FALSE(scheduler.has_dependency_path(a.id(), b.id()));
+}
+
+TEST_CASE("Write/Read access infers writer before reader", "[scheduler]") {
+    SimulationClock clock;
+    CommandQueue queue;
+    Scheduler scheduler(queue, clock);
+
+    ComponentStorage<Position> storage;
+
+    auto writer = scheduler.schedule(
+        "writer",
+        60.0,
+        WriterSystem{},
+        Query<Write<Position>>{}.bind_storage(storage)
+    );
+
+    auto reader = scheduler.schedule(
+        "reader",
+        60.0,
+        ReaderSystem{},
+        Query<Read<Position>>{}.bind_storage(storage)
+    );
+
+    scheduler.resolve_dependencies();
+
+    REQUIRE(scheduler.has_dependency_path(
+        reader.id(),
+        writer.id()
+    ));
+
+    REQUIRE_FALSE(scheduler.has_dependency_path(
+        writer.id(),
+        reader.id()
+    ));
+}
+
+TEST_CASE("Read/Write access infers writer before reader", "[scheduler]") {
+    SimulationClock clock;
+    CommandQueue queue;
+    Scheduler scheduler(queue, clock);
+
+    ComponentStorage<Position> storage;
+
+    auto reader = scheduler.schedule(
+        "reader",
+        60.0,
+        ReaderSystem{},
+        Query<Read<Position>>{}.bind_storage(storage)
+    );
+
+    auto writer = scheduler.schedule(
+        "writer",
+        60.0,
+        WriterSystem{},
+        Query<Write<Position>>{}.bind_storage(storage)
+    );
+
+    scheduler.resolve_dependencies();
+
+    REQUIRE(scheduler.has_dependency_path(
+        reader.id(),
+        writer.id()
+    ));
+
+    REQUIRE_FALSE(scheduler.has_dependency_path(
+        writer.id(),
+        reader.id()
+    ));
+}
+
+TEST_CASE("Write/Write access requires explicit dependency", "[scheduler]") {
+    SimulationClock clock;
+    CommandQueue queue;
+    Scheduler scheduler(queue, clock);
+
+    ComponentStorage<Position> storage;
+
+    auto a = scheduler.schedule(
+        "writer_a",
+        60.0,
+        WriterSystem{},
+        Query<Write<Position>>{}.bind_storage(storage)
+    );
+
+    auto b = scheduler.schedule(
+        "writer_b",
+        60.0,
+        WriterSystem{},
+        Query<Write<Position>>{}.bind_storage(storage)
+    );
+
+    REQUIRE_THROWS(
+        scheduler.resolve_dependencies()
+    );
+}
+
+TEST_CASE("Explicit dependency resolves write/write conflict", "[scheduler]") {
+    SimulationClock clock;
+    CommandQueue queue;
+    Scheduler scheduler(queue, clock);
+
+    ComponentStorage<Position> storage;
+
+    auto a = scheduler.schedule(
+        "writer_a",
+        60.0,
+        WriterSystem{},
+        Query<Write<Position>>{}.bind_storage(storage)
+    );
+
+    auto b = scheduler.schedule(
+        "writer_b",
+        60.0,
+        WriterSystem{},
+        Query<Write<Position>>{}.bind_storage(storage)
+    );
+
+    REQUIRE(
+        b.depends_on(a) == DependencyResult::Success
+    );
+
+    REQUIRE_NOTHROW(
+        scheduler.resolve_dependencies()
+    );
+
+    REQUIRE(scheduler.has_dependency_path(
+        b.id(),
+        a.id()
+    ));
+}
+
+TEST_CASE("Explicit dependency can resolve write/write in either direction", "[scheduler]") {
+    SimulationClock clock;
+    CommandQueue queue;
+    Scheduler scheduler(queue, clock);
+
+    ComponentStorage<Position> storage;
+
+    auto a = scheduler.schedule(
+        "writer_a",
+        60.0,
+        WriterSystem{},
+        Query<Write<Position>>{}.bind_storage(storage)
+    );
+
+    auto b = scheduler.schedule(
+        "writer_b",
+        60.0,
+        WriterSystem{},
+        Query<Write<Position>>{}.bind_storage(storage)
+    );
+
+    REQUIRE(
+        a.depends_on(b) == DependencyResult::Success
+    );
+
+    REQUIRE_NOTHROW(
+        scheduler.resolve_dependencies()
+    );
+}
+
+TEST_CASE("Accesses to different components do not create dependency", "[scheduler]") {
+    SimulationClock clock;
+    CommandQueue queue;
+    Scheduler scheduler(queue, clock);
+
+    ComponentStorage<Position> positions;
+    ComponentStorage<Velocity> velocities;
+
+    auto position_writer = scheduler.schedule(
+        "position_writer",
+        60.0,
+        WriterSystem{},
+        Query<Write<Position>>{}.bind_storage(positions)
+    );
+
+    auto velocity_writer = scheduler.schedule(
+        "velocity_writer",
+        60.0,
+        WriterSystem{},
+        Query<Write<Velocity>>{}.bind_storage(velocities)
+    );
+
+    scheduler.resolve_dependencies();
+
+    REQUIRE_FALSE(scheduler.has_dependency_path(
+        position_writer.id(),
+        velocity_writer.id()
+    ));
+
+    REQUIRE_FALSE(scheduler.has_dependency_path(
+        velocity_writer.id(),
+        position_writer.id()
+    ));
+}
+
+TEST_CASE("Mixed query infers dependencies for conflicting components", "[scheduler]") {
+    SimulationClock clock;
+    CommandQueue queue;
+    Scheduler scheduler(queue, clock);
+
+    ComponentStorage<Position> positions;
+    ComponentStorage<Velocity> velocities;
+
+    auto physics = scheduler.schedule(
+        "physics",
+        60.0,
+        PhysicsSystem{},
+        Query<
+            Read<Velocity>,
+            Write<Position>
+        >{}.bind_storage(velocities, positions)
+    );
+
+    auto renderer = scheduler.schedule(
+        "renderer",
+        60.0,
+        RenderSystem{},
+        Query<
+            Read<Position>,
+            Read<Velocity>
+        >{}.bind_storage(positions, velocities)
+    );
+
+    scheduler.resolve_dependencies();
+
+    REQUIRE(scheduler.has_dependency_path(
+        renderer.id(),
+        physics.id()
+    ));
+}
+
+TEST_CASE("Inferred dependencies form transitive ordering", "[scheduler]") {
+    SimulationClock clock;
+    CommandQueue queue;
+    Scheduler scheduler(queue, clock);
+
+    ComponentStorage<Position> positions;
+    ComponentStorage<Velocity> velocities;
+
+    auto physics = scheduler.schedule(
+        "physics",
+        60.0,
+        PhysicsSystem{},
+        Query<Write<Position>>{}.bind_storage(positions)
+    );
+
+    auto movement = scheduler.schedule(
+        "movement",
+        60.0,
+        MovementSystem{},
+        Query<
+            Read<Position>,
+            Write<Velocity>
+        >{}.bind_storage(positions, velocities)
+    );
+
+    auto consumer = scheduler.schedule(
+        "consumer",
+        60.0,
+        ConsumerSystem{},
+        Query<Read<Velocity>>{}.bind_storage(velocities)
+    );
+
+    scheduler.resolve_dependencies();
+
+    REQUIRE(scheduler.has_dependency_path(
+        movement.id(),
+        physics.id()
+    ));
+
+    REQUIRE(scheduler.has_dependency_path(
+        consumer.id(),
+        movement.id()
+    ));
+
+    REQUIRE(scheduler.has_dependency_path(
+        consumer.id(),
+        physics.id()
+    ));
+}
+
+TEST_CASE("Conflicting access pattern that creates cycle is rejected", "[scheduler]") {
+    SimulationClock clock;
+    CommandQueue queue;
+    Scheduler scheduler(queue, clock);
+
+    ComponentStorage<Position> positions;
+    ComponentStorage<Velocity> velocities;
+    ComponentStorage<Health> health;
+
+    auto a = scheduler.schedule(
+        "system_a",
+        60.0,
+        PhysicsSystem{},
+        Query<
+            Write<Position>,
+            Read<Velocity>
+        >{}.bind_storage(positions, velocities)
+    );
+
+    auto b = scheduler.schedule(
+        "system_b",
+        60.0,
+        HealthSystem{},
+        Query<
+            Read<Position>,
+            Write<Health>
+        >{}.bind_storage(positions, health)
+    );
+
+    auto c = scheduler.schedule(
+        "system_c",
+        60.0,
+        PhysicsSystem{},
+        Query<
+            Read<Health>,
+            Write<Velocity>
+        >{}.bind_storage(health, velocities)
+    );
+
+    REQUIRE_THROWS(
+        scheduler.resolve_dependencies()
+    );
+}
+
+TEST_CASE("2 cycle dependency throws", "[scheduler]") {
+    SimulationClock clock;
+    CommandQueue queue;
+    Scheduler scheduler(queue, clock);
+
+    ComponentStorage<Position> positions;
+    ComponentStorage<Velocity> velocities;
+
+    auto physics = scheduler.schedule(
+        "physics",
+        60.0,
+        PhysicsSystem{},
+        Query<
+            Write<Position>,
+            Read<Velocity>
+        >{}.bind_storage(positions, velocities)
+    );
+
+    auto movement = scheduler.schedule(
+        "movement",
+        60.0,
+        MovementSystem{},
+        Query<
+            Read<Position>,
+            Write<Velocity>
+        >{}.bind_storage(positions, velocities)
+    );
+
+    REQUIRE_THROWS(
+        scheduler.resolve_dependencies()
+    );
+}
+
+TEST_CASE("2 cycle dependency can be resolved with explicit dependency", "[scheduler]") {
+    SimulationClock clock;
+    CommandQueue queue;
+    Scheduler scheduler(queue, clock);
+
+    ComponentStorage<Position> positions;
+    ComponentStorage<Velocity> velocities;
+
+    auto physics = scheduler.schedule(
+        "physics",
+        60.0,
+        PhysicsSystem{},
+        Query<
+            Write<Position>,
+            Read<Velocity>
+        >{}.bind_storage(positions, velocities)
+    );
+
+    auto movement = scheduler.schedule(
+        "movement",
+        60.0,
+        MovementSystem{},
+        Query<
+            Read<Position>,
+            Write<Velocity>
+        >{}.bind_storage(positions, velocities)
+    );
+
+    physics.depends_on(movement);
+
+    REQUIRE_NOTHROW(
+        scheduler.resolve_dependencies()
+    );
 }

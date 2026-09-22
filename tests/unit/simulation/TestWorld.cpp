@@ -25,9 +25,9 @@ namespace {
         template<typename BoundQueryT>
         void update(conductor::SystemContext<BoundQueryT> ctx) {
             for(auto [velocity, position] : ctx.query()) {
-                position.x += velocity.x * ctx.clock().delta_seconds();
-                position.y += velocity.y * ctx.clock().delta_seconds();
-                position.z += velocity.z * ctx.clock().delta_seconds();
+                position.x += velocity.x * ctx.delta_seconds();
+                position.y += velocity.y * ctx.delta_seconds();
+                position.z += velocity.z * ctx.delta_seconds();
             }
         }
     };

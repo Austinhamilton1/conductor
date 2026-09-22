@@ -2,6 +2,8 @@
 
 #include <utility>
 
+#include <iostream>
+
 namespace conductor {
     Clock& Application::clock() {
         return m_clock;

@@ -38,7 +38,7 @@ namespace {
             ++executions;
 
             last_delta =
-                ctx.clock().delta_seconds();
+                ctx.delta_seconds();
         }
 
         static void reset() {

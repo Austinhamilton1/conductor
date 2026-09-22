@@ -39,13 +39,13 @@ namespace {
                 ctx.query())
             {
                 position.x += velocity.x *
-                              ctx.clock().delta_seconds();
+                              ctx.delta_seconds();
 
                 position.y += velocity.y *
-                              ctx.clock().delta_seconds();
+                              ctx.delta_seconds();
 
                 position.z += velocity.z *
-                              ctx.clock().delta_seconds();
+                              ctx.delta_seconds();
             }
         }
 
@@ -93,7 +93,6 @@ TEST_CASE("SystemExecutor provides functional query", "[ecs]") {
         );
 
     CommandQueue commands;
-    SimulationClock clock;
 
     SystemExecutor<
         MovementSystem,
@@ -103,11 +102,9 @@ TEST_CASE("SystemExecutor provides functional query", "[ecs]") {
         std::move(query)
     );
 
-    clock.update(0.5);
-
     executor.execute(
         commands,
-        clock
+        0.5
     );
 
     REQUIRE(MovementSystem::executions == 1);
