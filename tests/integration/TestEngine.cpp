@@ -1,6 +1,10 @@
 #include <catch2/catch_test_macros.hpp>
+#include <catch2/matchers/catch_matchers_floating_point.hpp>
 #include <cmath>
 #include <iostream>
+#include <fstream>
+#include <string>
+#include <format>
 
 #include "core/Random.h"
 #include "ecs/Entity.h"
@@ -8,12 +12,27 @@
 #include "ecs/SystemContext.h"
 #include "runtime/Application.h"
 
-/* Initialization */
+/* Helpers */
 namespace {
     conductor::Random rand(12345);
     constexpr int num_drones = 10;
     constexpr double num_seconds = 10.0;
     constexpr double frequency = 10.0;
+    std::string telemetry_file = "./engine_telemetry.csv";
+    
+    bool equals(double a, double b) {
+        constexpr double EPS = 0.0001;
+        return std::abs(a - b) < EPS;
+    }
+
+    void record(std::string data) {
+        std::ofstream file(telemetry_file, std::ios::app);
+
+        if(file.is_open()) {
+            file << data << std::endl;
+            file.close();
+        }
+    } 
 }
 
 /* Components for drone simulation */
@@ -157,9 +176,13 @@ namespace {
 
         template<typename BoundQueryT>
         void update(conductor::SystemContext<BoundQueryT>& ctx) {
-            for(auto [drone_status] : ctx.query()) {
+            for(auto it = ctx.query().begin(); it != ctx.query().end(); it++) {
+                conductor::Entity e = it.entity();
+                auto [drone_status] = *it;
+
                 if(drone_status.state == DroneState::LowBattery) {
-                    // Need to think about this one
+                    ctx.commands().destroy_entity(e);
+                    removals++;
                 }
             }
         }
@@ -177,8 +200,46 @@ namespace {
 
         template<typename BoundQueryT>
         void update(conductor::SystemContext<BoundQueryT>& ctx) {
-            for(auto [position, velocity, battery, drone_status] : ctx.query()) {
-                // Need to think about this one
+            for(auto it = ctx.query().begin(); it != ctx.query().end(); it++) {
+                conductor::Entity e = it.entity();
+                auto [position, velocity, battery, drone_status] = *it;
+
+                const std::string telemetry_line = 
+                    std::format(
+                        "({}; {}),({}; {}),({}; {}),{},{}",
+                        e.index(),
+                        e.generation(),
+                        position.x,
+                        position.y,
+                        velocity.x,
+                        velocity.y,
+                        battery.level,
+                        (drone_status.state == DroneState::Active ? "active" : "low battery")
+                    );
+
+                record(telemetry_line);
+            }
+        }
+    };
+}
+
+namespace {
+    class TenSecondApp : public conductor::Application {
+        void initialize() {
+            std::cout << "Starting simulation...\n";
+            
+            record("Entity,Position,Velocity,Battery,Drone State");
+        }
+
+        void shutdown() {
+            std::cout << "Simulation stopped\n";
+
+            record("\n");
+        }
+
+        void update(double) {
+            if(simulation_clock().total_seconds() >= 10.0) {
+                stop();
             }
         }
     };
@@ -196,14 +257,14 @@ namespace {
 
         bool operator==(const DroneSnapshot& other) const {
             return (
-                pos.x == other.pos.x &&
-                pos.y == other.pos.y &&
-                vel.x == other.vel.x &&
-                vel.y == other.vel.y &&
-                tar.x == other.tar.x &&
-                tar.y == other.tar.y &&
-                battery.level == other.battery.level &&
-                sensor.distance_to_target == other.sensor.distance_to_target &&
+                equals(pos.x, other.pos.x) &&
+                equals(pos.y, other.pos.y) &&
+                equals(vel.x, other.vel.x) &&
+                equals(vel.y, other.vel.y) &&
+                equals(tar.x, other.tar.x) &&
+                equals(tar.y, other.tar.y) &&
+                equals(battery.level, other.battery.level) &&
+                equals(sensor.distance_to_target, other.sensor.distance_to_target) &&
                 status.state == other.status.state
             );
         }
@@ -219,12 +280,13 @@ namespace {
 
         bool operator==(const SimulationSnapshot& other) const {
             for(int i = 0; i < drones.size(); i++) {
-                if(drones[i] != other.drones[i])
+                if(drones[i] != other.drones[i]) {
                     return false;
+                }
             }
 
             return (
-                time == other.time &&
+                equals(time, other.time) &&
                 destroyed_drones == other.destroyed_drones &&
                 telemetry_updates == other.telemetry_updates
             );
@@ -232,7 +294,11 @@ namespace {
     };
 
     SimulationSnapshot run_application() {
-        conductor::Application app;
+        rand.seed(12345);
+        TelemetrySystem::updates = 0;
+        DroneRemovalSystem::removals = 0;
+
+        TenSecondApp app;
 
         app.world().register_component<Position>();
         app.world().register_component<Velocity>();
