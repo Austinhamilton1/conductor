@@ -47,6 +47,9 @@ namespace conductor {
 
         entry.storage = nullptr;
         entry.destroy = nullptr;
+        entry.add = nullptr;
+        entry.remove = nullptr;
+        entry.flush = nullptr;
 
         --m_size;
     }
