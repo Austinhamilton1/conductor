@@ -147,6 +147,10 @@ namespace {
                 if(battery.level > 0.0) {
                     battery.level -= std::exp(speed) * ctx.delta_seconds();
                 }
+
+                if(battery.level < 0.0) {
+                    battery.level = 0.0;
+                }
             }
         }
     };
@@ -227,6 +231,8 @@ namespace {
     class TenSecondApp : public conductor::Application {
         void initialize() {
             std::cout << "Starting simulation...\n";
+
+            simulation_clock().set_time_scale(10.0);
             
             record("Entity,Position,Velocity,Battery,Drone State");
         }
@@ -248,24 +254,57 @@ namespace {
 /* Telemetry */
 namespace {
     struct DroneSnapshot {
-        Position pos;
-        Velocity vel;
-        Target tar;
-        Battery battery;
-        SensorData sensor;
-        DroneStatus status;
+        Position *pos;
+        Velocity *vel;
+        Target *tar;
+        Battery *battery;
+        SensorData *sensor;
+        DroneStatus *status;
 
         bool operator==(const DroneSnapshot& other) const {
+            bool pos_equal = (
+                pos == nullptr || other.pos == nullptr
+                    ? pos == other.pos
+                    : (equals(pos->x, other.pos->x) && equals(pos->y, other.pos->y))
+            );
+
+            bool vel_equal = (
+                vel == nullptr || other.vel == nullptr
+                    ? vel == other.vel
+                    : (equals(vel->x, other.vel->x) && equals(vel->y, other.vel->y))
+            );
+
+            bool tar_equal = (
+                tar == nullptr || other.tar == nullptr
+                    ? tar == other.tar
+                    : (equals(tar->x, other.tar->x) && equals(tar->y, other.tar->y))
+            );
+
+            bool battery_equal = (
+                battery == nullptr || other.battery == nullptr
+                    ? battery == other.battery
+                    : equals(battery->level,other.battery->level)
+            );
+
+            bool sensor_equal = (
+                sensor == nullptr || other.sensor == nullptr
+                    ? sensor == other.sensor
+                    : equals(sensor->distance_to_target, other.sensor->distance_to_target)
+            );
+
+            bool status_equal = (
+                status == nullptr || status == nullptr
+                    ? status == other.status
+                    : (status->state == other.status->state)
+            );
+
             return (
-                equals(pos.x, other.pos.x) &&
-                equals(pos.y, other.pos.y) &&
-                equals(vel.x, other.vel.x) &&
-                equals(vel.y, other.vel.y) &&
-                equals(tar.x, other.tar.x) &&
-                equals(tar.y, other.tar.y) &&
-                equals(battery.level, other.battery.level) &&
-                equals(sensor.distance_to_target, other.sensor.distance_to_target) &&
-                status.state == other.status.state
+                pos_equal &&
+                vel_equal &&
+                tar_equal &&
+                battery_equal &&
+                sensor_equal &&
+                status_equal
             );
         }
     };
@@ -385,12 +424,12 @@ namespace {
 
             conductor::Entity e = app.world().get_entity(i);
 
-            Position p = *positions.get(e);
-            Velocity v = *velocities.get(e);
-            Target t = *targets.get(e);
-            Battery b = *batteries.get(e);
-            SensorData s = *sensors.get(e);
-            DroneStatus st = *statuses.get(e);
+            Position *p = positions.get(e);
+            Velocity *v = velocities.get(e);
+            Target *t = targets.get(e);
+            Battery *b = batteries.get(e);
+            SensorData *s = sensors.get(e);
+            DroneStatus *st = statuses.get(e);
 
             drones.push_back(DroneSnapshot{
                 .pos = p,

@@ -183,7 +183,8 @@ namespace conductor {
 
         void apply_entity_command(
             const Command& command,
-            EntityManager& manager
+            EntityManager& manager,
+            ComponentStorageRegistry& storages
         );
 
         void apply_component_command(

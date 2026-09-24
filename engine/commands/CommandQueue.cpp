@@ -155,7 +155,8 @@ namespace conductor {
 
     void CommandQueue::apply_entity_command(
         const Command& command,
-        EntityManager& manager
+        EntityManager& manager,
+        ComponentStorageRegistry& storages
     ) {
         switch(command.type) {
         case CommandType::CreateEntity: {
@@ -182,6 +183,7 @@ namespace conductor {
                 );
 
             manager.destroy(entity);
+            storages.remove_entity(entity);
             break;
         }
 
@@ -315,7 +317,8 @@ namespace conductor {
             case CommandType::DestroyEntity:
                 apply_entity_command(
                     command,
-                    manager
+                    manager,
+                    storages
                 );
                 break;
 

@@ -152,6 +152,8 @@ namespace conductor {
 
         const StorageEntry& entry(ComponentTypeId id) const;
 
+        void remove_entity(Entity entity);
+
         size_t size() const noexcept {
             return m_size;
         }

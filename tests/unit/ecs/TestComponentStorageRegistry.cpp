@@ -1,6 +1,7 @@
 #include <catch2/catch_test_macros.hpp>
 
-#include "ComponentStorageRegistry.h"
+#include "ecs/ComponentStorageRegistry.h"
+#include "ecs/EntityManager.h"
 
 using namespace conductor;
 
@@ -392,4 +393,30 @@ TEST_CASE("ComponentStorageRegistry add operation preserves component data", "[e
     REQUIRE(actual.x == expected.x);
     REQUIRE(actual.y == expected.y);
     REQUIRE(actual.z == expected.z);
+}
+
+TEST_CASE("Destroying an entity removes all components", "[ecs]") {
+    EntityManager manager;
+    ComponentStorageRegistry storages;
+
+    auto& positions = storages.create<Position>();
+    auto& velocities = storages.create<Velocity>();
+    auto& batteries = storages.create<Health>();
+
+    Entity entity = manager.create();
+
+    positions.add(entity, Position{1.0, 2.0});
+    velocities.add(entity, Velocity{3.0, 4.0});
+    batteries.add(entity, Health{100});
+
+    REQUIRE(positions.contains(entity));
+    REQUIRE(velocities.contains(entity));
+    REQUIRE(batteries.contains(entity));
+
+    manager.destroy(entity);
+    storages.remove_entity(entity);
+
+    REQUIRE_FALSE(positions.contains(entity));
+    REQUIRE_FALSE(velocities.contains(entity));
+    REQUIRE_FALSE(batteries.contains(entity));
 }

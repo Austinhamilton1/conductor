@@ -104,4 +104,43 @@ namespace conductor {
 
         return entry;
     }
+
+    void ComponentStorageRegistry::remove_entity(Entity entity) {
+        /*
+         * Phase 1:
+         * Queue the entity's removal from every component storage.
+         */
+        for(auto& entry : m_storages) {
+            if(!entry.valid())
+                continue;
+
+            if(entry.remove == nullptr) {
+                throw std::logic_error(
+                    "Component storage does not support remove"
+                );
+            }
+
+            entry.remove(
+                entry.storage,
+                entity
+            );
+        }
+
+        /*
+         * Phase 2:
+         * Apply all pending removals.
+         */
+        for(auto& entry : m_storages) {
+            if(!entry.valid())
+                continue;
+
+            if(entry.flush == nullptr) {
+                throw std::logic_error(
+                    "Component storage does not support flush"
+                );
+            }
+
+            entry.flush(entry.storage);
+        }
+    }
 }
