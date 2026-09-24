@@ -443,7 +443,7 @@ Conductor currently requires:
 Clone the repository and configure the project with CMake:
 
 ```bash
-git clone --recurse-subdirectories <repository-url>
+git clone --recurse-subdirectories https://github.com/Austinhamilton1/conductor.git
 cd conductor
 
 cmake --preset debug
