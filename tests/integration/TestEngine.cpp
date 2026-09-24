@@ -15,9 +15,11 @@
 /* Helpers */
 namespace {
     conductor::Random rand(12345);
+
     constexpr int num_drones = 10;
     constexpr double num_seconds = 10.0;
     constexpr double frequency = 10.0;
+    
     std::string telemetry_file = "./engine_telemetry.csv";
     
     bool equals(double a, double b) {

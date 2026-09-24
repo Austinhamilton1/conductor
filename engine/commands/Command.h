@@ -55,6 +55,7 @@ namespace conductor {
             uint32_t data_size
         ) noexcept;
 
+        // Helper function to generate a remove component command
         static Command remove_component(
             EntityReference entity,
             ComponentTypeId component
