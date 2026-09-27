@@ -2,6 +2,13 @@
 #include "Assert.h"
 
 namespace conductor {
+    Random::Random() {
+        std::random_device rd;
+
+        s = (rd() << 32) | rd();
+        generator = std::mt19937_64(s);
+    }
+
     void Random::seed(uint64_t s) {
         this->s = s;
         generator = std::mt19937_64(s);

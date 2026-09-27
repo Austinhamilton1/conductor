@@ -28,12 +28,14 @@ namespace conductor {
 
         void execute(
             CommandQueue& commands,
-            double delta_seconds
+            double delta_seconds,
+            Random& rand
         ) override {
             SystemContext<BoundQueryT> context(
                 m_query,
                 commands,
-                delta_seconds
+                delta_seconds,
+                rand
             );
 
             m_system.update(context);

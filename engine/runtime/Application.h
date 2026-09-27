@@ -6,6 +6,7 @@
 #include "core/Clock.h"
 #include "core/SimulationClock.h"
 #include "core/NonCopyable.h"
+#include "core/Random.h"
 #include "events/EventBus.h"
 #include "plugins/PluginManager.h"
 #include "scheduler/Scheduler.h"
@@ -19,7 +20,7 @@ namespace conductor {
         virtual void shutdown() {};
 
     public:
-        Application() {};
+        Application() : m_world(m_rand) {};
         virtual ~Application() = default;
 
         Clock& clock();
@@ -27,6 +28,7 @@ namespace conductor {
         EventBus& events();
         World& world();
         PluginManager& plugins();
+        Random& random();
 
         void run();
         void stop();
@@ -42,5 +44,6 @@ namespace conductor {
         SimulationClock m_simulation_clock;
         EventBus m_events;
         World m_world;
+        Random m_rand;
     };
 }

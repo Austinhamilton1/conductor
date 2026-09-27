@@ -3,6 +3,7 @@
 
 #include "commands/CommandQueue.h"
 #include "core/SimulationClock.h"
+#include "core/Random.h"
 #include "ecs/Query.h"
 #include "ecs/SystemContext.h"
 #include "ecs/SystemExecutor.h"
@@ -102,9 +103,12 @@ TEST_CASE("SystemExecutor provides functional query", "[ecs]") {
         std::move(query)
     );
 
+    Random rand;
+
     executor.execute(
         commands,
-        0.5
+        0.5,
+        rand
     );
 
     REQUIRE(MovementSystem::executions == 1);

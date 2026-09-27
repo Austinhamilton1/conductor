@@ -25,6 +25,10 @@ namespace conductor {
         return m_world;
     }
 
+    Random& Application::random() {
+        return m_rand;
+    }
+
     void Application::run() {
         m_running = true;
         

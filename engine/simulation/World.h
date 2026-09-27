@@ -6,6 +6,7 @@
 
 #include "core/NonCopyable.h"
 #include "core/SimulationClock.h"
+#include "core/Random.h"
 #include "ecs/ComponentType.h"
 #include "ecs/SystemType.h"
 #include "ecs/Entity.h"
@@ -33,8 +34,9 @@ namespace conductor {
 
     class World : public NonCopyable {
     public:
-        World() 
-            : m_clock(), 
+        World(Random& rand) 
+            : m_rand(rand),
+              m_clock(), 
               m_commands(), 
               m_scheduler(m_commands, m_clock) {};
         
@@ -84,6 +86,7 @@ namespace conductor {
         CommandQueue m_commands;
         Scheduler m_scheduler;
         std::vector<Entity> m_entities;
+        Random& m_rand;
 
         bool m_finalized{false};
     };
@@ -134,7 +137,8 @@ namespace conductor {
             std::move(name),
             frequency,
             std::move(system),
-            std::move(query)
+            std::move(query),
+            m_rand
         );
     }
 }

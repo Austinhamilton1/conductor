@@ -67,7 +67,8 @@ namespace conductor {
             std::string name,
             double frequency,
             T system,
-            BoundQueryT query
+            BoundQueryT query,
+            Random& rand
         ) {
             if(frequency <= 0.0) {
                 throw std::invalid_argument(
@@ -84,7 +85,8 @@ namespace conductor {
             auto executor =
                 std::make_unique<SystemExecutor<T, BoundQueryT>>(
                     std::move(system),
-                    std::move(query)
+                    std::move(query),
+                    rand
                 );
 
             auto accesses = query_accesses<QueryT>();

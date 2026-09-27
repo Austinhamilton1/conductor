@@ -14,8 +14,6 @@
 
 /* Helpers */
 namespace {
-    conductor::Random rand(12345);
-
     constexpr int num_drones = 10;
     constexpr double num_seconds = 10.0;
     constexpr double frequency = 10.0;
@@ -109,7 +107,7 @@ namespace {
                 const double dx = target.x - position.x;
                 const double dy = target.y - position.y;
 
-                const double speed = sensor.distance_to_target * rand.next_double() * 0.025;
+                const double speed = sensor.distance_to_target * ctx.rand().next_double() * 0.025;
 
                 velocity.x += dx * speed * ctx.delta_seconds();
                 velocity.y += dy * speed * ctx.delta_seconds();
@@ -335,11 +333,11 @@ namespace {
     };
 
     SimulationSnapshot run_application() {
-        rand.seed(12345);
         TelemetrySystem::updates = 0;
         DroneRemovalSystem::removals = 0;
 
         TenSecondApp app;
+        app.random().seed(12345);
 
         app.world().register_component<Position>();
         app.world().register_component<Velocity>();

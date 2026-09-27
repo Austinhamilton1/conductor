@@ -6,6 +6,8 @@
 namespace conductor {
     class Random {
     public:
+        Random();
+
         explicit Random(uint64_t s) 
             : s(s), 
               generator(std::mt19937_64(s)) {};
