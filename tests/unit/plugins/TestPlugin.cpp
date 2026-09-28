@@ -127,8 +127,7 @@ TEST_CASE("Plugin system executes during simulation", "[plugins]") {
 
     world.update(1.0);
 
-    const auto& storage = world.storage().get<PluginPosition>();
-    const auto result = storage.get(entity);
+    auto result = world.get_component<PluginPosition>(entity);
 
     // Plugin system runs at 60 Hz.
     // With a one-second simulation delta, the

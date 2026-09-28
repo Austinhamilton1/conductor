@@ -13,10 +13,7 @@
 #include "runtime/Application.h"
 
 /* Helpers */
-namespace {
-    constexpr int num_drones = 10;
-    constexpr double frequency = 10.0;
-    
+namespace {    
     std::string telemetry_file = "./engine_telemetry.csv";
     
     bool equals(double a, double b) {
@@ -100,16 +97,38 @@ namespace {
             conductor::Write<Velocity>
         >;
 
+        const double stiffness = 2.0;
+        const double damping = 1.5;
+        const double max_speed = 3.0;
+
         template<typename BoundQueryT>
         void update(conductor::SystemContext<BoundQueryT>& ctx) {
             for(auto [position, target, sensor, velocity] : ctx.query()) {
                 const double dx = target.x - position.x;
                 const double dy = target.y - position.y;
 
-                const double speed = sensor.distance_to_target * ctx.rand().next_double() * 0.025;
+                const double ax =
+                    dx * stiffness -
+                    velocity.x * damping;
 
-                velocity.x += dx * speed * ctx.delta_seconds();
-                velocity.y += dy * speed * ctx.delta_seconds();
+                const double ay =
+                    dy * stiffness -
+                    velocity.y * damping;
+
+                velocity.x += ax * ctx.delta_seconds();
+                velocity.y += ay * ctx.delta_seconds();
+
+                const double speed = std::sqrt(
+                    velocity.x * velocity.x +
+                    velocity.y * velocity.y
+                );
+
+                if(speed > max_speed) {
+                    const double scale = max_speed / speed;
+
+                    velocity.x *= scale;
+                    velocity.y *= scale;
+                }
             }
         }
     };

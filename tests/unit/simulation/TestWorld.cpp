@@ -1,19 +1,24 @@
 #include <catch2/catch_test_macros.hpp>
 
+#include "simulation/SpawnConfig.h"
 #include "simulation/World.h"
 #include "ecs/SystemContext.h"
 
 namespace {
     struct Position {
-        float x;
-        float y;
-        float z;
+        double x;
+        double y;
+        double z;
     };
 
     struct Velocity {
-        float x;
-        float y;
-        float z;
+        double x;
+        double y;
+        double z;
+    };
+
+    struct Battery {
+        double charge;
     };
 
     struct MovementSystem {
@@ -98,9 +103,9 @@ TEST_CASE("World adds components to entities", "[simulation]") {
     auto entity = world.create_entity();
 
     Position position{
-        1.0f,
-        2.0f,
-        3.0f
+        1.0,
+        2.0,
+        3.0
     };
 
     world.add_component(entity, position);
@@ -111,9 +116,9 @@ TEST_CASE("World adds components to entities", "[simulation]") {
 
     auto result = storage.get(entity);
 
-    REQUIRE(result->x == 1.0f);
-    REQUIRE(result->y == 2.0f);
-    REQUIRE(result->z == 3.0f);
+    REQUIRE(result->x == 1.0);
+    REQUIRE(result->y == 2.0);
+    REQUIRE(result->z == 3.0);
 }
 
 TEST_CASE("World can add a system", "[simulation]") {
@@ -142,15 +147,15 @@ TEST_CASE("World updates systems", "[simulation]") {
     auto entity = world.create_entity();
 
     Position position{
-        0.0f,
-        0.0f,
-        0.0f
+        0.0,
+        0.0,
+        0.0
     };
 
     Velocity velocity{
-        1.0f,
-        2.0f,
-        3.0f
+        1.0,
+        2.0,
+        3.0
     };
 
     world.add_component(entity, position);
@@ -166,12 +171,11 @@ TEST_CASE("World updates systems", "[simulation]") {
 
     world.update(1.0);
 
-    auto& positions = world.storage().get<Position>();
-    auto result = positions.get(entity);
+    auto result = world.get_component<Position>(entity);
 
-    REQUIRE(result->x == 1.0f);
-    REQUIRE(result->y == 2.0f);
-    REQUIRE(result->z == 3.0f);
+    REQUIRE(result->x == 1.0);
+    REQUIRE(result->y == 2.0);
+    REQUIRE(result->z == 3.0);
 }
 
 TEST_CASE("World prevents component registration after finalization", "[simulation]") {
@@ -230,4 +234,270 @@ TEST_CASE("World prevents entity destruction after finalization", "[simulation]"
         world.destroy_entity(entity),
         std::logic_error
     );
+}
+
+TEST_CASE("SpawnConfig can initialize a constant component", "[simulation]") {
+    conductor::Random random(12345);
+    conductor::World world(random);
+
+    world.register_component<Position>();
+
+    conductor::SpawnConfig config;
+
+    config.component<Position>(
+        Position{10.0, 20.0, 30.0}
+    );
+
+    world.spawn_entities(1, config);
+
+    conductor::Entity entity = world.get_entity(0);
+
+    REQUIRE(world.entities().alive(entity));
+
+    auto position = world.get_component<Position>(entity);
+
+    REQUIRE(position->x == 10.0);
+    REQUIRE(position->y == 20.0);
+    REQUIRE(position->z == 30.0);
+}
+
+TEST_CASE("SpawnConfig can spawn multiple entities", "[simulation]") {
+    conductor::Random random(12345);
+    conductor::World world(random);
+
+    world.register_component<Position>();
+
+    conductor::SpawnConfig config;
+
+    config.component<Position>(
+        Position{10.0, 20.0, 30.0}
+    );
+
+    world.spawn_entities(200, config);
+
+    for(std::size_t i = 0; i < 200; ++i) {
+        conductor::Entity entity = world.get_entity(i);
+
+        REQUIRE(world.entities().alive(entity));
+
+        auto position = world.get_component<Position>(entity);
+
+        REQUIRE(position->x == 10.0);
+        REQUIRE(position->y == 20.0);
+        REQUIRE(position->z == 30.0);
+    }
+}
+
+TEST_CASE("SpawnConfig can generate component values per entity", "[simulation]") {
+    conductor::Random random(12345);
+    conductor::World world(random);
+
+    world.register_component<Position>();
+
+    conductor::SpawnConfig config;
+
+    config.component<Position>(
+        [](const conductor::SpawnContext& context) {
+            return Position{
+                static_cast<double>(context.index),
+                static_cast<double>(context.index * 10),
+                static_cast<double>(context.index * 20)
+            };
+        }
+    );
+
+    world.spawn_entities(10, config);
+
+    for(std::size_t i = 0; i < 10; ++i) {
+        conductor::Entity entity = world.get_entity(i);
+
+        auto position = world.get_component<Position>(entity);
+
+        REQUIRE(position->x == static_cast<double>(i));
+        REQUIRE(position->y == static_cast<double>(i * 10));
+        REQUIRE(position->z == static_cast<double>(i * 20));
+    }
+}
+
+TEST_CASE("SpawnConfig can initialize multiple components", "[simulation]") {
+    conductor::Random random(12345);
+    conductor::World world(random);
+
+    world.register_component<Position>();
+    world.register_component<Velocity>();
+    world.register_component<Battery>();
+
+    conductor::SpawnConfig config;
+
+    config.component<Position>(
+        Position{1.0, 2.0}
+    );
+
+    config.component<Velocity>(
+        Velocity{3.0, 4.0}
+    );
+
+    config.component<Battery>(
+        Battery{100.0}
+    );
+
+    world.spawn_entities(1, config);
+
+    conductor::Entity entity = world.get_entity(0);
+
+    auto position = world.get_component<Position>(entity);
+    auto velocity = world.get_component<Velocity>(entity);
+    auto battery = world.get_component<Battery>(entity);
+
+    REQUIRE(position->x == 1.0);
+    REQUIRE(position->y == 2.0);
+
+    REQUIRE(velocity->x == 3.0);
+    REQUIRE(velocity->y == 4.0);
+
+    REQUIRE(battery->charge == 100.0);
+}
+
+TEST_CASE("SpawnConfig can be reused", "[simulation]") {
+    conductor::Random random(12345);
+    conductor::World world(random);
+
+    world.register_component<Position>();
+
+    conductor::SpawnConfig config;
+
+    config.component<Position>(
+        [](const conductor::SpawnContext& context) {
+            return Position{
+                static_cast<double>(context.index),
+                0.0,
+                0.0
+            };
+        }
+    );
+
+    world.spawn_entities(5, config);
+    world.spawn_entities(5, config);
+
+    REQUIRE(world.entities().size() == 10);
+
+    for(std::size_t i = 0; i < 5; ++i) {
+        conductor::Entity entity = world.get_entity(i);
+
+        auto position = world.get_component<Position>(entity);
+
+        REQUIRE(position->x == static_cast<double>(i));
+    }
+
+    for(std::size_t i = 5; i < 10; ++i) {
+        conductor::Entity entity = world.get_entity(i);
+
+        auto position = world.get_component<Position>(entity);
+
+        REQUIRE(
+            position->x ==
+            static_cast<double>(i - 5)
+        );
+    }
+}
+
+TEST_CASE("Spawning zero entities does nothing", "[simulation]") {
+    conductor::Random random(12345);
+    conductor::World world(random);
+
+    world.register_component<Position>();
+
+    conductor::SpawnConfig config;
+
+    config.component<Position>(
+        Position{10.0, 20.0}
+    );
+
+    world.spawn_entities(0, config);
+
+    REQUIRE(world.entities().size() == 0);
+}
+
+TEST_CASE("SpawnConfig random initialization is deterministic", "[simulation]") {
+    conductor::Random random_a(12345);
+    conductor::Random random_b(12345);
+
+    conductor::World world_a(random_a);
+    conductor::World world_b(random_b);
+
+
+    world_a.register_component<Position>();
+    world_b.register_component<Position>();
+
+    conductor::SpawnConfig config_a;
+    conductor::SpawnConfig config_b;
+
+    config_a.component<Position>(
+        [](const conductor::SpawnContext& context) {
+            return Position{
+                context.random.next_double(),
+                context.random.next_double(),
+                context.random.next_double()
+            };
+        }
+    );
+
+    config_b.component<Position>(
+        [](const conductor::SpawnContext& context) {
+            return Position{
+                context.random.next_double(),
+                context.random.next_double(),
+                context.random.next_double()
+            };
+        }
+    );
+
+    world_a.spawn_entities(100, config_a);
+    world_b.spawn_entities(100, config_b);
+
+    for(std::size_t i = 0; i < 100; ++i) {
+        conductor::Entity a = world_a.get_entity(i);
+        conductor::Entity b = world_b.get_entity(i);
+
+        auto position_a = world_a.get_component<Position>(a);
+        auto position_b = world_b.get_component<Position>(b);
+
+        REQUIRE(position_a->x == position_b->x);
+        REQUIRE(position_a->y == position_b->y);
+        REQUIRE(position_a->z == position_b->z);
+    }
+}
+
+TEST_CASE("SpawnConfig does not retain generated component state", "[simulation]") {
+    conductor::Random random(12345);
+    conductor::World world(random);
+
+    world.register_component<Position>();
+
+    conductor::SpawnConfig config;
+
+    config.component<Position>(
+        [](const conductor::SpawnContext& context) {
+            return Position{
+                static_cast<double>(context.index),
+                0.0,
+                0.0
+            };
+        }
+    );
+
+    world.spawn_entities(3, config);
+
+    world.spawn_entities(3, config);
+
+    for(std::size_t i = 0; i < 6; ++i) {
+        conductor::Entity entity = world.get_entity(i);
+
+        auto position = world.get_component<Position>(entity);
+
+        const double expected =
+            static_cast<double>(i < 3 ? i : i - 3);
+
+        REQUIRE(position->x == expected);
+    }
 }

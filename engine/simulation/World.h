@@ -18,6 +18,8 @@
 #include "scheduler/Scheduler.h"
 
 namespace conductor {
+    class SpawnConfig;
+    
     namespace detail {
         template<typename Query>
         struct WorldQueryBinder;
@@ -49,6 +51,9 @@ namespace conductor {
         template<Component T>
         void add_component(Entity entity, T& component);
 
+        template<Component T>
+        T *get_component(Entity entity);
+
         template<System T>
         Scheduler::SystemHandle add_system(
             std::string name,
@@ -62,6 +67,8 @@ namespace conductor {
         Entity create_entity();
         Entity get_entity(size_t index);
         void destroy_entity(Entity entity);
+
+        void spawn_entities(std::size_t count, const SpawnConfig& config);
 
         void update(double delta);
 
@@ -113,6 +120,12 @@ namespace conductor {
 
         ComponentStorage<T>& storage = m_storages.get<T>();
         storage.add(entity, component);
+    }
+
+    template<Component T>
+    T *World::get_component(Entity entity) {
+        auto& storage = m_storages.get<T>();
+        return storage.get(entity);
     }
 
     template<System T>

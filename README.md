@@ -521,4 +521,4 @@ Some goals of v0.2 include:
  - [X] Application should own a `Random` instance, there should no longer be a need for an external random number generator.
  - [X] Deterministic `SimulationClock` execution. `SimulationClock` should increment deterministically regardless of time scale.
  - [X] `Application` should become configurable. There should be no reason to inherit a new `Application` class for every application instance.
- - [ ] Configurable entity creation. A user should be able to configure 1, 100, or 10,000 drones without having to create them with an explicit loop.
+ - [X] Configurable entity creation. A user should be able to configure 1, 100, or 10,000 drones without having to create them with an explicit loop.

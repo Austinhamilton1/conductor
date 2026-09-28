@@ -1,8 +1,13 @@
 #include "Simulation.h"
 
+#include "simulation/SpawnConfig.h"
+
 int main() {
+    constexpr int num_drones = 10;
+    constexpr double frequency = 10.0;
+    
     conductor::ApplicationConfig config{
-        .duration = 10.0,
+        .duration = 20.0,
         .time_scale = 10000.0,
         .step_size = 1.0 / 60.0,
         .seed = 12345
@@ -17,23 +22,29 @@ int main() {
     app.world().register_component<SensorData>();
     app.world().register_component<DroneStatus>();
 
-    for(int i = 0; i < num_drones; i++) {
-        conductor::Entity e = app.world().create_entity();
+    conductor::SpawnConfig spawner;
+    spawner.component<Position>(
+        [](const conductor::SpawnContext& ctx) {
+            return Position{
+                -10.0,
+                2.0 * ctx.index
+            };
+        }
+    )
+    .component<Velocity>(Velocity{})
+    .component<Target>(
+        [](const conductor::SpawnContext& ctx) {
+            return Target{
+                10.0,
+                2.0 * ctx.index
+            };
+        }
+    )
+    .component<Battery>(Battery{})
+    .component<SensorData>(SensorData{})
+    .component<DroneStatus>(DroneStatus{});
 
-        Position p{-10.0, 2.0 * i};
-        Velocity v{};
-        Target t{10.0, 2.0 * i};
-        Battery b{};
-        SensorData s{};
-        DroneStatus st{};
-
-        app.world().add_component(e, p);
-        app.world().add_component(e, v);
-        app.world().add_component(e, t);
-        app.world().add_component(e, b),
-        app.world().add_component(e, s);
-        app.world().add_component(e, st);
-    }
+    app.world().spawn_entities(num_drones, spawner);
 
     auto sensor = app.world().add_system(
         "sensor",
@@ -78,6 +89,7 @@ int main() {
     );
 
     steering.depends_on(integration);
+    telemetry.depends_on(removal);
 
     app.world().finalize();
 
