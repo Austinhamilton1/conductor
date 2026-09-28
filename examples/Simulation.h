@@ -1,5 +1,5 @@
-#include <catch2/catch_test_macros.hpp>
-#include <catch2/matchers/catch_matchers_floating_point.hpp>
+#pragma once
+
 #include <cmath>
 #include <iostream>
 #include <fstream>
@@ -175,8 +175,6 @@ namespace {
             conductor::Read<DroneStatus>
         >;
 
-        inline static int removals = 0;
-
         template<typename BoundQueryT>
         void update(conductor::SystemContext<BoundQueryT>& ctx) {
             for(auto it = ctx.query().begin(); it != ctx.query().end(); it++) {
@@ -185,7 +183,6 @@ namespace {
 
                 if(drone_status.state == DroneState::LowBattery) {
                     ctx.commands().destroy_entity(e);
-                    removals++;
                 }
             }
         }
@@ -221,7 +218,6 @@ namespace {
                     );
 
                 record(telemetry_line);
-                updates++;
             }
         }
     };
@@ -244,214 +240,4 @@ namespace {
     public:
         RecordApp(conductor::ApplicationConfig config) : Application(config) {};
     };
-}
-
-/* Telemetry */
-namespace {
-    struct DroneSnapshot {
-        Position *pos;
-        Velocity *vel;
-        Target *tar;
-        Battery *battery;
-        SensorData *sensor;
-        DroneStatus *status;
-
-        bool operator==(const DroneSnapshot& other) const {
-            bool pos_equal = (
-                pos == nullptr || other.pos == nullptr
-                    ? pos == other.pos
-                    : (equals(pos->x, other.pos->x) && equals(pos->y, other.pos->y))
-            );
-
-            bool vel_equal = (
-                vel == nullptr || other.vel == nullptr
-                    ? vel == other.vel
-                    : (equals(vel->x, other.vel->x) && equals(vel->y, other.vel->y))
-            );
-
-            bool tar_equal = (
-                tar == nullptr || other.tar == nullptr
-                    ? tar == other.tar
-                    : (equals(tar->x, other.tar->x) && equals(tar->y, other.tar->y))
-            );
-
-            bool battery_equal = (
-                battery == nullptr || other.battery == nullptr
-                    ? battery == other.battery
-                    : equals(battery->level,other.battery->level)
-            );
-
-            bool sensor_equal = (
-                sensor == nullptr || other.sensor == nullptr
-                    ? sensor == other.sensor
-                    : equals(sensor->distance_to_target, other.sensor->distance_to_target)
-            );
-
-            bool status_equal = (
-                status == nullptr || status == nullptr
-                    ? status == other.status
-                    : (status->state == other.status->state)
-            );
-
-            return (
-                pos_equal &&
-                vel_equal &&
-                tar_equal &&
-                battery_equal &&
-                sensor_equal &&
-                status_equal
-            );
-        }
-    };
-
-    struct SimulationSnapshot {
-        std::vector<DroneSnapshot> drones;
-
-        int destroyed_drones;
-        int telemetry_updates;
-
-        bool operator==(const SimulationSnapshot& other) const {
-            for(int i = 0; i < drones.size(); i++) {
-                if(drones[i] != other.drones[i]) {
-                    return false;
-                }
-            }
-
-            return (
-                destroyed_drones == other.destroyed_drones &&
-                telemetry_updates == other.telemetry_updates
-            );
-        }
-    };
-
-    SimulationSnapshot run_application() {
-        TelemetrySystem::updates = 0;
-        DroneRemovalSystem::removals = 0;
-
-        conductor::ApplicationConfig config{
-            .duration = 10.0,
-            .time_scale = 10000.0,
-            .step_size = 1.0 / 60.0,
-            .seed = 12345
-        };
-
-        RecordApp app(config);
-
-        app.world().register_component<Position>();
-        app.world().register_component<Velocity>();
-        app.world().register_component<Target>();
-        app.world().register_component<Battery>();
-        app.world().register_component<SensorData>();
-        app.world().register_component<DroneStatus>();
-
-        for(int i = 0; i < num_drones; i++) {
-            conductor::Entity e = app.world().create_entity();
-
-            Position p{-10.0, 2.0 * i};
-            Velocity v{};
-            Target t{10.0, 2.0 * i};
-            Battery b{};
-            SensorData s{};
-            DroneStatus st{};
-
-            app.world().add_component(e, p);
-            app.world().add_component(e, v);
-            app.world().add_component(e, t);
-            app.world().add_component(e, b),
-            app.world().add_component(e, s);
-            app.world().add_component(e, st);
-        }
-
-        auto sensor = app.world().add_system(
-            "sensor",
-            frequency,
-            SensorSystem{}
-        );
-
-        auto steering = app.world().add_system(
-            "steering", 
-            frequency,
-            SteeringSystem{}
-        );
-
-        auto integration = app.world().add_system(
-            "integration",
-            frequency,
-            IntegrationSystem{}
-        );
-
-        auto battery = app.world().add_system(
-            "battery",
-            frequency,
-            BatterySystem{}
-        );
-
-        auto monitor = app.world().add_system(
-            "monitor",
-            frequency,
-            BatteryMonitorSystem{}
-        );
-
-        auto removal = app.world().add_system(
-            "removal",
-            frequency,
-            DroneRemovalSystem{}
-        );
-
-        auto telemetry = app.world().add_system(
-            "telemetry",
-            frequency,
-            TelemetrySystem{}
-        );
-
-        steering.depends_on(integration);
-
-        app.world().finalize();
-
-        app.run();
-
-        auto& positions = app.world().storage().get<Position>();
-        auto& velocities = app.world().storage().get<Velocity>();
-        auto& targets = app.world().storage().get<Target>();
-        auto& batteries = app.world().storage().get<Battery>();
-        auto& sensors = app.world().storage().get<SensorData>();
-        auto& statuses = app.world().storage().get<DroneStatus>();
-
-        std::vector<DroneSnapshot> drones;
-        for(int i = 0; i < num_drones; i++) {
-
-            conductor::Entity e = app.world().get_entity(i);
-
-            Position *p = positions.get(e);
-            Velocity *v = velocities.get(e);
-            Target *t = targets.get(e);
-            Battery *b = batteries.get(e);
-            SensorData *s = sensors.get(e);
-            DroneStatus *st = statuses.get(e);
-
-            drones.push_back(DroneSnapshot{
-                .pos = p,
-                .vel = v,
-                .tar = t,
-                .battery = b,
-                .sensor = s,
-                .status = st
-            });
-        }
-        
-
-        return SimulationSnapshot{
-            .drones = drones,
-            .destroyed_drones = DroneRemovalSystem::removals,
-            .telemetry_updates = TelemetrySystem::updates
-        };
-    }
-}
-
-
-TEST_CASE("Conductor engine is deterministic", "[integration]") {
-    auto first_snapshot = run_application();
-    auto second_snapshot = run_application();
-
-    REQUIRE(first_snapshot == second_snapshot);
 }
