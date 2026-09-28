@@ -79,6 +79,7 @@ namespace conductor {
         const SimulationClock& clock() const;
 
     private:
+        Random& m_rand;
         EntityManager m_entity_manager;
         ComponentRegistry m_components;
         ComponentStorageRegistry m_storages;
@@ -86,7 +87,6 @@ namespace conductor {
         CommandQueue m_commands;
         Scheduler m_scheduler;
         std::vector<Entity> m_entities;
-        Random& m_rand;
 
         bool m_finalized{false};
     };

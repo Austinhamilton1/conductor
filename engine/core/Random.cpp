@@ -5,7 +5,7 @@ namespace conductor {
     Random::Random() {
         std::random_device rd;
 
-        s = (rd() << 32) | rd();
+        s = (static_cast<uint64_t>(rd()) << 32) | rd();
         generator = std::mt19937_64(s);
     }
 

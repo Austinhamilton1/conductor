@@ -59,6 +59,8 @@ namespace {
 using namespace conductor;
 
 TEST_CASE("SystemExecutor provides functional query", "[ecs]") {
+    Random rand;
+
     MovementSystem::reset();
 
     ComponentStorage<Velocity> velocities;
@@ -100,15 +102,13 @@ TEST_CASE("SystemExecutor provides functional query", "[ecs]") {
         decltype(query)
     > executor(
         MovementSystem{},
-        std::move(query)
+        std::move(query),
+        rand
     );
-
-    Random rand;
 
     executor.execute(
         commands,
-        0.5,
-        rand
+        0.5
     );
 
     REQUIRE(MovementSystem::executions == 1);

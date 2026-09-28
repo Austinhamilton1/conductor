@@ -509,3 +509,15 @@ The long-term objective is to provide a platform where building a sophisticated 
 Instead, the infrastructure should disappear into the background.
 
 **The robots, the environment, the communication network, and the coordination algorithms should be the interesting part.**
+
+---
+
+## v0.2 Vision
+
+Version 0.2 of Conductor should build upon v0.1. The release of v0.1 brought with it the initial simulation engine; however this engine is only a small part of the Conductor Simulator vision. Version 0.2 will streamline some features of v0.1 and begin to forge the user-facing API, making Conductor a better product for users.
+
+Some goals of v0.2 include:
+
+ - [X] Application should own a `Random` instance, there should no longer be a need for an external random number generator.
+ - [ ] `Application` should become configurable. There should be no reason to inherit a new `Application` class for every application instance.
+ - [ ] Configurable entity creation. A user should be able to configure 1, 100, or 10,000 drones without having to create them with an explicit loop.

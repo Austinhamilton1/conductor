@@ -34,13 +34,15 @@ namespace {
 }
 
 TEST_CASE("World can be constructed", "[simulation]") {
-    conductor::World world;
+    conductor::Random rand;
+    conductor::World world(rand);
 
     REQUIRE_FALSE(false);
 }
 
 TEST_CASE("World creates entities", "[simulation]") {
-    conductor::World world;
+    conductor::Random rand;
+    conductor::World world(rand);
 
     auto entity1 = world.create_entity();
     auto entity2 = world.create_entity();
@@ -51,7 +53,8 @@ TEST_CASE("World creates entities", "[simulation]") {
 }
 
 TEST_CASE("World destroys entities", "[simulation]") {
-    conductor::World world;
+    conductor::Random rand;
+    conductor::World world(rand);
 
     auto entity = world.create_entity();
 
@@ -63,7 +66,8 @@ TEST_CASE("World destroys entities", "[simulation]") {
 }
 
 TEST_CASE("World registers components", "[simulation]") {
-    conductor::World world;
+    conductor::Random rand;
+    conductor::World world(rand);
 
     world.register_component<Position>();
     world.register_component<Velocity>();
@@ -75,7 +79,8 @@ TEST_CASE("World registers components", "[simulation]") {
 }
 
 TEST_CASE("World creates component storage", "[simulation]") {
-    conductor::World world;
+    conductor::Random rand;
+    conductor::World world(rand);
 
     world.register_component<Position>();
 
@@ -85,7 +90,8 @@ TEST_CASE("World creates component storage", "[simulation]") {
 }
 
 TEST_CASE("World adds components to entities", "[simulation]") {
-    conductor::World world;
+    conductor::Random rand;
+    conductor::World world(rand);
 
     world.register_component<Position>();
 
@@ -111,7 +117,8 @@ TEST_CASE("World adds components to entities", "[simulation]") {
 }
 
 TEST_CASE("World can add a system", "[simulation]") {
-    conductor::World world;
+    conductor::Random rand;
+    conductor::World world(rand);
 
     world.register_component<Position>();
     world.register_component<Velocity>();
@@ -126,7 +133,8 @@ TEST_CASE("World can add a system", "[simulation]") {
 }
 
 TEST_CASE("World updates systems", "[simulation]") {
-    conductor::World world;
+    conductor::Random rand;
+    conductor::World world(rand);
 
     world.register_component<Position>();
     world.register_component<Velocity>();
@@ -167,7 +175,8 @@ TEST_CASE("World updates systems", "[simulation]") {
 }
 
 TEST_CASE("World prevents component registration after finalization", "[simulation]") {
-    conductor::World world;
+    conductor::Random rand;
+    conductor::World world(rand);
 
     world.register_component<Position>();
     world.finalize();
@@ -179,7 +188,8 @@ TEST_CASE("World prevents component registration after finalization", "[simulati
 }
 
 TEST_CASE("World prevents adding systems after finalization", "[simulation]") {
-    conductor::World world;
+    conductor::Random rand;
+    conductor::World world(rand);
 
     world.register_component<Position>();
     world.register_component<Velocity>();
@@ -197,7 +207,8 @@ TEST_CASE("World prevents adding systems after finalization", "[simulation]") {
 }
 
 TEST_CASE("World prevents entity creation after finalization", "[simulation]") {
-    conductor::World world;
+    conductor::Random rand;
+    conductor::World world(rand);
 
     world.finalize();
 
@@ -208,7 +219,8 @@ TEST_CASE("World prevents entity creation after finalization", "[simulation]") {
 }
 
 TEST_CASE("World prevents entity destruction after finalization", "[simulation]") {
-    conductor::World world;
+    conductor::Random rand;
+    conductor::World world(rand);
 
     auto entity = world.create_entity();
 

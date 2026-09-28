@@ -1,6 +1,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include <stdexcept>
 
+#include "core/Random.h"
 #include "runtime/Application.h"
 #include "TestComponents.h"
 
@@ -60,7 +61,8 @@ TEST_CASE("Plugin can register components", "[plugins]") {
 }
 
 TEST_CASE("Plugin system executes during simulation", "[plugins]") {
-    conductor::World world;
+    conductor::Random rand;
+    conductor::World world(rand);
 
     conductor::PluginManager plugins;
 

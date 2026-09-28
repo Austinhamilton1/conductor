@@ -127,6 +127,7 @@ TEST_CASE("Scheduler executes systems when due", "[scheduler]") {
 
     CommandQueue commands;
     SimulationClock clock;
+	Random rand;
 
     Scheduler scheduler(
         commands,
@@ -145,7 +146,8 @@ TEST_CASE("Scheduler executes systems when due", "[scheduler]") {
             "Execution",
             10.0,
             ExecutionSystem{},
-            std::move(query)
+            std::move(query),
+            rand
         );
 
     REQUIRE(handle.valid());
@@ -168,6 +170,7 @@ TEST_CASE("Scheduler accumulates partial intervals", "[scheduler]") {
 
     CommandQueue commands;
     SimulationClock clock;
+	Random rand;
 
     Scheduler scheduler(
         commands,
@@ -185,7 +188,8 @@ TEST_CASE("Scheduler accumulates partial intervals", "[scheduler]") {
         "Execution",
         10.0,
         ExecutionSystem{},
-        std::move(query)
+        std::move(query),
+        rand
     );
 
     scheduler.update(0.03);
@@ -208,6 +212,7 @@ TEST_CASE("Scheduler executes multiple intervals from large delta", "[scheduler]
 
     CommandQueue commands;
     SimulationClock clock;
+	Random rand;
 
     Scheduler scheduler(
         commands,
@@ -225,7 +230,8 @@ TEST_CASE("Scheduler executes multiple intervals from large delta", "[scheduler]
         "Execution",
         10.0,
         ExecutionSystem{},
-        std::move(query)
+        std::move(query),
+        rand
     );
 
     scheduler.update(0.35);
@@ -240,6 +246,7 @@ TEST_CASE("Scheduler pauses and resumes systems", "[scheduler]") {
 
     CommandQueue commands;
     SimulationClock clock;
+	Random rand;
 
     Scheduler scheduler(
         commands,
@@ -258,7 +265,8 @@ TEST_CASE("Scheduler pauses and resumes systems", "[scheduler]") {
             "Execution",
             10.0,
             ExecutionSystem{},
-            std::move(query)
+            std::move(query),
+            rand
         );
 
     handle.pause();
@@ -283,6 +291,7 @@ TEST_CASE("Cancelling a system prevents future execution", "[scheduler]") {
 
     CommandQueue commands;
     SimulationClock clock;
+	Random rand;
 
     Scheduler scheduler(
         commands,
@@ -301,7 +310,8 @@ TEST_CASE("Cancelling a system prevents future execution", "[scheduler]") {
             "Execution",
             10.0,
             ExecutionSystem{},
-            std::move(query)
+            std::move(query),
+            rand
         );
 
     REQUIRE(handle.valid());
@@ -325,6 +335,7 @@ TEST_CASE("Scheduler respects system dependencies", "[scheduler]") {
 
     CommandQueue commands;
     SimulationClock clock;
+	Random rand;
 
     Scheduler scheduler(
         commands,
@@ -348,7 +359,8 @@ TEST_CASE("Scheduler respects system dependencies", "[scheduler]") {
             "A",
             60.0,
             OrderSystemA{},
-            std::move(query_a)
+            std::move(query_a),
+            rand
         );
 
     auto b =
@@ -356,7 +368,8 @@ TEST_CASE("Scheduler respects system dependencies", "[scheduler]") {
             "B",
             60.0,
             OrderSystemB{},
-            std::move(query_b)
+            std::move(query_b),
+            rand
         );
 
     REQUIRE(
@@ -382,6 +395,7 @@ TEST_CASE("System dependency requires parent execution", "[scheduler]") {
 
     CommandQueue commands;
     SimulationClock clock;
+	Random rand;
 
     Scheduler scheduler(
         commands,
@@ -405,7 +419,8 @@ TEST_CASE("System dependency requires parent execution", "[scheduler]") {
             "A",
             60.0,
             OrderSystemA{},
-            std::move(query_a)
+            std::move(query_a),
+            rand
         );
 
     auto b =
@@ -413,7 +428,8 @@ TEST_CASE("System dependency requires parent execution", "[scheduler]") {
             "B",
             120.0,
             OrderSystemB{},
-            std::move(query_b)
+            std::move(query_b),
+            rand
         );
 
     REQUIRE(
@@ -442,6 +458,7 @@ TEST_CASE("Failed system enters failed state", "[scheduler]") {
 
     CommandQueue commands;
     SimulationClock clock;
+	Random rand;
 
     Scheduler scheduler(
         commands,
@@ -460,7 +477,8 @@ TEST_CASE("Failed system enters failed state", "[scheduler]") {
             "Failure",
             60.0,
             FailingSystem{},
-            std::move(query)
+            std::move(query),
+            rand
         );
 
     REQUIRE_THROWS(
@@ -491,6 +509,7 @@ TEST_CASE("Failed system does not satisfy dependencies", "[scheduler]") {
 
     CommandQueue commands;
     SimulationClock clock;
+	Random rand;
 
     Scheduler scheduler(
         commands,
@@ -514,7 +533,8 @@ TEST_CASE("Failed system does not satisfy dependencies", "[scheduler]") {
             "Parent",
             60.0,
             FailingSystem{},
-            std::move(parent_query)
+            std::move(parent_query),
+            rand
         );
 
     auto child =
@@ -522,7 +542,8 @@ TEST_CASE("Failed system does not satisfy dependencies", "[scheduler]") {
             "Child",
             60.0,
             DependentSystem{},
-            std::move(child_query)
+            std::move(child_query),
+            rand
         );
 
     REQUIRE(

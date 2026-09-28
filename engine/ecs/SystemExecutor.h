@@ -21,21 +21,22 @@ namespace conductor {
     public:
         SystemExecutor(
             T system,
-            BoundQueryT query
+            BoundQueryT query,
+            Random& rand
         )
             : m_system(std::move(system)),
-              m_query(std::move(query)) {}
+              m_query(std::move(query)),
+              m_rand(rand) {}
 
         void execute(
             CommandQueue& commands,
-            double delta_seconds,
-            Random& rand
+            double delta_seconds
         ) override {
             SystemContext<BoundQueryT> context(
                 m_query,
                 commands,
                 delta_seconds,
-                rand
+                m_rand
             );
 
             m_system.update(context);
@@ -60,5 +61,6 @@ namespace conductor {
     private:
         T m_system;
         BoundQueryT m_query;
+        Random& m_rand;
     };
 }

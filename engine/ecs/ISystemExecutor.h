@@ -8,6 +8,6 @@ namespace conductor {
     public:
         virtual ~ISystemExecutor() = default;
 
-        virtual void execute(CommandQueue& commands, double delta_seconds, Random& rand) = 0;
+        virtual void execute(CommandQueue& commands, double delta_seconds) = 0;
     };
 }
