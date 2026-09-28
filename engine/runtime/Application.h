@@ -2,7 +2,7 @@
 
 #include <memory>
 
-#include "ApplicationContext.h"
+#include "ApplicationConfig.h"
 #include "core/Clock.h"
 #include "core/SimulationClock.h"
 #include "core/NonCopyable.h"
@@ -20,7 +20,7 @@ namespace conductor {
         virtual void shutdown() {};
 
     public:
-        Application() : m_world(m_rand) {};
+        Application(ApplicationConfig config);
         virtual ~Application() = default;
 
         Clock& clock();
@@ -40,10 +40,14 @@ namespace conductor {
         // is destroyed before this (plugin lifecycles)
         PluginManager m_plugins;
         
+        double m_duration;
+        double m_step_size;
+
+        Random m_rand;
+        World m_world;
         Clock m_clock;
         SimulationClock m_simulation_clock;
         EventBus m_events;
-        World m_world;
-        Random m_rand;
+
     };
 }

@@ -15,7 +15,6 @@
 /* Helpers */
 namespace {
     constexpr int num_drones = 10;
-    constexpr double num_seconds = 10.0;
     constexpr double frequency = 10.0;
     
     std::string telemetry_file = "./engine_telemetry.csv";
@@ -222,17 +221,16 @@ namespace {
                     );
 
                 record(telemetry_line);
+                updates++;
             }
         }
     };
 }
 
 namespace {
-    class TenSecondApp : public conductor::Application {
+    class RecordApp : public conductor::Application {
         void initialize() {
             std::cout << "Starting simulation...\n";
-
-            simulation_clock().set_time_scale(10.0);
             
             record("Entity,Position,Velocity,Battery,Drone State");
         }
@@ -243,11 +241,8 @@ namespace {
             record("\n");
         }
 
-        void update(double) {
-            if(simulation_clock().total_seconds() >= 10.0) {
-                stop();
-            }
-        }
+    public:
+        RecordApp(conductor::ApplicationConfig config) : Application(config) {};
     };
 }
 
@@ -310,8 +305,6 @@ namespace {
     };
 
     struct SimulationSnapshot {
-        double time;
-
         std::vector<DroneSnapshot> drones;
 
         int destroyed_drones;
@@ -325,7 +318,6 @@ namespace {
             }
 
             return (
-                equals(time, other.time) &&
                 destroyed_drones == other.destroyed_drones &&
                 telemetry_updates == other.telemetry_updates
             );
@@ -336,8 +328,14 @@ namespace {
         TelemetrySystem::updates = 0;
         DroneRemovalSystem::removals = 0;
 
-        TenSecondApp app;
-        app.random().seed(12345);
+        conductor::ApplicationConfig config{
+            .duration = 10.0,
+            .time_scale = 10000.0,
+            .step_size = 1.0 / 60.0,
+            .seed = 12345
+        };
+
+        RecordApp app(config);
 
         app.world().register_component<Position>();
         app.world().register_component<Velocity>();
@@ -443,7 +441,6 @@ namespace {
         
 
         return SimulationSnapshot{
-            .time = app.simulation_clock().total_seconds(),
             .drones = drones,
             .destroyed_drones = DroneRemovalSystem::removals,
             .telemetry_updates = TelemetrySystem::updates

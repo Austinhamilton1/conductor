@@ -6,7 +6,14 @@
 #include "TestComponents.h"
 
 TEST_CASE("Plugin can be loaded", "[plugins]") {
-    conductor::Application app;
+    conductor::ApplicationConfig config{
+        .duration = 10.0,
+        .time_scale = 1.0,
+        .step_size = 1.0 / 60.0,
+        .seed = 12345
+    };
+
+    conductor::Application app(config);
 
     REQUIRE_FALSE(app.plugins().loaded("hello"));
 
@@ -21,7 +28,14 @@ TEST_CASE("Plugin can be loaded", "[plugins]") {
 }
 
 TEST_CASE("Duplicate plugin names are rejected", "[plugins]") {
-    conductor::Application app;
+    conductor::ApplicationConfig config{
+        .duration = 10.0,
+        .time_scale = 1.0,
+        .step_size = 1.0 / 60.0,
+        .seed = 12345
+    };
+
+    conductor::Application app(config);
 
     app.plugins().load(
         TEST_PLUGIN_PATH,
@@ -40,7 +54,14 @@ TEST_CASE("Duplicate plugin names are rejected", "[plugins]") {
 }
 
 TEST_CASE("Plugin can register components", "[plugins]") {
-    conductor::Application app;
+    conductor::ApplicationConfig config{
+        .duration = 10.0,
+        .time_scale = 1.0,
+        .step_size = 1.0 / 60.0,
+        .seed = 12345
+    };
+
+    conductor::Application app(config);
 
     app.plugins().load(
         TEST_PLUGIN_PATH,
@@ -61,6 +82,13 @@ TEST_CASE("Plugin can register components", "[plugins]") {
 }
 
 TEST_CASE("Plugin system executes during simulation", "[plugins]") {
+    conductor::ApplicationConfig config{
+        .duration = 10.0,
+        .time_scale = 1.0,
+        .step_size = 1.0 / 60.0,
+        .seed = 12345
+    };
+
     conductor::Random rand;
     conductor::World world(rand);
 
