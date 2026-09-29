@@ -1,0 +1,12 @@
+simulation:
+  duration: 10.0
+  time_scale: 1000.0
+  step_size: 0.01666667
+  seed: 12345
+
+plugins:
+  - ../../build/debug/lib/libdrone_sim.so
+
+entities:
+  - type: drone
+    count: 10

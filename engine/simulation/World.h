@@ -1,5 +1,6 @@
 #pragma once
 
+#include <functional>
 #include <stdexcept>
 #include <string>
 #include <utility>
@@ -18,7 +19,32 @@
 #include "scheduler/Scheduler.h"
 
 namespace conductor {
-    class SpawnConfig;
+    class World;
+    
+    struct SpawnContext {
+        Entity entity;
+        std::size_t index;
+        Random& random;
+    };
+
+    class SpawnConfig {
+    public:
+        template<Component T>
+        SpawnConfig& component(T value);
+
+        template<Component T, typename F>
+        requires std::invocable<F&, const SpawnContext&> &&
+                 std::convertible_to<
+                    std::invoke_result_t<F&, const SpawnContext&>,
+                    T
+                 >
+        SpawnConfig& component(F initializer);
+
+        void initialize(World& world, Entity entity, SpawnContext& context) const;
+
+    private:
+        std::vector<std::function<void(World&, Entity, SpawnContext&)>> m_initializers;
+    };
     
     namespace detail {
         template<typename Query>
@@ -68,7 +94,8 @@ namespace conductor {
         Entity get_entity(size_t index);
         void destroy_entity(Entity entity);
 
-        void spawn_entities(std::size_t count, const SpawnConfig& config);
+        void register_spawner(const std::string& name, SpawnConfig config);
+        void spawn_entities(std::size_t count, const std::string& name);
 
         void update(double delta);
 
@@ -94,9 +121,46 @@ namespace conductor {
         CommandQueue m_commands;
         Scheduler m_scheduler;
         std::vector<Entity> m_entities;
+        std::unordered_map<std::string, SpawnConfig> m_spawners;
 
         bool m_finalized{false};
     };
+
+    template<Component T>
+    SpawnConfig& SpawnConfig::component(T value) {
+        m_initializers.emplace_back(
+            [value = std::move(value)](
+                World& world,
+                Entity entity,
+                SpawnContext&
+            ) mutable {
+                world.add_component<T>(entity, value);
+            }
+        );
+
+        return *this;
+    }
+
+    template<Component T, typename F>
+    requires std::invocable<F&, const SpawnContext&> &&
+             std::convertible_to<
+                std::invoke_result_t<F&, const SpawnContext&>,
+                T
+             >
+    SpawnConfig& SpawnConfig::component(F initializer) {
+        m_initializers.emplace_back(
+            [initializer = std::move(initializer)](
+                World& world,
+                Entity entity,
+                SpawnContext& context
+            ) mutable {
+                T value = initializer(context);
+                world.add_component<T>(entity, value);
+            }
+        );
+
+        return *this;
+    }
 
     template<Component T>
     void World::register_component() {

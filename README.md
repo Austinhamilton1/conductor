@@ -522,3 +522,18 @@ Some goals of v0.2 include:
  - [X] Deterministic `SimulationClock` execution. `SimulationClock` should increment deterministically regardless of time scale.
  - [X] `Application` should become configurable. There should be no reason to inherit a new `Application` class for every application instance.
  - [X] Configurable entity creation. A user should be able to configure 1, 100, or 10,000 drones without having to create them with an explicit loop.
+
+ ---
+
+ ## v0.3 Vision
+
+ Version 0.3 of Conductor should create the first standalone Conductor Simulator. The main goal of this version of the simulator is to create a single application that users can link against without recompilation. This version is the first step of converting Conductor from a generic C++ framework to an actual product.
+
+ Some goals of v0.3 include:
+
+ - [X] Compilation of a single, generic `conductor` application that can run multiple simulation configurations. 
+ - [X] Plugins become first-class objects of the simulation. Users should be able to create plugins instead of recompiling the conductor application.
+ - [X] YAML configuration for runtime `Application`.
+ - [X] YAML configuration for entity spawning.
+ - [X] YAML configuration for plugin loading.
+ - [X] Relative paths from YAML configuration.

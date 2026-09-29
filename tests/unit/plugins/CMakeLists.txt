@@ -8,12 +8,6 @@ PRIVATE
     conductor_runtime
 )
 
-target_include_directories(test_plugin
-PRIVATE
-    ${PROJECT_SOURCE_DIR}/engine
-    ${CMAKE_CURRENT_SOURCE_DIR}
-)
-
 add_executable(plugin_tests
     TestPlugin.cpp
 )
@@ -23,12 +17,6 @@ PRIVATE
     conductor_runtime
     conductor_simulation
     Catch2::Catch2WithMain
-)
-
-target_include_directories(plugin_tests
-PRIVATE
-    ${PROJECT_SOURCE_DIR}/engine
-    ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
 add_dependencies(plugin_tests test_plugin)
