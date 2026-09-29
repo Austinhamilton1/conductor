@@ -224,7 +224,7 @@ namespace {
 
                 const std::string telemetry_line = 
                     std::format(
-                        "{},({}; {}),({}; {}),({}; {}),({}; {}),{},{}",
+                        "{},{},{},{},{},{},{},{},{},{},{}",
                         ctx.clock().total_seconds(),
                         e.index(),
                         e.generation(),
