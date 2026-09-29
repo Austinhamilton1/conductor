@@ -5,6 +5,15 @@
 #include <iostream>
 
 namespace conductor {
+    Application::Application(ApplicationConfig config)
+        : m_duration(config.duration),
+          m_step_size(config.step_size),
+          m_rand(config.seed),
+          m_world(m_rand) 
+    {
+        m_simulation_clock.set_time_scale(config.time_scale);
+    }
+
     Clock& Application::clock() {
         return m_clock;
     }
@@ -25,28 +34,42 @@ namespace conductor {
         return m_world;
     }
 
+    Random& Application::random() {
+        return m_rand;
+    }
+
     void Application::run() {
         m_running = true;
         
+        m_rand.seed(m_rand.get_seed());
         initialize();
 
         m_world.finalize();
 
         while(m_running) {
             m_clock.tick();
-            const double real_dt = m_clock.delta_seconds();
+            
+            m_simulation_clock.update(
+                m_clock.delta_seconds()
+            );
+            
+            while(m_simulation_clock.step_available() && m_running) {
+                const double dt =
+                    m_simulation_clock.consume_step();
 
-            m_simulation_clock.update(real_dt);
-            const double simulation_dt = m_simulation_clock.delta_seconds();
+                // Process events from last frame
+                m_events.process();
 
-            // Process events from last frame
-            m_events.process();
+                // Application manages global updates
+                update(dt);
 
-            // Application manages global updates
-            update(simulation_dt);
+                // Update simulation world (ECS)
+                m_world.update(dt);
 
-            // Update simulation world (ECS)
-            m_world.update(simulation_dt);
+                if(m_simulation_clock.total_seconds() >= m_duration) {
+                    stop();
+                }
+            }
         }
 
         m_plugins.shutdown(m_world);

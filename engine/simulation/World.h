@@ -6,6 +6,7 @@
 
 #include "core/NonCopyable.h"
 #include "core/SimulationClock.h"
+#include "core/Random.h"
 #include "ecs/ComponentType.h"
 #include "ecs/SystemType.h"
 #include "ecs/Entity.h"
@@ -17,6 +18,8 @@
 #include "scheduler/Scheduler.h"
 
 namespace conductor {
+    class SpawnConfig;
+    
     namespace detail {
         template<typename Query>
         struct WorldQueryBinder;
@@ -33,8 +36,9 @@ namespace conductor {
 
     class World : public NonCopyable {
     public:
-        World() 
-            : m_clock(), 
+        World(Random& rand) 
+            : m_rand(rand),
+              m_clock(), 
               m_commands(), 
               m_scheduler(m_commands, m_clock) {};
         
@@ -46,6 +50,9 @@ namespace conductor {
 
         template<Component T>
         void add_component(Entity entity, T& component);
+
+        template<Component T>
+        T *get_component(Entity entity);
 
         template<System T>
         Scheduler::SystemHandle add_system(
@@ -60,6 +67,8 @@ namespace conductor {
         Entity create_entity();
         Entity get_entity(size_t index);
         void destroy_entity(Entity entity);
+
+        void spawn_entities(std::size_t count, const SpawnConfig& config);
 
         void update(double delta);
 
@@ -77,6 +86,7 @@ namespace conductor {
         const SimulationClock& clock() const;
 
     private:
+        Random& m_rand;
         EntityManager m_entity_manager;
         ComponentRegistry m_components;
         ComponentStorageRegistry m_storages;
@@ -112,6 +122,12 @@ namespace conductor {
         storage.add(entity, component);
     }
 
+    template<Component T>
+    T *World::get_component(Entity entity) {
+        auto& storage = m_storages.get<T>();
+        return storage.get(entity);
+    }
+
     template<System T>
     Scheduler::SystemHandle World::add_system(
         std::string name,
@@ -134,7 +150,8 @@ namespace conductor {
             std::move(name),
             frequency,
             std::move(system),
-            std::move(query)
+            std::move(query),
+            m_rand
         );
     }
 }

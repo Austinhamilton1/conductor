@@ -9,9 +9,10 @@ public:
     bool shutdown_called = false;
     int update_count = 0;
 
+    TestApplication(conductor::ApplicationConfig config) : Application(config) {}
+
 protected:
     void initialize() override {
-        simulation_clock().set_time_scale(2.0);
         initialized = true;
     }
 
@@ -29,7 +30,14 @@ protected:
 };
 
 TEST_CASE("Application initializes and shuts down", "[runtime]") {
-    TestApplication app;
+    conductor::ApplicationConfig config{
+        .duration = 10.0,
+        .time_scale = 2.0,
+        .step_size = 1.0 / 60.0,
+        .seed = 12345
+    };
+
+    TestApplication app(config);
 
     app.run();
 
@@ -38,7 +46,14 @@ TEST_CASE("Application initializes and shuts down", "[runtime]") {
 }
 
 TEST_CASE("Update is called", "[runtime]") {
-    TestApplication app;
+    conductor::ApplicationConfig config{
+        .duration = 10.0,
+        .time_scale = 2.0,
+        .step_size = 1.0 / 60.0,
+        .seed = 12345
+    };
+
+    TestApplication app(config);
 
     app.run();
 
@@ -47,7 +62,14 @@ TEST_CASE("Update is called", "[runtime]") {
 }
 
 TEST_CASE("Clock advances", "[runtime]") {
-    TestApplication app;
+    conductor::ApplicationConfig config{
+        .duration = 10.0,
+        .time_scale = 2.0,
+        .step_size = 1.0 / 60.0,
+        .seed = 12345
+    };
+
+    TestApplication app(config);
 
     double before = app.clock().total_seconds();
 
@@ -59,7 +81,14 @@ TEST_CASE("Clock advances", "[runtime]") {
 }
 
 TEST_CASE("Simulation clock advances", "[runtime]") {
-    TestApplication app;
+    conductor::ApplicationConfig config{
+        .duration = 10.0,
+        .time_scale = 2.0,
+        .step_size = 1.0 / 60.0,
+        .seed = 12345
+    };
+
+    TestApplication app(config);
 
     double before = app.simulation_clock().total_seconds();
 
@@ -71,7 +100,14 @@ TEST_CASE("Simulation clock advances", "[runtime]") {
 }
 
 TEST_CASE("Simulation time scale works", "[runtime]") {
-    TestApplication app;
+    conductor::ApplicationConfig config{
+        .duration = 10.0,
+        .time_scale = 2.0,
+        .step_size = 1.0 / 60.0,
+        .seed = 12345
+    };
+
+    TestApplication app(config);
 
     app.run();
 

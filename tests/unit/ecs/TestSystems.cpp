@@ -3,6 +3,7 @@
 
 #include "commands/CommandQueue.h"
 #include "core/SimulationClock.h"
+#include "core/Random.h"
 #include "ecs/Query.h"
 #include "ecs/SystemContext.h"
 #include "ecs/SystemExecutor.h"
@@ -58,6 +59,8 @@ namespace {
 using namespace conductor;
 
 TEST_CASE("SystemExecutor provides functional query", "[ecs]") {
+    Random rand;
+
     MovementSystem::reset();
 
     ComponentStorage<Velocity> velocities;
@@ -99,7 +102,8 @@ TEST_CASE("SystemExecutor provides functional query", "[ecs]") {
         decltype(query)
     > executor(
         MovementSystem{},
-        std::move(query)
+        std::move(query),
+        rand
     );
 
     executor.execute(

@@ -9,6 +9,7 @@
 #include "scheduler/Scheduler.h"
 #include "commands/CommandQueue.h"
 #include "core/SimulationClock.h"
+#include "core/Random.h"
 
 namespace {
     struct Position {
@@ -169,6 +170,7 @@ using namespace conductor;
 
 TEST_CASE("Scheduler creates a valid system handle", "[scheduler]") {
     SimulationClock clock;
+	Random rand;
     CommandQueue queue;
     Scheduler scheduler(queue, clock);
 
@@ -181,7 +183,8 @@ TEST_CASE("Scheduler creates a valid system handle", "[scheduler]") {
         "Movement",
         60.0,
         ExecutionSystem{},
-        query
+        query,
+        rand
     );
 
     REQUIRE(system.valid());
@@ -194,6 +197,7 @@ TEST_CASE("Scheduler creates a valid system handle", "[scheduler]") {
 
 TEST_CASE("Scheduler assigns unique system IDs", "[scheduler]") {
     SimulationClock clock;
+	Random rand;
     CommandQueue queue;
     Scheduler scheduler(queue, clock);
 
@@ -206,21 +210,24 @@ TEST_CASE("Scheduler assigns unique system IDs", "[scheduler]") {
         "First",
         60.0,
         ExecutionSystem{},
-        query
+        query,
+        rand
     );
 
     auto second = scheduler.schedule(
         "Second",
         60.0,
         ExecutionSystem{},
-        query
+        query,
+        rand
     );
 
     auto third = scheduler.schedule(
         "Third",
         60.0,
         ExecutionSystem{},
-        query
+        query,
+        rand
     );
 
     REQUIRE(first.id() != second.id());
@@ -231,6 +238,7 @@ TEST_CASE("Scheduler assigns unique system IDs", "[scheduler]") {
 
 TEST_CASE("Scheduler rejects zero frequency", "[scheduler]") {
     SimulationClock clock;
+	Random rand;
     CommandQueue queue;
     Scheduler scheduler(queue, clock);
 
@@ -244,7 +252,8 @@ TEST_CASE("Scheduler rejects zero frequency", "[scheduler]") {
             "Invalid",
             0.0,
             ExecutionSystem{},
-            query
+            query,
+            rand
         ),
         std::invalid_argument
     );
@@ -253,6 +262,7 @@ TEST_CASE("Scheduler rejects zero frequency", "[scheduler]") {
 
 TEST_CASE("Scheduler rejects negative frequency", "[scheduler]") {
     SimulationClock clock;
+	Random rand;
     CommandQueue queue;
     Scheduler scheduler(queue, clock);
 
@@ -266,7 +276,8 @@ TEST_CASE("Scheduler rejects negative frequency", "[scheduler]") {
             "Invalid",
             -60.0,
             ExecutionSystem{},
-            query
+            query,
+            rand
         ),
         std::invalid_argument
     );
@@ -279,6 +290,7 @@ TEST_CASE("Scheduler rejects negative frequency", "[scheduler]") {
 
 TEST_CASE("System does not execute before its interval", "[scheduler]") {
     SimulationClock clock;
+	Random rand;
     CommandQueue queue;
     Scheduler scheduler(queue, clock);
 
@@ -291,7 +303,8 @@ TEST_CASE("System does not execute before its interval", "[scheduler]") {
         "System",
         10.0,
         ExecutionSystem{},
-        query
+        query,
+        rand
     );
 
     // Interval = 0.1 seconds.
@@ -308,6 +321,7 @@ TEST_CASE("System does not execute before its interval", "[scheduler]") {
 
 TEST_CASE("System executes when its interval is reached", "[scheduler]") {
     SimulationClock clock;
+	Random rand;
     CommandQueue queue;
     Scheduler scheduler(queue, clock);
 
@@ -320,7 +334,8 @@ TEST_CASE("System executes when its interval is reached", "[scheduler]") {
         "System",
         10.0,
         ExecutionSystem{},
-        query
+        query,
+        rand
     );
 
     // Interval = 0.1 seconds.
@@ -333,6 +348,7 @@ TEST_CASE("System executes when its interval is reached", "[scheduler]") {
 
 TEST_CASE("System accumulates delta across updates", "[scheduler]") {
     SimulationClock clock;
+	Random rand;
     CommandQueue queue;
     Scheduler scheduler(queue, clock);
 
@@ -345,7 +361,8 @@ TEST_CASE("System accumulates delta across updates", "[scheduler]") {
         "System",
         10.0,
         ExecutionSystem{},
-        query
+        query,
+        rand
     );
 
     scheduler.update(0.03);
@@ -364,6 +381,7 @@ TEST_CASE("System accumulates delta across updates", "[scheduler]") {
 
 TEST_CASE("System can execute multiple times from accumulated delta", "[scheduler]") {
     SimulationClock clock;
+	Random rand;
     CommandQueue queue;
     Scheduler scheduler(queue, clock);
 
@@ -376,7 +394,8 @@ TEST_CASE("System can execute multiple times from accumulated delta", "[schedule
         "System",
         10.0,
         ExecutionSystem{},
-        query
+        query,
+        rand
     );
 
     // 0.35 seconds at 10 Hz means three executions
@@ -389,6 +408,7 @@ TEST_CASE("System can execute multiple times from accumulated delta", "[schedule
 
 TEST_CASE("System retains fractional accumulated time", "[scheduler]") {
     SimulationClock clock;
+	Random rand;
     CommandQueue queue;
     Scheduler scheduler(queue, clock);
 
@@ -401,7 +421,8 @@ TEST_CASE("System retains fractional accumulated time", "[scheduler]") {
         "System",
         10.0,
         ExecutionSystem{},
-        query
+        query,
+        rand
     );
 
     scheduler.update(0.35);
@@ -416,6 +437,7 @@ TEST_CASE("System retains fractional accumulated time", "[scheduler]") {
 
 TEST_CASE("System frequency can be changed", "[scheduler]") {
     SimulationClock clock;
+	Random rand;
     CommandQueue queue;
     Scheduler scheduler(queue, clock);
 
@@ -428,7 +450,8 @@ TEST_CASE("System frequency can be changed", "[scheduler]") {
         "System",
         10.0,
         ExecutionSystem{},
-        query
+        query,
+        rand
     );
 
     system.set_frequency(20.0);
@@ -441,6 +464,7 @@ TEST_CASE("System frequency can be changed", "[scheduler]") {
 
 TEST_CASE("Invalid frequency change throws", "[scheduler]") {
     SimulationClock clock;
+	Random rand;
     CommandQueue queue;
     Scheduler scheduler(queue, clock);
 
@@ -453,7 +477,8 @@ TEST_CASE("Invalid frequency change throws", "[scheduler]") {
         "System",
         60.0,
         ExecutionSystem{},
-        query
+        query,
+        rand
     );
 
     REQUIRE_THROWS_AS(
@@ -474,6 +499,7 @@ TEST_CASE("Invalid frequency change throws", "[scheduler]") {
 
 TEST_CASE("Paused system does not accumulate time", "[scheduler]") {
     SimulationClock clock;
+	Random rand;
     CommandQueue queue;
     Scheduler scheduler(queue, clock);
 
@@ -486,7 +512,8 @@ TEST_CASE("Paused system does not accumulate time", "[scheduler]") {
         "System",
         10.0,
         ExecutionSystem{},
-        query
+        query,
+        rand
     );
 
     system.pause();
@@ -501,6 +528,7 @@ TEST_CASE("Paused system does not accumulate time", "[scheduler]") {
 
 TEST_CASE("Resuming system allows scheduling to continue", "[scheduler]") {
     SimulationClock clock;
+	Random rand;
     CommandQueue queue;
     Scheduler scheduler(queue, clock);
 
@@ -513,7 +541,8 @@ TEST_CASE("Resuming system allows scheduling to continue", "[scheduler]") {
         "System",
         10.0,
         ExecutionSystem{},
-        query
+        query,
+        rand
     );
 
     system.pause();
@@ -534,6 +563,7 @@ TEST_CASE("Resuming system allows scheduling to continue", "[scheduler]") {
 
 TEST_CASE("Pausing preserves accumulated time", "[scheduler]") {
     SimulationClock clock;
+	Random rand;
     CommandQueue queue;
     Scheduler scheduler(queue, clock);
 
@@ -546,7 +576,8 @@ TEST_CASE("Pausing preserves accumulated time", "[scheduler]") {
         "System",
         10.0,
         ExecutionSystem{},
-        query
+        query,
+        rand
     );
 
     scheduler.update(0.05);
@@ -571,6 +602,7 @@ TEST_CASE("Pausing preserves accumulated time", "[scheduler]") {
 
 TEST_CASE("System can depend on another system", "[scheduler]") {
     SimulationClock clock;
+	Random rand;
     CommandQueue queue;
     Scheduler scheduler(queue, clock);
 
@@ -583,14 +615,16 @@ TEST_CASE("System can depend on another system", "[scheduler]") {
         "Physics",
         60.0,
         ExecutionSystem{},
-        query
+        query,
+        rand
     );
 
     auto child = scheduler.schedule(
         "Rendering",
         60.0,
         ExecutionSystem{},
-        query
+        query,
+        rand
     );
 
     REQUIRE(
@@ -602,6 +636,7 @@ TEST_CASE("System can depend on another system", "[scheduler]") {
 
 TEST_CASE("System cannot depend on itself", "[scheduler]") {
     SimulationClock clock;
+	Random rand;
     CommandQueue queue;
     Scheduler scheduler(queue, clock);
 
@@ -614,7 +649,8 @@ TEST_CASE("System cannot depend on itself", "[scheduler]") {
         "System",
         60.0,
         ExecutionSystem{},
-        query
+        query,
+        rand
     );
 
     REQUIRE(
@@ -626,6 +662,7 @@ TEST_CASE("System cannot depend on itself", "[scheduler]") {
 
 TEST_CASE("Duplicate dependency is rejected", "[scheduler]") {
     SimulationClock clock;
+	Random rand;
     CommandQueue queue;
     Scheduler scheduler(queue, clock);
 
@@ -638,14 +675,16 @@ TEST_CASE("Duplicate dependency is rejected", "[scheduler]") {
         "Parent",
         60.0,
         ExecutionSystem{},
-        query
+        query,
+        rand
     );
 
     auto child = scheduler.schedule(
         "Child",
         60.0,
         ExecutionSystem{},
-        query
+        query,
+        rand
     );
 
     REQUIRE(
@@ -662,6 +701,7 @@ TEST_CASE("Duplicate dependency is rejected", "[scheduler]") {
 
 TEST_CASE("Dependency between different schedulers is rejected", "[scheduler]") {
     SimulationClock first_clock;
+    Random rand;
     CommandQueue first_queue;
     Scheduler first(first_queue, first_clock);
 
@@ -678,14 +718,16 @@ TEST_CASE("Dependency between different schedulers is rejected", "[scheduler]") 
         "Parent",
         60.0,
         ExecutionSystem{},
-        query
+        query,
+        rand
     );
 
     auto child = second.schedule(
         "Child",
         60.0,
         ExecutionSystem{},
-        query
+        query,
+        rand
     );
 
     REQUIRE(
@@ -701,6 +743,7 @@ TEST_CASE("Dependency between different schedulers is rejected", "[scheduler]") 
 
 TEST_CASE("Child waits for parent generation", "[scheduler]") {
     SimulationClock clock;
+	Random rand;
     CommandQueue queue;
     Scheduler scheduler(queue, clock);
 
@@ -713,14 +756,16 @@ TEST_CASE("Child waits for parent generation", "[scheduler]") {
         "Parent",
         10.0,
         ExecutionSystem{},
-        query
+        query,
+        rand
     );
 
     auto child = scheduler.schedule(
         "Child",
         10.0,
         ExecutionSystem{},
-        query
+        query,
+        rand
     );
 
     REQUIRE(
@@ -740,6 +785,7 @@ TEST_CASE("Child waits for parent generation", "[scheduler]") {
 
 TEST_CASE("Child cannot execute twice without a new parent generation") { 
     SimulationClock clock;
+	Random rand;
     CommandQueue queue;
     Scheduler scheduler(queue, clock);
 
@@ -752,14 +798,16 @@ TEST_CASE("Child cannot execute twice without a new parent generation") {
         "Parent",
         10.0,
         ExecutionSystem{},
-        query
+        query,
+        rand
     );
 
     auto child = scheduler.schedule(
         "Child",
         10.0,
         ExecutionSystem{},
-        query
+        query,
+        rand
     );
 
     REQUIRE(
@@ -782,6 +830,7 @@ TEST_CASE("Child cannot execute twice without a new parent generation") {
 
 TEST_CASE("Dependency chain executes in generation order", "[scheduler]") {
     SimulationClock clock;
+	Random rand;
     CommandQueue queue;
     Scheduler scheduler(queue, clock);
 
@@ -794,21 +843,24 @@ TEST_CASE("Dependency chain executes in generation order", "[scheduler]") {
         "A",
         10.0,
         ExecutionSystem{},
-        query
+        query,
+        rand
     );
 
     auto b = scheduler.schedule(
         "B",
         10.0,
         ExecutionSystem{},
-        query
+        query,
+        rand
     );
 
     auto c = scheduler.schedule(
         "C",
         10.0,
         ExecutionSystem{},
-        query
+        query,
+        rand
     );
 
     REQUIRE(
@@ -831,6 +883,7 @@ TEST_CASE("Dependency chain executes in generation order", "[scheduler]") {
 
 TEST_CASE("System with multiple dependencies waits for all parents", "[scheduler]") {
     SimulationClock clock;
+	Random rand;
     CommandQueue queue;
     Scheduler scheduler(queue, clock);
 
@@ -843,21 +896,24 @@ TEST_CASE("System with multiple dependencies waits for all parents", "[scheduler
         "A",
         10.0,
         ExecutionSystem{},
-        query
+        query,
+        rand
     );
 
     auto b = scheduler.schedule(
         "B",
         20.0,
         ExecutionSystem{},
-        query
+        query,
+        rand
     );
 
     auto c = scheduler.schedule(
         "C",
         10.0,
         ExecutionSystem{},
-        query
+        query,
+        rand
     );
 
     REQUIRE(
@@ -898,6 +954,7 @@ TEST_CASE("System with multiple dependencies waits for all parents", "[scheduler
 
 TEST_CASE("Faster child waits for slower parent", "[scheduler]") {
     SimulationClock clock;
+	Random rand;
     CommandQueue queue;
     Scheduler scheduler(queue, clock);
 
@@ -910,14 +967,16 @@ TEST_CASE("Faster child waits for slower parent", "[scheduler]") {
         "Physics",
         20.0,
         ExecutionSystem{},
-        query
+        query,
+        rand
     );
 
     auto rendering = scheduler.schedule(
         "Rendering",
         60.0,
         ExecutionSystem{},
-        query
+        query,
+        rand
     );
 
     REQUIRE(
@@ -947,6 +1006,7 @@ TEST_CASE("Faster child waits for slower parent", "[scheduler]") {
 
 TEST_CASE("Slower child does not consume parent generation prematurely", "[scheduler]") {
     SimulationClock clock;
+	Random rand;
     CommandQueue queue;
     Scheduler scheduler(queue, clock);
 
@@ -959,14 +1019,16 @@ TEST_CASE("Slower child does not consume parent generation prematurely", "[sched
         "Physics",
         60.0,
         ExecutionSystem{},
-        query
+        query,
+        rand
     );
 
     auto ai = scheduler.schedule(
         "AI",
         20.0,
         ExecutionSystem{},
-        query
+        query,
+        rand
     );
 
     REQUIRE(
@@ -997,6 +1059,7 @@ TEST_CASE("Slower child does not consume parent generation prematurely", "[sched
 
 TEST_CASE("Direct dependency cycle is rejected", "[scheduler]") {
     SimulationClock clock;
+	Random rand;
     CommandQueue queue;
     Scheduler scheduler(queue, clock);
 
@@ -1005,8 +1068,8 @@ TEST_CASE("Direct dependency cycle is rejected", "[scheduler]") {
     auto query =
         ExecutionSystem::Query::bind_storage(positions);
 
-    auto a = scheduler.schedule("A", 60.0, ExecutionSystem{}, query);
-    auto b = scheduler.schedule("B", 60.0, ExecutionSystem{}, query);
+    auto a = scheduler.schedule("A", 60.0, ExecutionSystem{}, query, rand);
+    auto b = scheduler.schedule("B", 60.0, ExecutionSystem{}, query, rand);
 
     REQUIRE(
         b.depends_on(a) ==
@@ -1022,6 +1085,7 @@ TEST_CASE("Direct dependency cycle is rejected", "[scheduler]") {
 
 TEST_CASE("Indirect dependency cycle is rejected", "[scheduler]") {
     SimulationClock clock;
+	Random rand;
     CommandQueue queue;
     Scheduler scheduler(queue, clock);
 
@@ -1030,9 +1094,9 @@ TEST_CASE("Indirect dependency cycle is rejected", "[scheduler]") {
     auto query =
         ExecutionSystem::Query::bind_storage(positions);
 
-    auto a = scheduler.schedule("A", 60.0, ExecutionSystem{}, query);
-    auto b = scheduler.schedule("B", 60.0, ExecutionSystem{}, query);
-    auto c = scheduler.schedule("C", 60.0, ExecutionSystem{}, query);
+    auto a = scheduler.schedule("A", 60.0, ExecutionSystem{}, query, rand);
+    auto b = scheduler.schedule("B", 60.0, ExecutionSystem{}, query, rand);
+    auto c = scheduler.schedule("C", 60.0, ExecutionSystem{}, query, rand);
 
     REQUIRE(
         b.depends_on(a) ==
@@ -1053,6 +1117,7 @@ TEST_CASE("Indirect dependency cycle is rejected", "[scheduler]") {
 
 TEST_CASE("Long dependency cycle is rejected", "[scheduler]") {
     SimulationClock clock;
+	Random rand;
     CommandQueue queue;
     Scheduler scheduler(queue, clock);
 
@@ -1061,10 +1126,10 @@ TEST_CASE("Long dependency cycle is rejected", "[scheduler]") {
     auto query =
         ExecutionSystem::Query::bind_storage(positions);
 
-    auto a = scheduler.schedule("A", 60.0, ExecutionSystem{}, query);
-    auto b = scheduler.schedule("B", 60.0, ExecutionSystem{}, query);
-    auto c = scheduler.schedule("C", 60.0, ExecutionSystem{}, query);
-    auto d = scheduler.schedule("D", 60.0, ExecutionSystem{}, query);
+    auto a = scheduler.schedule("A", 60.0, ExecutionSystem{}, query, rand);
+    auto b = scheduler.schedule("B", 60.0, ExecutionSystem{}, query, rand);
+    auto c = scheduler.schedule("C", 60.0, ExecutionSystem{}, query, rand);
+    auto d = scheduler.schedule("D", 60.0, ExecutionSystem{}, query, rand);
 
     REQUIRE(
         b.depends_on(a) ==
@@ -1094,6 +1159,7 @@ TEST_CASE("Long dependency cycle is rejected", "[scheduler]") {
 
 TEST_CASE("Multiple children can depend on the same parent", "[scheduler]") {
     SimulationClock clock;
+	Random rand;
     CommandQueue queue;
     Scheduler scheduler(queue, clock);
 
@@ -1106,21 +1172,24 @@ TEST_CASE("Multiple children can depend on the same parent", "[scheduler]") {
         "Physics",
         60.0,
         ExecutionSystem{},
-        query
+        query,
+        rand
     );
 
     auto ai = scheduler.schedule(
         "AI",
         60.0,
         ExecutionSystem{},
-        query
+        query,
+        rand
     );
 
     auto rendering = scheduler.schedule(
         "Rendering",
         60.0,
         ExecutionSystem{},
-        query
+        query,
+        rand
     );
 
     REQUIRE(
@@ -1147,6 +1216,7 @@ TEST_CASE("Multiple children can depend on the same parent", "[scheduler]") {
 
 TEST_CASE("Cancelling a system invalidates its handle", "[scheduler]") {
     SimulationClock clock;
+	Random rand;
     CommandQueue queue;
     Scheduler scheduler(queue, clock);
 
@@ -1159,7 +1229,8 @@ TEST_CASE("Cancelling a system invalidates its handle", "[scheduler]") {
         "System",
         60.0,
         ExecutionSystem{},
-        query
+        query,
+        rand
     );
 
     REQUIRE(system.valid());
@@ -1172,6 +1243,7 @@ TEST_CASE("Cancelling a system invalidates its handle", "[scheduler]") {
 
 TEST_CASE("Cancelling a system twice is safe", "[scheduler]") {
     SimulationClock clock;
+	Random rand;
     CommandQueue queue;
     Scheduler scheduler(queue, clock);
 
@@ -1184,7 +1256,8 @@ TEST_CASE("Cancelling a system twice is safe", "[scheduler]") {
         "System",
         60.0,
         ExecutionSystem{},
-        query
+        query,
+        rand
     );
 
     system.cancel();
@@ -1196,6 +1269,7 @@ TEST_CASE("Cancelling a system twice is safe", "[scheduler]") {
 
 TEST_CASE("Cancelling a parent removes it from child dependencies", "[scheduler]") {
     SimulationClock clock;
+	Random rand;
     CommandQueue queue;
     Scheduler scheduler(queue, clock);
 
@@ -1208,14 +1282,16 @@ TEST_CASE("Cancelling a parent removes it from child dependencies", "[scheduler]
         "Parent",
         60.0,
         ExecutionSystem{},
-        query
+        query,
+        rand
     );
 
     auto child = scheduler.schedule(
         "Child",
         60.0,
         ExecutionSystem{},
-        query
+        query,
+        rand
     );
 
     REQUIRE(
@@ -1236,6 +1312,7 @@ TEST_CASE("Cancelling a parent removes it from child dependencies", "[scheduler]
 
 TEST_CASE("Cancelling a child preserves its parent", "[scheduler]") {
     SimulationClock clock;
+	Random rand;
     CommandQueue queue;
     Scheduler scheduler(queue, clock);
 
@@ -1248,14 +1325,16 @@ TEST_CASE("Cancelling a child preserves its parent", "[scheduler]") {
         "Parent",
         60.0,
         ExecutionSystem{},
-        query
+        query,
+        rand
     );
 
     auto child = scheduler.schedule(
         "Child",
         60.0,
         ExecutionSystem{},
-        query
+        query,
+        rand
     );
 
     REQUIRE(
@@ -1280,6 +1359,7 @@ TEST_CASE("Cancelling a child preserves its parent", "[scheduler]") {
 
 TEST_CASE("Moving a system handle transfers ownership", "[scheduler]") {
     SimulationClock clock;
+	Random rand;
     CommandQueue queue;
     Scheduler scheduler(queue, clock);
 
@@ -1292,7 +1372,8 @@ TEST_CASE("Moving a system handle transfers ownership", "[scheduler]") {
         "System",
         60.0,
         ExecutionSystem{},
-        query
+        query,
+        rand
     );
 
     const auto id = original.id();
@@ -1307,6 +1388,7 @@ TEST_CASE("Moving a system handle transfers ownership", "[scheduler]") {
 
 TEST_CASE("Move assignment transfers system handle", "[scheduler]") {
     SimulationClock clock;
+	Random rand;
     CommandQueue queue;
     Scheduler scheduler(queue, clock);
 
@@ -1319,14 +1401,16 @@ TEST_CASE("Move assignment transfers system handle", "[scheduler]") {
         "First",
         60.0,
         ExecutionSystem{},
-        query
+        query,
+        rand
     );
 
     auto second = scheduler.schedule(
         "Second",
         60.0,
         ExecutionSystem{},
-        query
+        query,
+        rand
     );
 
     const auto second_id = second.id();
@@ -1340,6 +1424,7 @@ TEST_CASE("Move assignment transfers system handle", "[scheduler]") {
 
 TEST_CASE("Read/Read access does not create dependency", "[scheduler]") {
     SimulationClock clock;
+	Random rand;
     CommandQueue queue;
     Scheduler scheduler(queue, clock);
 
@@ -1349,14 +1434,16 @@ TEST_CASE("Read/Read access does not create dependency", "[scheduler]") {
         "reader_a",
         60.0,
         ReaderSystem{},
-        Query<Read<Position>>{}.bind_storage(storage)
+        Query<Read<Position>>{}.bind_storage(storage),
+        rand
     );
 
     auto b = scheduler.schedule(
         "reader_b",
         60.00,
         ReaderSystem{},
-        Query<Read<Position>>{}.bind_storage(storage)
+        Query<Read<Position>>{}.bind_storage(storage),
+        rand
     );
 
     scheduler.resolve_dependencies();
@@ -1367,6 +1454,7 @@ TEST_CASE("Read/Read access does not create dependency", "[scheduler]") {
 
 TEST_CASE("Write/Read access infers writer before reader", "[scheduler]") {
     SimulationClock clock;
+	Random rand;
     CommandQueue queue;
     Scheduler scheduler(queue, clock);
 
@@ -1376,14 +1464,16 @@ TEST_CASE("Write/Read access infers writer before reader", "[scheduler]") {
         "writer",
         60.0,
         WriterSystem{},
-        Query<Write<Position>>{}.bind_storage(storage)
+        Query<Write<Position>>{}.bind_storage(storage),
+        rand
     );
 
     auto reader = scheduler.schedule(
         "reader",
         60.0,
         ReaderSystem{},
-        Query<Read<Position>>{}.bind_storage(storage)
+        Query<Read<Position>>{}.bind_storage(storage),
+        rand
     );
 
     scheduler.resolve_dependencies();
@@ -1401,6 +1491,7 @@ TEST_CASE("Write/Read access infers writer before reader", "[scheduler]") {
 
 TEST_CASE("Read/Write access infers writer before reader", "[scheduler]") {
     SimulationClock clock;
+	Random rand;
     CommandQueue queue;
     Scheduler scheduler(queue, clock);
 
@@ -1410,14 +1501,16 @@ TEST_CASE("Read/Write access infers writer before reader", "[scheduler]") {
         "reader",
         60.0,
         ReaderSystem{},
-        Query<Read<Position>>{}.bind_storage(storage)
+        Query<Read<Position>>{}.bind_storage(storage),
+        rand
     );
 
     auto writer = scheduler.schedule(
         "writer",
         60.0,
         WriterSystem{},
-        Query<Write<Position>>{}.bind_storage(storage)
+        Query<Write<Position>>{}.bind_storage(storage),
+        rand
     );
 
     scheduler.resolve_dependencies();
@@ -1435,6 +1528,7 @@ TEST_CASE("Read/Write access infers writer before reader", "[scheduler]") {
 
 TEST_CASE("Write/Write access requires explicit dependency", "[scheduler]") {
     SimulationClock clock;
+	Random rand;
     CommandQueue queue;
     Scheduler scheduler(queue, clock);
 
@@ -1444,14 +1538,16 @@ TEST_CASE("Write/Write access requires explicit dependency", "[scheduler]") {
         "writer_a",
         60.0,
         WriterSystem{},
-        Query<Write<Position>>{}.bind_storage(storage)
+        Query<Write<Position>>{}.bind_storage(storage),
+        rand
     );
 
     auto b = scheduler.schedule(
         "writer_b",
         60.0,
         WriterSystem{},
-        Query<Write<Position>>{}.bind_storage(storage)
+        Query<Write<Position>>{}.bind_storage(storage),
+        rand
     );
 
     REQUIRE_THROWS(
@@ -1461,6 +1557,7 @@ TEST_CASE("Write/Write access requires explicit dependency", "[scheduler]") {
 
 TEST_CASE("Explicit dependency resolves write/write conflict", "[scheduler]") {
     SimulationClock clock;
+	Random rand;
     CommandQueue queue;
     Scheduler scheduler(queue, clock);
 
@@ -1470,14 +1567,16 @@ TEST_CASE("Explicit dependency resolves write/write conflict", "[scheduler]") {
         "writer_a",
         60.0,
         WriterSystem{},
-        Query<Write<Position>>{}.bind_storage(storage)
+        Query<Write<Position>>{}.bind_storage(storage),
+        rand
     );
 
     auto b = scheduler.schedule(
         "writer_b",
         60.0,
         WriterSystem{},
-        Query<Write<Position>>{}.bind_storage(storage)
+        Query<Write<Position>>{}.bind_storage(storage),
+        rand
     );
 
     REQUIRE(
@@ -1496,6 +1595,7 @@ TEST_CASE("Explicit dependency resolves write/write conflict", "[scheduler]") {
 
 TEST_CASE("Explicit dependency can resolve write/write in either direction", "[scheduler]") {
     SimulationClock clock;
+	Random rand;
     CommandQueue queue;
     Scheduler scheduler(queue, clock);
 
@@ -1505,14 +1605,16 @@ TEST_CASE("Explicit dependency can resolve write/write in either direction", "[s
         "writer_a",
         60.0,
         WriterSystem{},
-        Query<Write<Position>>{}.bind_storage(storage)
+        Query<Write<Position>>{}.bind_storage(storage),
+        rand
     );
 
     auto b = scheduler.schedule(
         "writer_b",
         60.0,
         WriterSystem{},
-        Query<Write<Position>>{}.bind_storage(storage)
+        Query<Write<Position>>{}.bind_storage(storage),
+        rand
     );
 
     REQUIRE(
@@ -1526,6 +1628,7 @@ TEST_CASE("Explicit dependency can resolve write/write in either direction", "[s
 
 TEST_CASE("Accesses to different components do not create dependency", "[scheduler]") {
     SimulationClock clock;
+	Random rand;
     CommandQueue queue;
     Scheduler scheduler(queue, clock);
 
@@ -1536,14 +1639,16 @@ TEST_CASE("Accesses to different components do not create dependency", "[schedul
         "position_writer",
         60.0,
         WriterSystem{},
-        Query<Write<Position>>{}.bind_storage(positions)
+        Query<Write<Position>>{}.bind_storage(positions),
+        rand
     );
 
     auto velocity_writer = scheduler.schedule(
         "velocity_writer",
         60.0,
         WriterSystem{},
-        Query<Write<Velocity>>{}.bind_storage(velocities)
+        Query<Write<Velocity>>{}.bind_storage(velocities),
+        rand
     );
 
     scheduler.resolve_dependencies();
@@ -1561,6 +1666,7 @@ TEST_CASE("Accesses to different components do not create dependency", "[schedul
 
 TEST_CASE("Mixed query infers dependencies for conflicting components", "[scheduler]") {
     SimulationClock clock;
+	Random rand;
     CommandQueue queue;
     Scheduler scheduler(queue, clock);
 
@@ -1574,7 +1680,8 @@ TEST_CASE("Mixed query infers dependencies for conflicting components", "[schedu
         Query<
             Read<Velocity>,
             Write<Position>
-        >{}.bind_storage(velocities, positions)
+        >{}.bind_storage(velocities, positions),
+        rand
     );
 
     auto renderer = scheduler.schedule(
@@ -1584,7 +1691,8 @@ TEST_CASE("Mixed query infers dependencies for conflicting components", "[schedu
         Query<
             Read<Position>,
             Read<Velocity>
-        >{}.bind_storage(positions, velocities)
+        >{}.bind_storage(positions, velocities),
+        rand
     );
 
     scheduler.resolve_dependencies();
@@ -1597,6 +1705,7 @@ TEST_CASE("Mixed query infers dependencies for conflicting components", "[schedu
 
 TEST_CASE("Inferred dependencies form transitive ordering", "[scheduler]") {
     SimulationClock clock;
+	Random rand;
     CommandQueue queue;
     Scheduler scheduler(queue, clock);
 
@@ -1607,7 +1716,8 @@ TEST_CASE("Inferred dependencies form transitive ordering", "[scheduler]") {
         "physics",
         60.0,
         PhysicsSystem{},
-        Query<Write<Position>>{}.bind_storage(positions)
+        Query<Write<Position>>{}.bind_storage(positions),
+        rand
     );
 
     auto movement = scheduler.schedule(
@@ -1617,14 +1727,16 @@ TEST_CASE("Inferred dependencies form transitive ordering", "[scheduler]") {
         Query<
             Read<Position>,
             Write<Velocity>
-        >{}.bind_storage(positions, velocities)
+        >{}.bind_storage(positions, velocities),
+        rand
     );
 
     auto consumer = scheduler.schedule(
         "consumer",
         60.0,
         ConsumerSystem{},
-        Query<Read<Velocity>>{}.bind_storage(velocities)
+        Query<Read<Velocity>>{}.bind_storage(velocities),
+        rand
     );
 
     scheduler.resolve_dependencies();
@@ -1647,6 +1759,7 @@ TEST_CASE("Inferred dependencies form transitive ordering", "[scheduler]") {
 
 TEST_CASE("Conflicting access pattern that creates cycle is rejected", "[scheduler]") {
     SimulationClock clock;
+	Random rand;
     CommandQueue queue;
     Scheduler scheduler(queue, clock);
 
@@ -1661,7 +1774,8 @@ TEST_CASE("Conflicting access pattern that creates cycle is rejected", "[schedul
         Query<
             Write<Position>,
             Read<Velocity>
-        >{}.bind_storage(positions, velocities)
+        >{}.bind_storage(positions, velocities),
+        rand
     );
 
     auto b = scheduler.schedule(
@@ -1671,7 +1785,8 @@ TEST_CASE("Conflicting access pattern that creates cycle is rejected", "[schedul
         Query<
             Read<Position>,
             Write<Health>
-        >{}.bind_storage(positions, health)
+        >{}.bind_storage(positions, health),
+        rand
     );
 
     auto c = scheduler.schedule(
@@ -1681,7 +1796,8 @@ TEST_CASE("Conflicting access pattern that creates cycle is rejected", "[schedul
         Query<
             Read<Health>,
             Write<Velocity>
-        >{}.bind_storage(health, velocities)
+        >{}.bind_storage(health, velocities),
+        rand
     );
 
     REQUIRE_THROWS(
@@ -1691,6 +1807,7 @@ TEST_CASE("Conflicting access pattern that creates cycle is rejected", "[schedul
 
 TEST_CASE("2 cycle dependency throws", "[scheduler]") {
     SimulationClock clock;
+	Random rand;
     CommandQueue queue;
     Scheduler scheduler(queue, clock);
 
@@ -1704,7 +1821,8 @@ TEST_CASE("2 cycle dependency throws", "[scheduler]") {
         Query<
             Write<Position>,
             Read<Velocity>
-        >{}.bind_storage(positions, velocities)
+        >{}.bind_storage(positions, velocities),
+        rand
     );
 
     auto movement = scheduler.schedule(
@@ -1714,7 +1832,8 @@ TEST_CASE("2 cycle dependency throws", "[scheduler]") {
         Query<
             Read<Position>,
             Write<Velocity>
-        >{}.bind_storage(positions, velocities)
+        >{}.bind_storage(positions, velocities),
+        rand
     );
 
     REQUIRE_THROWS(
@@ -1724,6 +1843,7 @@ TEST_CASE("2 cycle dependency throws", "[scheduler]") {
 
 TEST_CASE("2 cycle dependency can be resolved with explicit dependency", "[scheduler]") {
     SimulationClock clock;
+	Random rand;
     CommandQueue queue;
     Scheduler scheduler(queue, clock);
 
@@ -1737,7 +1857,8 @@ TEST_CASE("2 cycle dependency can be resolved with explicit dependency", "[sched
         Query<
             Write<Position>,
             Read<Velocity>
-        >{}.bind_storage(positions, velocities)
+        >{}.bind_storage(positions, velocities),
+        rand
     );
 
     auto movement = scheduler.schedule(
@@ -1747,7 +1868,8 @@ TEST_CASE("2 cycle dependency can be resolved with explicit dependency", "[sched
         Query<
             Read<Position>,
             Write<Velocity>
-        >{}.bind_storage(positions, velocities)
+        >{}.bind_storage(positions, velocities),
+        rand
     );
 
     physics.depends_on(movement);

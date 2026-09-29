@@ -1,4 +1,5 @@
 #include "World.h"
+#include "SpawnConfig.h"
 
 namespace conductor {
     void World::finalize() {
@@ -29,6 +30,26 @@ namespace conductor {
         }
 
         m_entity_manager.destroy(entity);
+    }
+
+    void World::spawn_entities(std::size_t count, const SpawnConfig& config) {
+        if(m_finalized) {
+            throw std::logic_error(
+                "Cannot create entities after world finalization"
+            );
+        }
+        
+        for(std::size_t i = 0; i < count; i++) {
+            Entity e = create_entity();
+
+            SpawnContext context{
+                .entity = e,
+                .index = i,
+                .random = m_rand
+            };
+
+            config.initialize(*this, e, context);
+        }
     }
 
     void World::update(double delta) {

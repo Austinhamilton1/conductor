@@ -1,11 +1,19 @@
 #include <catch2/catch_test_macros.hpp>
 #include <stdexcept>
 
+#include "core/Random.h"
 #include "runtime/Application.h"
 #include "TestComponents.h"
 
 TEST_CASE("Plugin can be loaded", "[plugins]") {
-    conductor::Application app;
+    conductor::ApplicationConfig config{
+        .duration = 10.0,
+        .time_scale = 1.0,
+        .step_size = 1.0 / 60.0,
+        .seed = 12345
+    };
+
+    conductor::Application app(config);
 
     REQUIRE_FALSE(app.plugins().loaded("hello"));
 
@@ -20,7 +28,14 @@ TEST_CASE("Plugin can be loaded", "[plugins]") {
 }
 
 TEST_CASE("Duplicate plugin names are rejected", "[plugins]") {
-    conductor::Application app;
+    conductor::ApplicationConfig config{
+        .duration = 10.0,
+        .time_scale = 1.0,
+        .step_size = 1.0 / 60.0,
+        .seed = 12345
+    };
+
+    conductor::Application app(config);
 
     app.plugins().load(
         TEST_PLUGIN_PATH,
@@ -39,7 +54,14 @@ TEST_CASE("Duplicate plugin names are rejected", "[plugins]") {
 }
 
 TEST_CASE("Plugin can register components", "[plugins]") {
-    conductor::Application app;
+    conductor::ApplicationConfig config{
+        .duration = 10.0,
+        .time_scale = 1.0,
+        .step_size = 1.0 / 60.0,
+        .seed = 12345
+    };
+
+    conductor::Application app(config);
 
     app.plugins().load(
         TEST_PLUGIN_PATH,
@@ -60,7 +82,15 @@ TEST_CASE("Plugin can register components", "[plugins]") {
 }
 
 TEST_CASE("Plugin system executes during simulation", "[plugins]") {
-    conductor::World world;
+    conductor::ApplicationConfig config{
+        .duration = 10.0,
+        .time_scale = 1.0,
+        .step_size = 1.0 / 60.0,
+        .seed = 12345
+    };
+
+    conductor::Random rand;
+    conductor::World world(rand);
 
     conductor::PluginManager plugins;
 
@@ -97,8 +127,7 @@ TEST_CASE("Plugin system executes during simulation", "[plugins]") {
 
     world.update(1.0);
 
-    const auto& storage = world.storage().get<PluginPosition>();
-    const auto result = storage.get(entity);
+    auto result = world.get_component<PluginPosition>(entity);
 
     // Plugin system runs at 60 Hz.
     // With a one-second simulation delta, the

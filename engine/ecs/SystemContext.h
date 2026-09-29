@@ -2,6 +2,7 @@
 
 #include "Query.h"
 #include "core/SimulationClock.h"
+#include "core/Random.h"
 #include "commands/CommandQueue.h"
 
 namespace conductor {
@@ -13,10 +14,12 @@ namespace conductor {
         SystemContext(
             BoundQueryT& query,
             CommandQueue& commands,
-            double delta_seconds
+            double delta_seconds,
+            Random& rand
         ) : m_query(query),
             m_commands(commands),
-            m_delta_seconds(delta_seconds) {}
+            m_delta_seconds(delta_seconds),
+            m_rand(rand) {}
 
         BoundQueryT& query() noexcept {
             return m_query;
@@ -38,9 +41,18 @@ namespace conductor {
             return m_delta_seconds;
         }
 
+        Random& rand() noexcept {
+            return m_rand;
+        }
+
+        const Random& rand() const noexcept {
+            return m_rand;
+        }
+
     private:
         BoundQueryT& m_query;
         CommandQueue& m_commands;
         double m_delta_seconds;
+        Random& m_rand;
     };
 }
