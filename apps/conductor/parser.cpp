@@ -1,9 +1,27 @@
 #include "parser.h"
 
 #include <iostream>
+#include <filesystem>
 #include <yaml-cpp/yaml.h>
 
+namespace fs = std::filesystem;
+
+std::string make_path_relative_to_parent(
+    const std::string& filepath_str,
+    const std::string& target_path
+) {
+    fs::path yaml_dir = fs::absolute(filepath_str).parent_path();
+
+    fs::path full_path = yaml_dir / target_path;
+
+    return fs::weakly_canonical(full_path).string();
+}
+
 ConductorConfig load_conductor_config(const std::string& filename) {
+    fs::path filepath = filename;
+
+    fs::path dir_path = filepath.parent_path();
+
     try {
         ConductorConfig config;
 
@@ -23,7 +41,10 @@ ConductorConfig load_conductor_config(const std::string& filename) {
 
         if(root["plugins"] && root["plugins"].IsSequence()) {
             for(const auto& plugin : root["plugins"]) {
-                config.plugins.push_back(plugin.as<std::string>());
+                std::string path = plugin.as<std::string>();
+                config.plugins.push_back(
+                    make_path_relative_to_parent(filename, path)
+                );
             }
         }
 
