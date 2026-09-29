@@ -537,4 +537,4 @@ Some goals of v0.2 include:
  - [X] YAML configuration for entity spawning.
  - [X] YAML configuration for plugin loading.
  - [X] Relative paths from YAML configuration.
- - [ ] `SimulationClock` exposed through `SystemContext` to give systems access to global time.
+ - [X] `SimulationClock` exposed through `SystemContext` to give systems access to global time.
