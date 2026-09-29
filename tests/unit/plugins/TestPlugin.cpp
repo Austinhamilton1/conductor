@@ -78,7 +78,8 @@ TEST_CASE("Plugin system executes during simulation", "[plugins]") {
     };
 
     conductor::Random rand;
-    conductor::World world(rand);
+    conductor::SimulationClock clock;
+    conductor::World world(rand, clock);
 
     conductor::PluginManager plugins;
 

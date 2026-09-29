@@ -86,6 +86,7 @@ namespace conductor {
                 std::make_unique<SystemExecutor<T, BoundQueryT>>(
                     std::move(system),
                     std::move(query),
+                    m_clock,
                     rand
                 );
 

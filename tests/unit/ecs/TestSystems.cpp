@@ -60,6 +60,7 @@ using namespace conductor;
 
 TEST_CASE("SystemExecutor provides functional query", "[ecs]") {
     Random rand;
+    SimulationClock clock;
 
     MovementSystem::reset();
 
@@ -103,6 +104,7 @@ TEST_CASE("SystemExecutor provides functional query", "[ecs]") {
     > executor(
         MovementSystem{},
         std::move(query),
+        clock,
         rand
     );
 
