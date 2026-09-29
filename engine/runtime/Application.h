@@ -32,6 +32,8 @@ namespace conductor {
 
         void run();
         void stop();
+
+        void load_plugin(const std::string& plugin_path);
         
     private:
         bool m_running = false;

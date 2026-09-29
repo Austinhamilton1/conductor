@@ -38,6 +38,10 @@ namespace conductor {
         return m_rand;
     }
 
+    void Application::load_plugin(const std::string& plugin_path) {
+        m_plugins.load(plugin_path, m_world);
+    }
+
     void Application::run() {
         m_running = true;
         

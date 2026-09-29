@@ -18,10 +18,7 @@ TEST_CASE("Plugin can be loaded", "[plugins]") {
     REQUIRE_FALSE(app.plugins().loaded("hello"));
 
     REQUIRE_NOTHROW(
-        app.plugins().load(
-            TEST_PLUGIN_PATH,
-            app.world()
-        )
+        app.load_plugin(TEST_PLUGIN_PATH)
     );
 
     REQUIRE(app.plugins().loaded("hello"));
@@ -37,16 +34,10 @@ TEST_CASE("Duplicate plugin names are rejected", "[plugins]") {
 
     conductor::Application app(config);
 
-    app.plugins().load(
-        TEST_PLUGIN_PATH,
-        app.world()
-    );
+    app.load_plugin(TEST_PLUGIN_PATH);
 
     REQUIRE_THROWS_AS(
-        app.plugins().load(
-            TEST_PLUGIN_PATH,
-            app.world()
-        ),
+        app.load_plugin(TEST_PLUGIN_PATH),
         std::runtime_error
     );
 
@@ -63,10 +54,7 @@ TEST_CASE("Plugin can register components", "[plugins]") {
 
     conductor::Application app(config);
 
-    app.plugins().load(
-        TEST_PLUGIN_PATH,
-        app.world()
-    );
+    app.load_plugin(TEST_PLUGIN_PATH);
 
     const auto position =
         conductor::ComponentRegistry::info<PluginPosition>();

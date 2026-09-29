@@ -531,8 +531,8 @@ Some goals of v0.2 include:
 
  Some goals of v0.3 include:
 
- - [ ] Compilation of a single, generic `conductor` application that can run multiple simulation configurations. 
- - [ ] Plugins become first-class objects of the simulation. Users should be able to create plugins instead of recompiling the conductor application.
- - [ ] YAML configuration for runtime `Application`.
- - [ ] YAML configuration for entity spawning.
- - [ ] YAML configuration for plugin loading.
+ - [X] Compilation of a single, generic `conductor` application that can run multiple simulation configurations. 
+ - [X] Plugins become first-class objects of the simulation. Users should be able to create plugins instead of recompiling the conductor application.
+ - [X] YAML configuration for runtime `Application`.
+ - [X] YAML configuration for entity spawning.
+ - [X] YAML configuration for plugin loading.

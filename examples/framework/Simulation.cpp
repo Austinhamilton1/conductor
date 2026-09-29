@@ -1,7 +1,5 @@
 #include "Simulation.h"
 
-#include "simulation/SpawnConfig.h"
-
 int main() {
     constexpr int num_drones = 10;
     constexpr double frequency = 10.0;
@@ -44,7 +42,8 @@ int main() {
     .component<SensorData>(SensorData{})
     .component<DroneStatus>(DroneStatus{});
 
-    app.world().spawn_entities(num_drones, spawner);
+    app.world().register_spawner("drone", spawner);
+    app.world().spawn_entities(num_drones, "drone");
 
     auto sensor = app.world().add_system(
         "sensor",

@@ -1,7 +1,12 @@
 #include "World.h"
-#include "SpawnConfig.h"
 
 namespace conductor {
+    void SpawnConfig::initialize(World& world, Entity entity, SpawnContext& context) const {
+        for(auto& initializer : m_initializers) {
+            initializer(world, entity, context);
+        }
+    }
+    
     void World::finalize() {
         m_finalized = true;
     }
@@ -32,12 +37,28 @@ namespace conductor {
         m_entity_manager.destroy(entity);
     }
 
-    void World::spawn_entities(std::size_t count, const SpawnConfig& config) {
+    void World::register_spawner(const std::string& name, SpawnConfig config) {
+        if(m_finalized) {
+            throw std::logic_error(
+                "Cannot register spawners after world finalization"
+            );
+        }
+
+        m_spawners[name] = config;
+    }
+
+    void World::spawn_entities(std::size_t count, const std::string& name) {
         if(m_finalized) {
             throw std::logic_error(
                 "Cannot create entities after world finalization"
             );
         }
+
+        if(m_spawners.find(name) == m_spawners.end()) {
+            return;
+        }
+
+        SpawnConfig config = m_spawners[name];
         
         for(std::size_t i = 0; i < count; i++) {
             Entity e = create_entity();
