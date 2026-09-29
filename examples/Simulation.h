@@ -163,7 +163,7 @@ namespace {
                 );
 
                 if(battery.level > 0.0) {
-                    battery.level -= std::exp(speed) * ctx.delta_seconds();
+                    battery.level -= 0.5 * std::exp(speed) * ctx.delta_seconds();
                 }
 
                 if(battery.level < 0.0) {
