@@ -146,6 +146,29 @@ namespace {
         }
     };
 
+    struct TargetSystem {
+        using Query = conductor::Query<
+            conductor::Write<Target>
+        >;
+
+        double last_move = 0.0;
+
+        template<typename BoundQueryT>
+        void update(conductor::SystemContext<BoundQueryT>& ctx) {
+            for(auto [target] : ctx.query()) {
+                const double total_time =
+                    ctx.clock().total_seconds();
+
+                if(total_time - last_move >= 1.0) {
+                    target.x += 10.0 * ctx.rand().next_double() - 5.0;
+                    target.y += 10.0 * ctx.rand().next_double() - 5.0;
+
+                    last_move = total_time;
+                }
+            }
+        }
+    };
+
     struct BatterySystem {
         using Query = conductor::Query<
             conductor::Read<Velocity>,
@@ -302,6 +325,12 @@ namespace {
                 IntegrationSystem{}
             );
 
+            m_target = world.add_system(
+                "target",
+                frequency,
+                TargetSystem{}
+            );
+
             m_battery = world.add_system(
                 "battery",
                 frequency,
@@ -336,7 +365,7 @@ namespace {
         conductor::Scheduler::SystemHandle
             m_sensor, m_steering, m_integration,
             m_battery, m_monitor, m_removal,
-            m_telemetry;
+            m_telemetry, m_target;
     };
 }
 
