@@ -209,6 +209,7 @@ namespace {
         using Query = conductor::Query<
             conductor::Read<Position>,
             conductor::Read<Velocity>,
+            conductor::Read<Target>,
             conductor::Read<Battery>,
             conductor::Read<DroneStatus>
         >;
@@ -219,17 +220,20 @@ namespace {
         void update(conductor::SystemContext<BoundQueryT>& ctx) {
             for(auto it = ctx.query().begin(); it != ctx.query().end(); it++) {
                 conductor::Entity e = it.entity();
-                auto [position, velocity, battery, drone_status] = *it;
+                auto [position, velocity, target, battery, drone_status] = *it;
 
                 const std::string telemetry_line = 
                     std::format(
-                        "({}; {}),({}; {}),({}; {}),{},{}",
+                        "{},({}; {}),({}; {}),({}; {}),({}; {}),{},{}",
+                        ctx.clock().total_seconds(),
                         e.index(),
                         e.generation(),
                         position.x,
                         position.y,
                         velocity.x,
                         velocity.y,
+                        target.x,
+                        target.y,
                         battery.level,
                         (drone_status.state == DroneState::Active ? "active" : "low battery")
                     );

@@ -22,10 +22,12 @@ namespace conductor {
         SystemExecutor(
             T system,
             BoundQueryT query,
+            SimulationClock& clock,
             Random& rand
         )
             : m_system(std::move(system)),
               m_query(std::move(query)),
+              m_clock(clock),
               m_rand(rand) {}
 
         void execute(
@@ -36,6 +38,7 @@ namespace conductor {
                 m_query,
                 commands,
                 delta_seconds,
+                m_clock,
                 m_rand
             );
 
@@ -61,6 +64,7 @@ namespace conductor {
     private:
         T m_system;
         BoundQueryT m_query;
+        SimulationClock& m_clock;
         Random& m_rand;
     };
 }

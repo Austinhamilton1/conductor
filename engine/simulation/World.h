@@ -62,9 +62,9 @@ namespace conductor {
 
     class World : public NonCopyable {
     public:
-        World(Random& rand) 
+        World(Random& rand, SimulationClock& clock) 
             : m_rand(rand),
-              m_clock(), 
+              m_clock(clock), 
               m_commands(), 
               m_scheduler(m_commands, m_clock) {};
         
@@ -117,7 +117,7 @@ namespace conductor {
         EntityManager m_entity_manager;
         ComponentRegistry m_components;
         ComponentStorageRegistry m_storages;
-        SimulationClock m_clock;
+        SimulationClock& m_clock;
         CommandQueue m_commands;
         Scheduler m_scheduler;
         std::vector<Entity> m_entities;

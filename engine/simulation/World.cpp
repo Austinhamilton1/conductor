@@ -74,7 +74,6 @@ namespace conductor {
     }
 
     void World::update(double delta) {
-        m_clock.update(delta);
         m_scheduler.update(delta);
         m_commands.apply(m_entity_manager, m_storages);
     }

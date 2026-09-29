@@ -39,14 +39,16 @@ namespace {
 
 TEST_CASE("World can be constructed", "[simulation]") {
     conductor::Random rand;
-    conductor::World world(rand);
+	conductor::SimulationClock clock;
+    conductor::World world(rand, clock);
 
     REQUIRE_FALSE(false);
 }
 
 TEST_CASE("World creates entities", "[simulation]") {
     conductor::Random rand;
-    conductor::World world(rand);
+	conductor::SimulationClock clock;
+    conductor::World world(rand, clock);
 
     auto entity1 = world.create_entity();
     auto entity2 = world.create_entity();
@@ -58,7 +60,8 @@ TEST_CASE("World creates entities", "[simulation]") {
 
 TEST_CASE("World destroys entities", "[simulation]") {
     conductor::Random rand;
-    conductor::World world(rand);
+	conductor::SimulationClock clock;
+    conductor::World world(rand, clock);
 
     auto entity = world.create_entity();
 
@@ -71,7 +74,8 @@ TEST_CASE("World destroys entities", "[simulation]") {
 
 TEST_CASE("World registers components", "[simulation]") {
     conductor::Random rand;
-    conductor::World world(rand);
+	conductor::SimulationClock clock;
+    conductor::World world(rand, clock);
 
     world.register_component<Position>();
     world.register_component<Velocity>();
@@ -84,7 +88,8 @@ TEST_CASE("World registers components", "[simulation]") {
 
 TEST_CASE("World creates component storage", "[simulation]") {
     conductor::Random rand;
-    conductor::World world(rand);
+	conductor::SimulationClock clock;
+    conductor::World world(rand, clock);
 
     world.register_component<Position>();
 
@@ -95,7 +100,8 @@ TEST_CASE("World creates component storage", "[simulation]") {
 
 TEST_CASE("World adds components to entities", "[simulation]") {
     conductor::Random rand;
-    conductor::World world(rand);
+	conductor::SimulationClock clock;
+    conductor::World world(rand, clock);
 
     world.register_component<Position>();
 
@@ -122,7 +128,8 @@ TEST_CASE("World adds components to entities", "[simulation]") {
 
 TEST_CASE("World can add a system", "[simulation]") {
     conductor::Random rand;
-    conductor::World world(rand);
+	conductor::SimulationClock clock;
+    conductor::World world(rand, clock);
 
     world.register_component<Position>();
     world.register_component<Velocity>();
@@ -138,7 +145,8 @@ TEST_CASE("World can add a system", "[simulation]") {
 
 TEST_CASE("World updates systems", "[simulation]") {
     conductor::Random rand;
-    conductor::World world(rand);
+	conductor::SimulationClock clock;
+    conductor::World world(rand, clock);
 
     world.register_component<Position>();
     world.register_component<Velocity>();
@@ -179,7 +187,8 @@ TEST_CASE("World updates systems", "[simulation]") {
 
 TEST_CASE("World prevents component registration after finalization", "[simulation]") {
     conductor::Random rand;
-    conductor::World world(rand);
+	conductor::SimulationClock clock;
+    conductor::World world(rand, clock);
 
     world.register_component<Position>();
     world.finalize();
@@ -192,7 +201,8 @@ TEST_CASE("World prevents component registration after finalization", "[simulati
 
 TEST_CASE("World prevents adding systems after finalization", "[simulation]") {
     conductor::Random rand;
-    conductor::World world(rand);
+	conductor::SimulationClock clock;
+    conductor::World world(rand, clock);
 
     world.register_component<Position>();
     world.register_component<Velocity>();
@@ -211,7 +221,8 @@ TEST_CASE("World prevents adding systems after finalization", "[simulation]") {
 
 TEST_CASE("World prevents entity creation after finalization", "[simulation]") {
     conductor::Random rand;
-    conductor::World world(rand);
+	conductor::SimulationClock clock;
+    conductor::World world(rand, clock);
 
     world.finalize();
 
@@ -223,7 +234,8 @@ TEST_CASE("World prevents entity creation after finalization", "[simulation]") {
 
 TEST_CASE("World prevents entity destruction after finalization", "[simulation]") {
     conductor::Random rand;
-    conductor::World world(rand);
+	conductor::SimulationClock clock;
+    conductor::World world(rand, clock);
 
     auto entity = world.create_entity();
 
@@ -237,7 +249,8 @@ TEST_CASE("World prevents entity destruction after finalization", "[simulation]"
 
 TEST_CASE("SpawnConfig can initialize a constant component", "[simulation]") {
     conductor::Random random(12345);
-    conductor::World world(random);
+	conductor::SimulationClock clock;
+    conductor::World world(random, clock);
 
     world.register_component<Position>();
 
@@ -263,7 +276,8 @@ TEST_CASE("SpawnConfig can initialize a constant component", "[simulation]") {
 
 TEST_CASE("SpawnConfig can spawn multiple entities", "[simulation]") {
     conductor::Random random(12345);
-    conductor::World world(random);
+	conductor::SimulationClock clock;
+    conductor::World world(random, clock);
 
     world.register_component<Position>();
 
@@ -291,7 +305,8 @@ TEST_CASE("SpawnConfig can spawn multiple entities", "[simulation]") {
 
 TEST_CASE("SpawnConfig can generate component values per entity", "[simulation]") {
     conductor::Random random(12345);
-    conductor::World world(random);
+	conductor::SimulationClock clock;
+    conductor::World world(random, clock);
 
     world.register_component<Position>();
 
@@ -323,7 +338,8 @@ TEST_CASE("SpawnConfig can generate component values per entity", "[simulation]"
 
 TEST_CASE("SpawnConfig can initialize multiple components", "[simulation]") {
     conductor::Random random(12345);
-    conductor::World world(random);
+	conductor::SimulationClock clock;
+    conductor::World world(random, clock);
 
     world.register_component<Position>();
     world.register_component<Velocity>();
@@ -363,7 +379,8 @@ TEST_CASE("SpawnConfig can initialize multiple components", "[simulation]") {
 
 TEST_CASE("SpawnConfig can be reused", "[simulation]") {
     conductor::Random random(12345);
-    conductor::World world(random);
+	conductor::SimulationClock clock;
+    conductor::World world(random, clock);
 
     world.register_component<Position>();
 
@@ -407,7 +424,8 @@ TEST_CASE("SpawnConfig can be reused", "[simulation]") {
 
 TEST_CASE("Spawning zero entities does nothing", "[simulation]") {
     conductor::Random random(12345);
-    conductor::World world(random);
+	conductor::SimulationClock clock;
+    conductor::World world(random, clock);
 
     world.register_component<Position>();
 
@@ -426,9 +444,11 @@ TEST_CASE("Spawning zero entities does nothing", "[simulation]") {
 TEST_CASE("SpawnConfig random initialization is deterministic", "[simulation]") {
     conductor::Random random_a(12345);
     conductor::Random random_b(12345);
+    conductor::SimulationClock clock_a;
+    conductor::SimulationClock clock_b;
 
-    conductor::World world_a(random_a);
-    conductor::World world_b(random_b);
+    conductor::World world_a(random_a, clock_a);
+    conductor::World world_b(random_b, clock_b);
 
 
     world_a.register_component<Position>();
@@ -477,7 +497,8 @@ TEST_CASE("SpawnConfig random initialization is deterministic", "[simulation]") 
 
 TEST_CASE("SpawnConfig does not retain generated component state", "[simulation]") {
     conductor::Random random(12345);
-    conductor::World world(random);
+	conductor::SimulationClock clock;
+    conductor::World world(random, clock);
 
     world.register_component<Position>();
 
