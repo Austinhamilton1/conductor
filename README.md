@@ -585,7 +585,7 @@ On both machines, the simulation was run for 10 simulation seconds with 10, 100,
 
 Two things should be noted about the benchmarks above. Namely:
 
- > Conductor runtime grows linearly with respect to drone count. This means that when optimizing in future versions, the algorithmic complexity of Conductor is not the main limiting factor.
- > Increasing simulation speed increases simulation runtime, but after a certain point, Conductor seems to hit a "speed limit". For example, with 1000 drones in the above simulation, increasing the simulation time-scale does not affect the runtime for `time_scale > 100.0`. This means that systems are scheduled and ran efficiently, but systems are taking time to finish.
+ - Conductor runtime grows linearly with respect to drone count. This means that when optimizing in future versions, the algorithmic complexity of Conductor is not the main limiting factor.
+ - Increasing simulation speed increases simulation runtime, but after a certain point, Conductor seems to hit a "speed limit". For example, with 1000 drones in the above simulation, increasing the simulation time-scale does not affect the runtime for `time_scale > 100.0`. This means that systems are scheduled and ran efficiently, but systems are taking time to finish.
 
 These both point to a natural conclusion that the main bottleneck of Conductor is not the simulation infrastructure/design, but rather the speed at which systems are able to complete. This means that for performance optimizations, approaches such as multithreading, SIMD multiprocessing, and component retrieval will most likely succeed if done correctly.
