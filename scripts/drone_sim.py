@@ -38,6 +38,8 @@ class SimulationFrame:
         velocity_y,
         target_x,
         target_y,
+        t_velocity_x,
+        t_velocity_y,
         battery_level,
         status,
     ):
@@ -53,6 +55,9 @@ class SimulationFrame:
 
         self.target_x = target_x
         self.target_y = target_y
+
+        self.t_velocity_x = t_velocity_x
+        self.t_velocity_y = t_velocity_y
 
         self.battery_level = battery_level
         self.status = status
@@ -78,7 +83,7 @@ def load_simulation(filename):
             if row[0].strip().lower() in ('time', '{time'):
                 continue
 
-            if len(row) < 11:
+            if len(row) < 13:
                 print(
                     f'Warning: skipping malformed row {row_number}: {row}',
                     file=sys.stderr
@@ -96,8 +101,10 @@ def load_simulation(filename):
                     velocity_y=float(row[6]),
                     target_x=float(row[7]),
                     target_y=float(row[8]),
-                    battery_level=float(row[9]),
-                    status=row[10],
+                    t_velocity_x=float(row[9]),
+                    t_velocity_y=float(row[10]),
+                    battery_level=float(row[11]),
+                    status=row[12],
                 )
 
                 frames.append(frame)
@@ -227,22 +234,19 @@ def draw_simulation(
 ):
     screen.fill(BACKGROUND_COLOR)
 
-    targets = set()
-
     for frame in state.values():
-        targets.add((frame.target_x, frame.target_y))
-
-    for target_x, target_y in targets:
-        x, y = world_to_screen.convert(target_x, target_y)
+        target_x, target_y = world_to_screen.convert(
+            frame.target_x,
+            frame.target_y,
+        )
 
         pygame.draw.circle(
             screen,
             TARGET_COLOR,
-            (x, y),
+            (target_x, target_y),
             TARGET_RADIUS,
         )
 
-    for frame in state.values():
         x, y = world_to_screen.convert(
             frame.position_x,
             frame.position_y,
@@ -255,6 +259,13 @@ def draw_simulation(
             color,
             (x, y),
             DRONE_RADIUS,
+        )
+
+        pygame.draw.line(
+            screen,
+            (255, 0, 0),
+            (x, y),
+            (target_x, target_y),
         )
 
     font = pygame.font.Font(None, 28)

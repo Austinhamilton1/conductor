@@ -46,6 +46,11 @@ namespace {
         double y = 0.0;
     };
 
+    struct TargetVelocity {
+        double x = 0.0;
+        double y = 0.0;
+    };
+
     struct Battery {
         double level = 100.0;
     };
@@ -134,37 +139,36 @@ namespace {
     struct IntegrationSystem {
         using Query = conductor::Query<
             conductor::Write<Position>,
-            conductor::Read<Velocity>
+            conductor::Read<Velocity>,
+            conductor::Write<Target>,
+            conductor::Read<TargetVelocity>
         >;
 
         template<typename BoundQueryT>
         void update(conductor::SystemContext<BoundQueryT>& ctx) {
-            for(auto [position, velocity] : ctx.query()) {
+            for(auto [position, velocity, target, t_velocity] : ctx.query()) {
                 position.x += velocity.x * ctx.delta_seconds();
                 position.y += velocity.y * ctx.delta_seconds();
+                target.x += t_velocity.x * ctx.delta_seconds();
+                target.y += t_velocity.y * ctx.delta_seconds();
             }
         }
     };
 
     struct TargetSystem {
         using Query = conductor::Query<
-            conductor::Write<Target>
+            conductor::Write<TargetVelocity>
         >;
-
-        double last_move = 0.0;
 
         template<typename BoundQueryT>
         void update(conductor::SystemContext<BoundQueryT>& ctx) {
-            for(auto [target] : ctx.query()) {
-                const double total_time =
-                    ctx.clock().total_seconds();
-
-                if(total_time - last_move >= 1.0) {
-                    target.x += 10.0 * ctx.rand().next_double() - 5.0;
-                    target.y += 10.0 * ctx.rand().next_double() - 5.0;
-
-                    last_move = total_time;
-                }
+            for(auto [t_velocity] : ctx.query()) {
+                t_velocity.x += 
+                    (10.0 * ctx.rand().next_double() - 5.0) *
+                    ctx.delta_seconds();
+                t_velocity.y += 
+                    (10.0 * ctx.rand().next_double() - 5.0) *
+                    ctx.delta_seconds();
             }
         }
     };
@@ -233,21 +237,20 @@ namespace {
             conductor::Read<Position>,
             conductor::Read<Velocity>,
             conductor::Read<Target>,
+            conductor::Read<TargetVelocity>,
             conductor::Read<Battery>,
             conductor::Read<DroneStatus>
         >;
-
-        inline static int updates = 0;
 
         template<typename BoundQueryT>
         void update(conductor::SystemContext<BoundQueryT>& ctx) {
             for(auto it = ctx.query().begin(); it != ctx.query().end(); it++) {
                 conductor::Entity e = it.entity();
-                auto [position, velocity, target, battery, drone_status] = *it;
+                auto [position, velocity, target, t_velocity, battery, drone_status] = *it;
 
                 const std::string telemetry_line = 
                     std::format(
-                        "{},{},{},{},{},{},{},{},{},{},{}",
+                        "{},{},{},{},{},{},{},{},{},{},{},{},{}",
                         ctx.clock().total_seconds(),
                         e.index(),
                         e.generation(),
@@ -257,6 +260,8 @@ namespace {
                         velocity.y,
                         target.x,
                         target.y,
+                        t_velocity.x,
+                        t_velocity.y,
                         battery.level,
                         (drone_status.state == DroneState::Active ? "active" : "low battery")
                     );
@@ -279,6 +284,7 @@ namespace {
             world.register_component<Position>();
             world.register_component<Velocity>();
             world.register_component<Target>();
+            world.register_component<TargetVelocity>();
             world.register_component<Battery>();
             world.register_component<SensorData>();
             world.register_component<DroneStatus>();
@@ -301,6 +307,7 @@ namespace {
                     };
                 }
             )
+            .component<TargetVelocity>(TargetVelocity{})
             .component<Battery>(Battery{})
             .component<SensorData>(SensorData{})
             .component<DroneStatus>(DroneStatus{});
