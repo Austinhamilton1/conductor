@@ -1,4 +1,5 @@
 #include "Application.h"
+#include "ApplicationContext.h"
 
 #include <utility>
 
@@ -9,7 +10,7 @@ namespace conductor {
         : m_duration(config.duration),
           m_step_size(config.step_size),
           m_rand(config.seed),
-          m_world(m_rand, m_simulation_clock) 
+          m_world(m_rand)
     {
         m_simulation_clock.set_time_scale(config.time_scale);
     }
@@ -39,7 +40,7 @@ namespace conductor {
     }
 
     void Application::load_plugin(const std::string& plugin_path) {
-        m_plugins.load(plugin_path, m_world);
+        m_plugins.load(plugin_path, m_world, m_events);
     }
 
     void Application::run() {
@@ -49,6 +50,12 @@ namespace conductor {
         initialize();
 
         m_world.finalize();
+
+        ApplicationContext ctx{
+            .random = m_rand,
+            .clock = m_simulation_clock,
+            .events = m_events,
+        };
 
         while(m_running) {
             m_clock.tick();
@@ -64,11 +71,11 @@ namespace conductor {
                 // Process events from last frame
                 m_events.process();
 
-                // Application manages global updates
+                // Application manages global update
                 update(dt);
 
                 // Update simulation world (ECS)
-                m_world.update(dt);
+                m_world.update(dt, ctx);
 
                 if(m_simulation_clock.total_seconds() >= m_duration) {
                     stop();
@@ -76,7 +83,7 @@ namespace conductor {
             }
         }
 
-        m_plugins.shutdown(m_world);
+        m_plugins.shutdown();
         shutdown();
     }
 

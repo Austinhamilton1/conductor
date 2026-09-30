@@ -10,6 +10,10 @@
 #include "ecs/ComponentStorage.h"
 #include "ecs/Query.h"
 
+#include "events/EventBus.h"
+
+#include "simulation/WorldContext.h"
+
 namespace {
     struct Position {
         float x;
@@ -128,11 +132,16 @@ TEST_CASE("Scheduler executes systems when due", "[scheduler]") {
     CommandQueue commands;
     SimulationClock clock;
 	Random rand;
+    EventBus events;
 
-    Scheduler scheduler(
-        commands,
-        clock
-    );
+    WorldContext ctx{
+        .rand = rand,
+        .clock = clock,
+        .queue = commands,
+        .events = events
+    };
+
+    Scheduler scheduler;
 
     ComponentStorage<Position> positions;
 
@@ -146,19 +155,18 @@ TEST_CASE("Scheduler executes systems when due", "[scheduler]") {
             "Execution",
             10.0,
             ExecutionSystem{},
-            std::move(query),
-            rand
+            std::move(query)
         );
 
     REQUIRE(handle.valid());
 
-    scheduler.update(0.05);
+    scheduler.update(0.05, ctx);
 
     REQUIRE(
         ExecutionSystem::executions == 0
     );
 
-    scheduler.update(0.05);
+    scheduler.update(0.05, ctx);
 
     REQUIRE(
         ExecutionSystem::executions == 1
@@ -171,11 +179,16 @@ TEST_CASE("Scheduler accumulates partial intervals", "[scheduler]") {
     CommandQueue commands;
     SimulationClock clock;
 	Random rand;
+    EventBus events;
 
-    Scheduler scheduler(
-        commands,
-        clock
-    );
+    WorldContext ctx{
+        .rand = rand,
+        .clock = clock,
+        .queue = commands,
+        .events = events
+    };
+
+    Scheduler scheduler;
 
     ComponentStorage<Position> positions;
 
@@ -188,19 +201,18 @@ TEST_CASE("Scheduler accumulates partial intervals", "[scheduler]") {
         "Execution",
         10.0,
         ExecutionSystem{},
-        std::move(query),
-        rand
+        std::move(query)
     );
 
-    scheduler.update(0.03);
-    scheduler.update(0.03);
-    scheduler.update(0.03);
+    scheduler.update(0.03, ctx);
+    scheduler.update(0.03, ctx);
+    scheduler.update(0.03, ctx);
 
     REQUIRE(
         ExecutionSystem::executions == 0
     );
 
-    scheduler.update(0.01);
+    scheduler.update(0.01, ctx);
 
     REQUIRE(
         ExecutionSystem::executions == 1
@@ -213,11 +225,16 @@ TEST_CASE("Scheduler executes multiple intervals from large delta", "[scheduler]
     CommandQueue commands;
     SimulationClock clock;
 	Random rand;
+    EventBus events;
 
-    Scheduler scheduler(
-        commands,
-        clock
-    );
+    WorldContext ctx{
+        .rand = rand,
+        .clock = clock,
+        .queue = commands,
+        .events = events
+    };
+
+    Scheduler scheduler;
 
     ComponentStorage<Position> positions;
 
@@ -230,11 +247,10 @@ TEST_CASE("Scheduler executes multiple intervals from large delta", "[scheduler]
         "Execution",
         10.0,
         ExecutionSystem{},
-        std::move(query),
-        rand
+        std::move(query)
     );
 
-    scheduler.update(0.35);
+    scheduler.update(0.35, ctx);
 
     REQUIRE(
         ExecutionSystem::executions == 3
@@ -247,11 +263,16 @@ TEST_CASE("Scheduler pauses and resumes systems", "[scheduler]") {
     CommandQueue commands;
     SimulationClock clock;
 	Random rand;
+    EventBus events;
 
-    Scheduler scheduler(
-        commands,
-        clock
-    );
+    WorldContext ctx{
+        .rand = rand,
+        .clock = clock,
+        .queue = commands,
+        .events = events
+    };
+
+    Scheduler scheduler;
 
     ComponentStorage<Position> positions;
 
@@ -265,13 +286,12 @@ TEST_CASE("Scheduler pauses and resumes systems", "[scheduler]") {
             "Execution",
             10.0,
             ExecutionSystem{},
-            std::move(query),
-            rand
+            std::move(query)
         );
 
     handle.pause();
 
-    scheduler.update(1.0);
+    scheduler.update(1.0, ctx);
 
     REQUIRE(
         ExecutionSystem::executions == 0
@@ -279,7 +299,7 @@ TEST_CASE("Scheduler pauses and resumes systems", "[scheduler]") {
 
     handle.resume();
 
-    scheduler.update(0.1);
+    scheduler.update(0.1, ctx);
 
     REQUIRE(
         ExecutionSystem::executions == 1
@@ -292,11 +312,16 @@ TEST_CASE("Cancelling a system prevents future execution", "[scheduler]") {
     CommandQueue commands;
     SimulationClock clock;
 	Random rand;
+    EventBus events;
 
-    Scheduler scheduler(
-        commands,
-        clock
-    );
+    WorldContext ctx{
+        .rand = rand,
+        .clock = clock,
+        .queue = commands,
+        .events = events
+    };
+
+    Scheduler scheduler;
 
     ComponentStorage<Position> positions;
 
@@ -310,8 +335,7 @@ TEST_CASE("Cancelling a system prevents future execution", "[scheduler]") {
             "Execution",
             10.0,
             ExecutionSystem{},
-            std::move(query),
-            rand
+            std::move(query)
         );
 
     REQUIRE(handle.valid());
@@ -320,7 +344,7 @@ TEST_CASE("Cancelling a system prevents future execution", "[scheduler]") {
 
     REQUIRE_FALSE(handle.valid());
 
-    scheduler.update(1.0);
+    scheduler.update(1.0, ctx);
 
     REQUIRE(
         ExecutionSystem::executions == 0
@@ -336,11 +360,16 @@ TEST_CASE("Scheduler respects system dependencies", "[scheduler]") {
     CommandQueue commands;
     SimulationClock clock;
 	Random rand;
+    EventBus events;
 
-    Scheduler scheduler(
-        commands,
-        clock
-    );
+    WorldContext ctx{
+        .rand = rand,
+        .clock = clock,
+        .queue = commands,
+        .events = events
+    };
+
+    Scheduler scheduler;
 
     ComponentStorage<Position> positions;
 
@@ -359,8 +388,7 @@ TEST_CASE("Scheduler respects system dependencies", "[scheduler]") {
             "A",
             60.0,
             OrderSystemA{},
-            std::move(query_a),
-            rand
+            std::move(query_a)
         );
 
     auto b =
@@ -368,8 +396,7 @@ TEST_CASE("Scheduler respects system dependencies", "[scheduler]") {
             "B",
             60.0,
             OrderSystemB{},
-            std::move(query_b),
-            rand
+            std::move(query_b)
         );
 
     REQUIRE(
@@ -378,7 +405,8 @@ TEST_CASE("Scheduler respects system dependencies", "[scheduler]") {
     );
 
     scheduler.update(
-        1.0 / 60.0
+        1.0 / 60.0,
+        ctx
     );
 
     REQUIRE(order.size() == 2);
@@ -396,11 +424,16 @@ TEST_CASE("System dependency requires parent execution", "[scheduler]") {
     CommandQueue commands;
     SimulationClock clock;
 	Random rand;
+    EventBus events;
 
-    Scheduler scheduler(
-        commands,
-        clock
-    );
+    WorldContext ctx{
+        .rand = rand,
+        .clock = clock,
+        .queue = commands,
+        .events = events
+    };
+
+    Scheduler scheduler;
 
     ComponentStorage<Position> positions;
 
@@ -419,8 +452,7 @@ TEST_CASE("System dependency requires parent execution", "[scheduler]") {
             "A",
             60.0,
             OrderSystemA{},
-            std::move(query_a),
-            rand
+            std::move(query_a)
         );
 
     auto b =
@@ -428,8 +460,7 @@ TEST_CASE("System dependency requires parent execution", "[scheduler]") {
             "B",
             120.0,
             OrderSystemB{},
-            std::move(query_b),
-            rand
+            std::move(query_b)
         );
 
     REQUIRE(
@@ -438,7 +469,8 @@ TEST_CASE("System dependency requires parent execution", "[scheduler]") {
     );
 
     scheduler.update(
-        1.0 / 60.0
+        1.0 / 60.0,
+        ctx
     );
 
     REQUIRE(order.size() == 2);
@@ -447,7 +479,8 @@ TEST_CASE("System dependency requires parent execution", "[scheduler]") {
 
     // B must not run again merely because it is due.
     scheduler.update(
-        1.0 / 120.0
+        1.0 / 120.0,
+        ctx
     );
 
     REQUIRE(order.empty());
@@ -459,11 +492,16 @@ TEST_CASE("Failed system enters failed state", "[scheduler]") {
     CommandQueue commands;
     SimulationClock clock;
 	Random rand;
+    EventBus events;
 
-    Scheduler scheduler(
-        commands,
-        clock
-    );
+    WorldContext ctx{
+        .rand = rand,
+        .clock = clock,
+        .queue = commands,
+        .events = events
+    };
+
+    Scheduler scheduler;
 
     ComponentStorage<Position> positions;
 
@@ -477,13 +515,13 @@ TEST_CASE("Failed system enters failed state", "[scheduler]") {
             "Failure",
             60.0,
             FailingSystem{},
-            std::move(query),
-            rand
+            std::move(query)
         );
 
     REQUIRE_THROWS(
         scheduler.update(
-            1.0 / 60.0
+            1.0 / 60.0,
+            ctx
         )
     );
 
@@ -494,7 +532,8 @@ TEST_CASE("Failed system enters failed state", "[scheduler]") {
     // The system should not be retried automatically.
     REQUIRE_NOTHROW(
         scheduler.update(
-            1.0 / 60.0
+            1.0 / 60.0,
+            ctx
         )
     );
 
@@ -510,11 +549,16 @@ TEST_CASE("Failed system does not satisfy dependencies", "[scheduler]") {
     CommandQueue commands;
     SimulationClock clock;
 	Random rand;
+    EventBus events;
 
-    Scheduler scheduler(
-        commands,
-        clock
-    );
+    WorldContext ctx{
+        .rand = rand,
+        .clock = clock,
+        .queue = commands,
+        .events = events
+    };
+
+    Scheduler scheduler;
 
     ComponentStorage<Position> positions;
 
@@ -533,8 +577,7 @@ TEST_CASE("Failed system does not satisfy dependencies", "[scheduler]") {
             "Parent",
             60.0,
             FailingSystem{},
-            std::move(parent_query),
-            rand
+            std::move(parent_query)
         );
 
     auto child =
@@ -542,8 +585,7 @@ TEST_CASE("Failed system does not satisfy dependencies", "[scheduler]") {
             "Child",
             60.0,
             DependentSystem{},
-            std::move(child_query),
-            rand
+            std::move(child_query)
         );
 
     REQUIRE(
@@ -553,7 +595,8 @@ TEST_CASE("Failed system does not satisfy dependencies", "[scheduler]") {
 
     REQUIRE_THROWS(
         scheduler.update(
-            1.0 / 60.0
+            1.0 / 60.0,
+            ctx
         )
     );
 

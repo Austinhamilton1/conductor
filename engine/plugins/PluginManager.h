@@ -9,14 +9,15 @@
 namespace conductor {
     class World;
     class Plugin;
+    class EventBus;
 
     class PluginManager : public NonCopyable {
     public:
         PluginManager() = default;
         ~PluginManager();
 
-        void load(const std::string& path, World& world);
-        void shutdown(World& world);
+        void load(const std::string& path, World& world, EventBus& events);
+        void shutdown();
         
         bool loaded(std::string_view name) const;
 

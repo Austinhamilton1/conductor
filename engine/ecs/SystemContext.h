@@ -4,6 +4,7 @@
 #include "core/SimulationClock.h"
 #include "core/Random.h"
 #include "commands/CommandQueue.h"
+#include "events/EventBus.h"
 
 namespace conductor {
     template<typename BoundQueryT>
@@ -16,12 +17,14 @@ namespace conductor {
             CommandQueue& commands,
             double delta_seconds,
             SimulationClock& clock,
-            Random& rand
+            Random& rand,
+            EventBus& events
         ) : m_query(query),
             m_commands(commands),
             m_delta_seconds(delta_seconds),
             m_clock(clock),
-            m_rand(rand) {}
+            m_rand(rand),
+            m_events(events) {}
 
         BoundQueryT& query() noexcept {
             return m_query;
@@ -55,11 +58,17 @@ namespace conductor {
             return m_rand;
         }
 
+        template<typename T>
+        void publish(T&& event) {
+            m_events.publish<T>(event);
+        }
+
     private:
         BoundQueryT& m_query;
         CommandQueue& m_commands;
         double m_delta_seconds;
         SimulationClock& m_clock;
         Random& m_rand;
+        EventBus& m_events;
     };
 }

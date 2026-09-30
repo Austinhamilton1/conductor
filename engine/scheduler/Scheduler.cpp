@@ -479,7 +479,7 @@ namespace conductor {
         return true;
     }
 
-    void Scheduler::update(double delta) {
+    void Scheduler::update(double delta, WorldContext& ctx) {
         if(!m_dependencies_resolved) {
             resolve_dependencies();
             m_dependencies_resolved = true;
@@ -508,13 +508,13 @@ namespace conductor {
                 if(!dependencies_ready(id))
                     continue;
 
-                if(execute_system(id))
+                if(execute_system(id, ctx))
                     progress = true;
             }
         }
     }
 
-    bool Scheduler::execute_system(SystemId id) {
+    bool Scheduler::execute_system(SystemId id, WorldContext& ctx) {
         auto it = m_systems.find(id);
 
         if(it == m_systems.end())
@@ -534,7 +534,10 @@ namespace conductor {
             const double system_delta = node.schedule.interval();
 
             node.executor->execute(
-                m_commands,
+                ctx.queue,
+                ctx.clock,
+                ctx.rand,
+                ctx.events,
                 system_delta
             );
 

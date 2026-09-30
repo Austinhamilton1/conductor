@@ -50,6 +50,5 @@ namespace conductor {
         Clock m_clock;
         SimulationClock m_simulation_clock;
         EventBus m_events;
-
     };
 }
