@@ -13,6 +13,7 @@ PUBLIC
     conductor_commands
     conductor_core
     conductor_ecs
+    conductor_events
     conductor_scheduler
 )
 

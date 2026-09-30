@@ -7,6 +7,7 @@
 
 #include "Plugin.h"
 #include "simulation/World.h"
+#include "events/EventBus.h"
 
 namespace conductor {
     namespace {
@@ -46,7 +47,7 @@ namespace conductor {
         }
     }
 
-    void PluginManager::load(const std::string& path, World& world) {
+    void PluginManager::load(const std::string& path, World& world, EventBus& events) {
         void *library = dlopen(
             path.c_str(),
             RTLD_NOW | RTLD_LOCAL
@@ -94,7 +95,8 @@ namespace conductor {
                 );
             }
 
-            plugin->initialize(world);
+            PluginConfig config(world, events);
+            plugin->configure(config);
 
             m_plugins.emplace(
                 plugin_name,
@@ -121,10 +123,10 @@ namespace conductor {
         }
     }
 
-    void PluginManager::shutdown(World& world) {
+    void PluginManager::shutdown() {
         for(auto& [name, plugin] : m_plugins) {
             if(plugin.instance != nullptr) {
-                plugin.instance->shutdown(world);
+                plugin.instance->shutdown();
             }
         }
     }

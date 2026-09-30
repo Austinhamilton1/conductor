@@ -16,6 +16,7 @@
 #include "ecs/SystemType.h"
 #include "ecs/SystemExecutor.h"
 #include "ecs/Query.h"
+#include "simulation/WorldContext.h"
 
 namespace conductor {  
     class CommandQueue;
@@ -55,20 +56,12 @@ namespace conductor {
             uint64_t m_id = 0;
         };
 
-        Scheduler(
-            CommandQueue& commands,
-            SimulationClock& clock
-        ) noexcept
-            : m_commands(commands),
-              m_clock(clock) {}
-
         template<System T, typename BoundQueryT>
         SystemHandle schedule(
             std::string name,
             double frequency,
             T system,
-            BoundQueryT query,
-            Random& rand
+            BoundQueryT query
         ) {
             if(frequency <= 0.0) {
                 throw std::invalid_argument(
@@ -85,9 +78,7 @@ namespace conductor {
             auto executor =
                 std::make_unique<SystemExecutor<T, BoundQueryT>>(
                     std::move(system),
-                    std::move(query),
-                    m_clock,
-                    rand
+                    std::move(query)
                 );
 
             auto accesses = query_accesses<QueryT>();
@@ -115,7 +106,7 @@ namespace conductor {
             SystemId parent
         );
 
-        void update(double delta);
+        void update(double delta, WorldContext& ctx);
         void resolve_dependencies();
 
         bool has_dependency(
@@ -160,9 +151,6 @@ namespace conductor {
         std::unordered_map<SystemId, SystemNode> m_systems;
         std::vector<InferredCycle> m_inferred_cycles;
 
-        CommandQueue& m_commands;
-        SimulationClock& m_clock;
-
         bool m_dependencies_resolved = false;
 
     private:
@@ -198,7 +186,7 @@ namespace conductor {
 
         void consume_dependencies(SystemId id);
 
-        bool execute_system(SystemId id);
+        bool execute_system(SystemId id, WorldContext& ctx);
 
         bool remove_dependency(
             SystemId child,

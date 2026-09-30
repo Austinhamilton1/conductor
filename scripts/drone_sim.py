@@ -352,29 +352,45 @@ def main():
                 elif event.key == pygame.K_ESCAPE:
                     running = False
 
-        if not paused:
-            real_dt = clock.get_time() / 1000.0
+        # ----------------------------------------------
+        # Advance simulation
+        # ----------------------------------------------
 
+        real_dt = clock.get_time() / 1000.0
+
+        if not paused:
             simulation_time += real_dt
 
             if simulation_time >= SIMULATION_DURATION:
                 simulation_time = SIMULATION_DURATION
                 paused = True
 
-            state = get_state_at_time(
-                sorted_times,
-                timestamps,
-                simulation_time,
-            )
+        # ----------------------------------------------
+        # Get current simulation state
+        # ----------------------------------------------
 
-            draw_simulation(
-                screen,
-                state,
-                world_to_screen,
-                simulation_time,
-            )
+        state = get_state_at_time(
+            sorted_times,
+            timestamps,
+            simulation_time,
+        )
 
-            clock.tick(60)
+        # ----------------------------------------------
+        # Render
+        # ----------------------------------------------
+
+        draw_simulation(
+            screen,
+            state,
+            world_to_screen,
+            simulation_time,
+        )
+
+        # ----------------------------------------------
+        # Always tick the clock
+        # ----------------------------------------------
+
+        clock.tick(60)
 
     pygame.quit()
 

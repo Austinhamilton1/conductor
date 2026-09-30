@@ -5,6 +5,7 @@
 #include <string>
 #include <utility>
 
+#include "WorldContext.h"
 #include "core/NonCopyable.h"
 #include "core/SimulationClock.h"
 #include "core/Random.h"
@@ -15,8 +16,10 @@
 #include "ecs/ComponentRegistry.h"
 #include "ecs/ComponentStorageRegistry.h"
 #include "ecs/Query.h"
+#include "events/EventBus.h"
 #include "commands/CommandQueue.h"
 #include "scheduler/Scheduler.h"
+#include "runtime/ApplicationContext.h"
 
 namespace conductor {
     class World;
@@ -62,11 +65,10 @@ namespace conductor {
 
     class World : public NonCopyable {
     public:
-        World(Random& rand, SimulationClock& clock) 
+        World(Random& rand) 
             : m_rand(rand),
-              m_clock(clock), 
               m_commands(), 
-              m_scheduler(m_commands, m_clock) {};
+              m_scheduler() {};
         
         ~World() {};
 
@@ -97,7 +99,7 @@ namespace conductor {
         void register_spawner(const std::string& name, SpawnConfig config);
         void spawn_entities(std::size_t count, const std::string& name);
 
-        void update(double delta);
+        void update(double delta, ApplicationContext& ctx);
 
         // Access
         EntityManager& entities();
@@ -109,15 +111,11 @@ namespace conductor {
         ComponentStorageRegistry& storage();
         const ComponentStorageRegistry& storage() const;
 
-        SimulationClock& clock();
-        const SimulationClock& clock() const;
-
     private:
         Random& m_rand;
         EntityManager m_entity_manager;
         ComponentRegistry m_components;
         ComponentStorageRegistry m_storages;
-        SimulationClock& m_clock;
         CommandQueue m_commands;
         Scheduler m_scheduler;
         std::vector<Entity> m_entities;
@@ -214,8 +212,7 @@ namespace conductor {
             std::move(name),
             frequency,
             std::move(system),
-            std::move(query),
-            m_rand
+            std::move(query)
         );
     }
 }

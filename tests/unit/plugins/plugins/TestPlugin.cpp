@@ -41,18 +41,18 @@ namespace {
             return "hello";
         }
 
-        void initialize(conductor::World& world) override {
-            world.register_component<PluginPosition>();
-            world.register_component<PluginVelocity>();
+        void configure(conductor::PluginConfig& config) override {
+            config.component<PluginPosition>();
+            config.component<PluginVelocity>();
 
-            handle = world.add_system<PluginMovementSystem>(
+            handle = config.system<PluginMovementSystem>(
                 "plugin_movement",
                 60.0,
                 PluginMovementSystem{}
             );
         }
 
-        void shutdown(conductor::World&) override {}
+        void shutdown() override {}
     
     private:
         conductor::Scheduler::SystemHandle handle;

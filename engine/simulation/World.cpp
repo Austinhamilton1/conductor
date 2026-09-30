@@ -73,8 +73,15 @@ namespace conductor {
         }
     }
 
-    void World::update(double delta) {
-        m_scheduler.update(delta);
+    void World::update(double delta, ApplicationContext& ctx) {
+        WorldContext wctx{
+            .rand = ctx.random,
+            .clock = ctx.clock,
+            .queue = m_commands,
+            .events = ctx.events
+        };
+
+        m_scheduler.update(delta, wctx);
         m_commands.apply(m_entity_manager, m_storages);
     }
 
@@ -100,13 +107,5 @@ namespace conductor {
 
     const ComponentStorageRegistry& World::storage() const {
         return m_storages;
-    }
-
-    SimulationClock& World::clock() {
-        return m_clock;
-    }
-
-    const SimulationClock& World::clock() const {
-        return m_clock;
     }
 }

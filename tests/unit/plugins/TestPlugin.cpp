@@ -79,13 +79,21 @@ TEST_CASE("Plugin system executes during simulation", "[plugins]") {
 
     conductor::Random rand;
     conductor::SimulationClock clock;
-    conductor::World world(rand, clock);
+    conductor::World world(rand);
+    conductor::EventBus events;
+
+    conductor::ApplicationContext ctx{
+        .random = rand,
+        .clock = clock,
+        .events = events,
+    };
 
     conductor::PluginManager plugins;
 
     plugins.load(
         TEST_PLUGIN_PATH,
-        world
+        world,
+        events
     );
 
     const auto entity = world.create_entity();
@@ -114,7 +122,7 @@ TEST_CASE("Plugin system executes during simulation", "[plugins]") {
 
     world.finalize();
 
-    world.update(1.0);
+    world.update(1.0, ctx);
 
     auto result = world.get_component<PluginPosition>(entity);
 
@@ -125,5 +133,5 @@ TEST_CASE("Plugin system executes during simulation", "[plugins]") {
     REQUIRE(result->y == 20.0f);
     REQUIRE(result->z == 30.0f);
 
-    plugins.shutdown(world);
+    plugins.shutdown();
 }

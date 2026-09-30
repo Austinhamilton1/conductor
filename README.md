@@ -523,13 +523,13 @@ Some goals of v0.2 include:
  - [X] `Application` should become configurable. There should be no reason to inherit a new `Application` class for every application instance.
  - [X] Configurable entity creation. A user should be able to configure 1, 100, or 10,000 drones without having to create them with an explicit loop.
 
- ---
+---
 
- ## v0.3 Vision
+## v0.3 Vision
 
- Version 0.3 of Conductor should create the first standalone Conductor Simulator. The main goal of this version of the simulator is to create a single application that users can link against without recompilation. This version is the first step of converting Conductor from a generic C++ framework to an actual product.
+Version 0.3 of Conductor should create the first standalone Conductor Simulator. The main goal of this version of the simulator is to create a single application that users can link against without recompilation. This version is the first step of converting Conductor from a generic C++ framework to an actual product.
 
- Some goals of v0.3 include:
+Some goals of v0.3 include:
 
  - [X] Compilation of a single, generic `conductor` application that can run multiple simulation configurations. 
  - [X] Plugins become first-class objects of the simulation. Users should be able to create plugins instead of recompiling the conductor application.
@@ -538,3 +538,54 @@ Some goals of v0.2 include:
  - [X] YAML configuration for plugin loading.
  - [X] Relative paths from YAML configuration.
  - [X] `SimulationClock` exposed through `SystemContext` to give systems access to global time.
+
+---
+
+## v0.4 Vision
+
+Version 0.4 of Conductor should freeze v1.0 of the plugin API for Conductor. After v0.4, researchers should be able to easily create plugins with a stable, declarative C++ API.
+
+Some goals of v0.4 include:
+
+ - [X] Rename `Plugin::initialize()` to `Plugin::configure()`.
+ - [X] Remove `World` from the plugin lifecycle API.
+ - [X] Add `PluginConfig` as the plugin configuration API.
+ - [X] Add `PluginConfig::component<T>()`.
+ - [X] Add `PluginConfig::system<T>()`.
+ - [X] Return `SystemHandle` from `system`.
+ - [X] Add entity spawning from `PluginConfig`,
+ - [X] Expose evnets through `PluginConfig`.
+ - [X] Expose event publishing through `SystemContext`.
+
+## v0.4 Benchmarks
+
+Version v0.4 has a plugin that can be run. The plugin spawns a set number of drones and moving targets. At each timestep, the drones must follow the targets. As the drones move, their battery decreases at a rate that is porportional to their speed. It is a simple simulation meant to show the API layout for Conductor v0.4.
+
+This simulation was benchmarked on two computers. The first computer is a desktop Ubuntu 24.04 machine with an Intel Core i7-8700 12 core CPU with 32 GB RAM. The second computer is a laptop Pop!_OS 24.04 machine with an Intel Core i9-13900HX and 16 GB RAM.
+
+On both machines, the simulation was run for 10 simulation seconds with 10, 100, and 1000 drones. It was run at 1x, 10x, 100x, and 1000x speed.
+
+### i7 Benchmark Results:
+| Num Drones | Simulation Speed | Simulation Time | Real Time | Observed Simulation Speed |
+| ---------- | ---------------- | --------------- | --------- | ------------------------- |
+| 10 | 1.0x | 10.0s | 10.005s | ~1.0x |
+| 10 | 10.0x | 10.0s | 1.004s | 9.96x |
+| 10 | 100.0x | 10.0s | 0.103s | 97.09x |
+| 10 | 1000.0x | 10.0s | 0.021s | 476.19x |
+| 100 | 1.0x | 10.0s | 10.003s | ~1.0x |
+| 100 | 10.0x | 10.0s | 1.003s | 9.97x |
+| 100 | 100.0x | 10.0s | 0.152s | 65.79x |
+| 100 | 1000.0x | 10.0s | 0.152s | 65.79x |
+| 1000 | 1.0x | 10.0s | 10.005s | ~1.0x |
+| 1000 | 10.0x | 10.0s | 1.448s | 6.91x |
+| 1000 | 100.0x | 10.0s | 1.474s | 6.78x |
+| 1000 | 1000.0x | 10.0s | 1.448s | 6.91x |
+
+### Benchmark Observations
+
+Two things should be noted about the benchmarks above. Namely:
+
+ > Conductor runtime grows linearly with respect to drone count. This means that when optimizing in future versions, the algorithmic complexity of Conductor is not the main limiting factor.
+ > Increasing simulation speed increases simulation runtime, but after a certain point, Conductor seems to hit a "speed limit". For example, with 1000 drones in the above simulation, increasing the simulation time-scale does not affect the runtime for `time_scale > 100.0`. This means that systems are scheduled and ran efficiently, but systems are taking time to finish.
+
+These both point to a natural conclusion that the main bottleneck of Conductor is not the simulation infrastructure/design, but rather the speed at which systems are able to complete. This means that for performance optimizations, approaches such as multithreading, SIMD multiprocessing, and component retrieval will most likely succeed if done correctly.

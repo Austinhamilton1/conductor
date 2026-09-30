@@ -4,12 +4,7 @@
 #include <string>
 #include <format>
 
-#include "ecs/Entity.h"
-#include "ecs/Query.h"
-#include "ecs/SystemContext.h"
-#include "runtime/Application.h"
-#include "plugins/Plugin.h"
-#include "plugins/PluginAPI.h"
+#include "include/conductor.h"
 
 /* Helpers */
 namespace {
@@ -66,6 +61,35 @@ namespace {
 
     struct DroneStatus {
         DroneState state = DroneState::Active;
+    };
+}
+
+namespace {
+    struct Drone {
+    public:
+        void configure(conductor::SpawnConfig& spawner) {
+            spawner.component<Position>(
+                [](const conductor::SpawnContext& ctx) {
+                    return Position{
+                        -10.0,
+                        2.0 * ctx.index
+                    };
+                }
+            )
+            .component<Velocity>(Velocity{})
+            .component<Target>(
+                [](const conductor::SpawnContext& ctx) {
+                    return Target{
+                        10.0,
+                        2.0 * ctx.index
+                    };
+                }
+            )
+            .component<TargetVelocity>(TargetVelocity{})
+            .component<Battery>(Battery{})
+            .component<SensorData>(SensorData{})
+            .component<DroneStatus>(DroneStatus{});
+        }
     };
 }
 
@@ -280,99 +304,76 @@ namespace {
             return "drone_sim";
         }
 
-        void initialize(conductor::World& world) override {
-            world.register_component<Position>();
-            world.register_component<Velocity>();
-            world.register_component<Target>();
-            world.register_component<TargetVelocity>();
-            world.register_component<Battery>();
-            world.register_component<SensorData>();
-            world.register_component<DroneStatus>();
+        void configure(conductor::PluginConfig& config) override {
+            config.component<Position>();
+            config.component<Velocity>();
+            config.component<Target>();
+            config.component<TargetVelocity>();
+            config.component<Battery>();
+            config.component<SensorData>();
+            config.component<DroneStatus>();
 
-            conductor::SpawnConfig spawner;
-            spawner.component<Position>(
-                [](const conductor::SpawnContext& ctx) {
-                    return Position{
-                        -10.0,
-                        2.0 * ctx.index
-                    };
-                }
-            )
-            .component<Velocity>(Velocity{})
-            .component<Target>(
-                [](const conductor::SpawnContext& ctx) {
-                    return Target{
-                        10.0,
-                        2.0 * ctx.index
-                    };
-                }
-            )
-            .component<TargetVelocity>(TargetVelocity{})
-            .component<Battery>(Battery{})
-            .component<SensorData>(SensorData{})
-            .component<DroneStatus>(DroneStatus{});
+            config.entity_type<Drone>("drone");
 
-            world.register_spawner("drone", spawner);
-
-            m_sensor = world.add_system(
+            m_sensor = config.system(
                 "sensor",
                 frequency,
                 SensorSystem{}
             );
 
-            m_steering = world.add_system(
+            m_steering = config.system(
                 "steering", 
                 frequency,
                 SteeringSystem{}
             );
 
-            m_integration = world.add_system(
+            m_integration = config.system(
                 "integration",
                 frequency,
                 IntegrationSystem{}
             );
 
-            m_target = world.add_system(
+            m_target = config.system(
                 "target",
                 frequency,
                 TargetSystem{}
             );
 
-            m_battery = world.add_system(
+            m_battery = config.system(
                 "battery",
                 frequency,
                 BatterySystem{}
             );
 
-            m_monitor = world.add_system(
+            m_monitor = config.system(
                 "monitor",
                 frequency,
                 BatteryMonitorSystem{}
             );
 
-            m_removal = world.add_system(
+            m_removal = config.system(
                 "removal",
                 frequency,
                 DroneRemovalSystem{}
             );
 
-            m_telemetry = world.add_system(
-                "telemetry",
-                frequency,
-                TelemetrySystem{}
-            );
+            // m_telemetry = config.system(
+            //     "telemetry",
+            //     frequency,
+            //     TelemetrySystem{}
+            // );
 
             m_steering.depends_on(m_integration);
-            m_telemetry.depends_on(m_removal);
+            // m_telemetry.depends_on(m_removal);
         }
 
-        void shutdown(conductor::World&) override {}
+        void shutdown() override {}
     
     private:
         conductor::Scheduler::SystemHandle
             m_sensor, m_steering, m_integration,
             m_battery, m_monitor, m_removal,
-            m_telemetry, m_target;
+            m_target;
     };
 }
 

@@ -9,4 +9,4 @@ plugins:
 
 entities:
   - type: drone
-    count: 10
+    count: 1000
