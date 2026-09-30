@@ -561,7 +561,7 @@ Some goals of v0.4 include:
 
 Version v0.4 has a plugin that can be run. The plugin spawns a set number of drones and moving targets. At each timestep, the drones must follow the targets. As the drones move, their battery decreases at a rate that is porportional to their speed. It is a simple simulation meant to show the API layout for Conductor v0.4.
 
-This simulation was benchmarked on two computers. The first computer is a desktop Ubuntu 24.04 machine with an Intel Core i7-8700 12 core CPU with 32 GB RAM. The second computer is a laptop Pop!_OS 24.04 machine with an Intel Core i9-13900HX and 16 GB RAM.
+This simulation was benchmarked on two computers. The first computer is a desktop Ubuntu 24.04 machine with an Intel Core i7-8700 12 core CPU with 32 GB RAM. The second computer is a laptop Pop!_OS 24.04 machine with an Intel Core Ultra 9 275HX and 16 GB RAM.
 
 On both machines, the simulation was run for 10 simulation seconds with 10, 100, and 1000 drones. It was run at 1x, 10x, 100x, and 1000x speed.
 
@@ -580,6 +580,23 @@ On both machines, the simulation was run for 10 simulation seconds with 10, 100,
 | 1000 | 10.0x | 10.0s | 1.448s | 6.91x |
 | 1000 | 100.0x | 10.0s | 1.474s | 6.78x |
 | 1000 | 1000.0x | 10.0s | 1.448s | 6.91x |
+
+### i9 Benchmark Results:
+| Num Drones | Simulation Speed | Simulation Time | Real Time | Observed Simulation Speed |
+| ---------- | ---------------- | --------------- | --------- | ------------------------- |
+| 10 | 1.0x | 10.0s | 10.004s | ~1.0x |
+| 10 | 10.0x | 10.0s | 1.004s | 9.96x |
+| 10 | 100.0x | 10.0s | 0.104 | 96.15x |
+| 10 | 1000.0x | 10.0s | 0.014 | 714.29x |
+| 100 | 1.0x | 10.0s | 10.005s | ~1.0x |
+| 100 | 10.0x | 10.0s | 1.004s | 9.96x |
+| 100 | 100.0x | 10.0s | 0.104s | 96.15x |
+| 100 | 1000.0x | 10.0s | 0.014s | 714.29x |
+| 1000 | 1.0x | 10.0s | 10.005s | ~1.0x |
+| 1000 | 10.0x | 10.0s | 1.004s | 9.96x |
+| 1000 | 100.0x | 10.0s | 0.104s | 96.15x |
+| 1000 | 1000.0x | 10.0s | 0.037s | 270.27x |
+
 
 ### Benchmark Observations
 

@@ -5,7 +5,7 @@ simulation:
   seed: 12345
 
 plugins:
-  - ../../build/debug/lib/libdrone_sim.so
+  - ../../build/release/lib/libdrone_sim.so
 
 entities:
   - type: drone
