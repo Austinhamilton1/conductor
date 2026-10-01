@@ -73,15 +73,18 @@ namespace conductor {
         }
     }
 
-    void World::update(double delta, ApplicationContext& ctx) {
-        WorldContext wctx{
-            .rand = ctx.random,
+    WorldContext World::get_context(ApplicationContext ctx) {
+        return WorldContext{
+            .random = ctx.random,
             .clock = ctx.clock,
-            .queue = m_commands,
-            .events = ctx.events
+            .events = ctx.events,
+            .executor = ctx.executor,
+            .queue = m_commands
         };
+    }
 
-        m_scheduler.update(delta, wctx);
+    void World::update(double delta, ApplicationContext ctx) {
+        m_scheduler.update(delta, get_context(ctx));
         m_commands.apply(m_entity_manager, m_storages);
     }
 

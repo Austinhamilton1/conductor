@@ -15,6 +15,12 @@ PUBLIC
     conductor_plugins
     conductor_scheduler
     conductor_simulation
+    Taskflow::Taskflow
+)
+
+target_link_libraries(conductor_runtime
+PUBLIC
+    Taskflow::Taskflow
 )
 
 target_compile_features(conductor_runtime

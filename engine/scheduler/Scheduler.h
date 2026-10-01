@@ -106,7 +106,7 @@ namespace conductor {
             SystemId parent
         );
 
-        void update(double delta, WorldContext& ctx);
+        void update(double delta, WorldContext ctx);
         void resolve_dependencies();
 
         bool has_dependency(

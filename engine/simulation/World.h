@@ -99,7 +99,9 @@ namespace conductor {
         void register_spawner(const std::string& name, SpawnConfig config);
         void spawn_entities(std::size_t count, const std::string& name);
 
-        void update(double delta, ApplicationContext& ctx);
+        void update(double delta, ApplicationContext ctx);
+
+        WorldContext get_context(ApplicationContext ctx);
 
         // Access
         EntityManager& entities();

@@ -5,7 +5,7 @@ SHARED
 
 target_link_libraries(drone_sim
 PRIVATE
-    conductor_plugin
+    conductor_lib
 )
 
 set_target_properties(drone_sim

@@ -15,6 +15,7 @@ PUBLIC
     conductor_ecs
     conductor_events
     conductor_scheduler
+    Taskflow::Taskflow
 )
 
 target_compile_features(conductor_simulation

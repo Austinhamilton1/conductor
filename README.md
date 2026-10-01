@@ -559,7 +559,7 @@ Some goals of v0.4 include:
 
 ## v0.4 Benchmarks
 
-Version v0.4 has a plugin that can be run. The plugin spawns a set number of drones and moving targets. At each timestep, the drones must follow the targets. As the drones move, their battery decreases at a rate that is porportional to their speed. It is a simple simulation meant to show the API layout for Conductor v0.4.
+Version 0.4 has a plugin that can be run. The plugin spawns a set number of drones and moving targets. At each timestep, the drones must follow the targets. As the drones move, their battery decreases at a rate that is porportional to their speed. It is a simple simulation meant to show the API layout for Conductor v0.4.
 
 This simulation was benchmarked on two computers. The first computer is a desktop Ubuntu 24.04 machine with an Intel Core i7-8700 12 core CPU with 32 GB RAM. The second computer is a laptop Pop!_OS 24.04 machine with an Intel Core Ultra 9 275HX and 16 GB RAM.
 
@@ -606,3 +606,37 @@ Two things should be noted about the benchmarks above. Namely:
  - Increasing simulation speed increases simulation runtime, but after a certain point, Conductor seems to hit a "speed limit". For example, with 1000 drones in the above simulation, increasing the simulation time-scale does not affect the runtime for `time_scale > 100.0`. This means that systems are scheduled and ran efficiently, but systems are taking time to finish.
 
 These both point to a natural conclusion that the main bottleneck of Conductor is not the simulation infrastructure/design, but rather the speed at which systems are able to complete. This means that for performance optimizations, approaches such as multithreading, SIMD multiprocessing, and component retrieval will most likely succeed if done correctly.
+
+---
+
+## v0.5 Vision
+
+Version 0.5 of Conductor will introduce parallelism to several subsystems within the Conductor engine. The scheduler, command queue, and query subsystems were all designed with parallelism in mind. v0.5 should optimize the runtime of large-scale simulations by running independent subsystems concurrently.
+
+Some goals of v0.5 include:
+
+ - [ ] Parallelize scheduler. Scheduler should be able to run independent systems concurrently, reducing the overall time to run systems.
+ - [ ] Parallelize command queue. Commands that are queued for execution during a single frame should be able to run concurrently. Commands are atomic, so running several in parallel should not affect the execution of the command queue.
+ - [ ] Parallelize queries. Sufficiently large queries should be able to run with chunked workers.
+ - [ ] Change query API. Queries should be able to run either single threaded or multithreaded. Proposed API change is to add `.do(function())` to query, which runs parallel workers.
+
+## v0.5 Considerations
+
+There are several dependencies within Conductor. Parallel execution of different subsystems will inevitably affect other subsystems that need to be made thread safe. Those subsystems include:
+
+### `Scheduler`
+
+ - [ ] `Random`: The random number generator needs to be made thread safe. Making this multithreaded will break determinism, therefore users need to be able to define whether they want multithreading or not.
+ - [ ] `SimulationClock`: This should be made constant when passing through dependency injection to ensure no changes are made that race.
+ - [ ] `CommandQueue`: There is no guarantee that two threads will not race on this. This needs to be made thread safe. Start with mutex, then move on to MPMC queue.
+ - [ ] `EventBus`: This also needs to be made thread safe. Start with mutex, then move on to MPMC queue.
+
+### `CommandQueue`
+
+ - [ ] Internal representation: `CommandQueue` uses three internal vectors. These need to be made thread safe so they do not race.
+ - [ ] `EntityManager`: This will need to be made thread safe. `CommandQueue` uses this to create/destroy entities. Entities may be created/destroyed in parallel.
+ - [ ] `ComponentStorage/ComponentStorageRegistry`: This will also need to be made thread safe. This is used to create/destroy components. Components may be created/destroyed in parallel.
+
+### `Query`
+
+Making `Query` parallel should not affect any other subsystems. `Query` workers should be independent. Each query contains one instance of every entity, so there should be no write-write conflicts.

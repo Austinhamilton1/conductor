@@ -31,11 +31,19 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(yaml-cpp)
 
+FetchContent_Declare(
+    taskflow
+    GIT_REPOSITORY https://github.com/taskflow/taskflow.git
+    GIT_TAG v4.0.0
+)
+
+FetchContent_MakeAvailable(taskflow)
+
 add_subdirectory(engine)
 
-add_library(conductor_plugin INTERFACE)
+add_library(conductor_lib INTERFACE)
 
-target_link_libraries(conductor_plugin
+target_link_libraries(conductor_lib
 INTERFACE
     conductor_commands
     conductor_core
@@ -45,6 +53,7 @@ INTERFACE
     conductor_runtime
     conductor_scheduler
     conductor_simulation
+    Taskflow::Taskflow
 )
 
 add_subdirectory(apps)

@@ -1,5 +1,6 @@
 #include <catch2/catch_test_macros.hpp>
 
+#include "runtime/Application.h"
 #include "simulation/World.h"
 #include "ecs/SystemContext.h"
 
@@ -144,16 +145,18 @@ TEST_CASE("World can add a system", "[simulation]") {
 }
 
 TEST_CASE("World updates systems", "[simulation]") {
+    conductor::ApplicationConfig config{
+        .duration = 10.0,
+        .time_scale = 10.0,
+        .step_size = 0.0166667,
+        .seed = 12345,
+    };
+
     conductor::Random rand;
 	conductor::SimulationClock clock;
     conductor::World world(rand);
     conductor::EventBus events;
-
-    conductor::ApplicationContext ctx{
-        .random = rand,
-        .clock = clock,
-        .events = events,
-    };
+    conductor::Application app(config);
 
     world.register_component<Position>();
     world.register_component<Velocity>();
@@ -183,7 +186,7 @@ TEST_CASE("World updates systems", "[simulation]") {
 
     world.finalize();
 
-    world.update(1.0, ctx);
+    world.update(1.0, app.get_context());
 
     auto result = world.get_component<Position>(entity);
 

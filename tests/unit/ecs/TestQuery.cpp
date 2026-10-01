@@ -7,6 +7,8 @@
 #include "ecs/ComponentStorage.h"
 #include "ecs/Query.h"
 
+#include "taskflow/taskflow.hpp"
+
 
 namespace {
 
@@ -641,4 +643,74 @@ TEST_CASE("Query can read from const component storage", "[ecs]") {
     }
 
     REQUIRE(count == 1);
+}
+
+TEST_CASE("Small parallel query works", "[ecs]") {
+    conductor::ComponentStorage<Position> storage;
+    tf::Executor executor;
+
+    for(int i = 0; i < 4000; i++) {
+        const auto entity = make_entity(i);
+        storage.add(
+            entity,
+            Position{static_cast<float>(i), 0.0f}
+        );
+    }
+
+    using Query =
+        conductor::Query<
+            conductor::Write<Position>
+        >;
+
+    auto query = Query::bind(storage.view());
+
+    query.parallel(executor, 
+        [](conductor::Entity& e, Position& pos) {
+            pos.x *= 5.0;
+        }
+    );
+
+    for(int i = 0; i < 4000; i++) {
+        const auto entity = make_entity(i);
+
+        auto result = storage.get(entity);
+
+        REQUIRE(static_cast<int>(result->x) == 5 * i);
+        REQUIRE(result->y == 0.0f);
+    }
+}
+
+TEST_CASE("Large parallel query works", "[ecs]") {
+    conductor::ComponentStorage<Position> storage;
+    tf::Executor executor;
+
+    for(int i = 0; i < 100000; i++) {
+        const auto entity = make_entity(i);
+        storage.add(
+            entity,
+            Position{static_cast<float>(i), 0.0f}
+        );
+    }
+
+    using Query =
+        conductor::Query<
+            conductor::Write<Position>
+        >;
+
+    auto query = Query::bind(storage.view());
+
+    query.parallel(executor, 
+        [](conductor::Entity& e, Position& pos) {
+            pos.x *= 5.0;
+        }
+    );
+
+    for(int i = 0; i < 100000; i++) {
+        const auto entity = make_entity(i);
+
+        auto result = storage.get(entity);
+
+        REQUIRE(static_cast<int>(result->x) == 5 * i);
+        REQUIRE(result->y == 0.0f);
+    }
 }

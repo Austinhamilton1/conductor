@@ -12,6 +12,8 @@
 #include "scheduler/Scheduler.h"
 #include "simulation/World.h"
 
+#include "taskflow/taskflow.hpp"
+
 namespace conductor {
     class Application : public NonCopyable {
     protected:
@@ -29,11 +31,14 @@ namespace conductor {
         World& world();
         PluginManager& plugins();
         Random& random();
+        tf::Executor& executor();
 
         void run();
         void stop();
 
         void load_plugin(const std::string& plugin_path);
+
+        ApplicationContext get_context();
         
     private:
         bool m_running = false;
@@ -50,5 +55,7 @@ namespace conductor {
         Clock m_clock;
         SimulationClock m_simulation_clock;
         EventBus m_events;
+
+        tf::Executor m_executor;
     };
 }

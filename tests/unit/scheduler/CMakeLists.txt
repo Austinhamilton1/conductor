@@ -5,7 +5,7 @@ add_executable(scheduler_tests
 
 target_link_libraries(scheduler_tests
 PRIVATE
-    conductor_scheduler
+    conductor_lib
     Catch2::Catch2WithMain
 )
 
@@ -13,5 +13,5 @@ include(Catch)
 
 catch_discover_tests(scheduler_tests
 PROPERTIES
-    LABELS "scheduler"
+    LABELS "conductor scheduler"
 )

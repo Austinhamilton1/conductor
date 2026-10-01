@@ -14,6 +14,8 @@
 
 #include "simulation/WorldContext.h"
 
+#include "runtime/Application.h"
+
 namespace {
     struct Position {
         float x;
@@ -122,6 +124,13 @@ namespace {
             executions = 0;
         }
     };
+
+    conductor::ApplicationConfig config{
+        .duration = 10.0,
+        .time_scale = 10.0,
+        .step_size = 0.0166667,
+        .seed = 12345
+    };
 }
 
 using namespace conductor;
@@ -129,17 +138,8 @@ using namespace conductor;
 TEST_CASE("Scheduler executes systems when due", "[scheduler]") {
     ExecutionSystem::reset();
 
-    CommandQueue commands;
-    SimulationClock clock;
-	Random rand;
-    EventBus events;
-
-    WorldContext ctx{
-        .rand = rand,
-        .clock = clock,
-        .queue = commands,
-        .events = events
-    };
+    Application app(config);
+    World world(app.random());
 
     Scheduler scheduler;
 
@@ -160,13 +160,13 @@ TEST_CASE("Scheduler executes systems when due", "[scheduler]") {
 
     REQUIRE(handle.valid());
 
-    scheduler.update(0.05, ctx);
+    scheduler.update(0.05, world.get_context(app.get_context()));
 
     REQUIRE(
         ExecutionSystem::executions == 0
     );
 
-    scheduler.update(0.05, ctx);
+    scheduler.update(0.05, world.get_context(app.get_context()));
 
     REQUIRE(
         ExecutionSystem::executions == 1
@@ -176,17 +176,8 @@ TEST_CASE("Scheduler executes systems when due", "[scheduler]") {
 TEST_CASE("Scheduler accumulates partial intervals", "[scheduler]") {
     ExecutionSystem::reset();
 
-    CommandQueue commands;
-    SimulationClock clock;
-	Random rand;
-    EventBus events;
-
-    WorldContext ctx{
-        .rand = rand,
-        .clock = clock,
-        .queue = commands,
-        .events = events
-    };
+    Application app(config);
+    World world(app.random());
 
     Scheduler scheduler;
 
@@ -204,15 +195,15 @@ TEST_CASE("Scheduler accumulates partial intervals", "[scheduler]") {
         std::move(query)
     );
 
-    scheduler.update(0.03, ctx);
-    scheduler.update(0.03, ctx);
-    scheduler.update(0.03, ctx);
+    scheduler.update(0.03, world.get_context(app.get_context()));
+    scheduler.update(0.03, world.get_context(app.get_context()));
+    scheduler.update(0.03, world.get_context(app.get_context()));
 
     REQUIRE(
         ExecutionSystem::executions == 0
     );
 
-    scheduler.update(0.01, ctx);
+    scheduler.update(0.01, world.get_context(app.get_context()));
 
     REQUIRE(
         ExecutionSystem::executions == 1
@@ -222,17 +213,8 @@ TEST_CASE("Scheduler accumulates partial intervals", "[scheduler]") {
 TEST_CASE("Scheduler executes multiple intervals from large delta", "[scheduler]") {
     ExecutionSystem::reset();
 
-    CommandQueue commands;
-    SimulationClock clock;
-	Random rand;
-    EventBus events;
-
-    WorldContext ctx{
-        .rand = rand,
-        .clock = clock,
-        .queue = commands,
-        .events = events
-    };
+    Application app(config);
+    World world(app.random());
 
     Scheduler scheduler;
 
@@ -250,7 +232,7 @@ TEST_CASE("Scheduler executes multiple intervals from large delta", "[scheduler]
         std::move(query)
     );
 
-    scheduler.update(0.35, ctx);
+    scheduler.update(0.35, world.get_context(app.get_context()));
 
     REQUIRE(
         ExecutionSystem::executions == 3
@@ -260,17 +242,8 @@ TEST_CASE("Scheduler executes multiple intervals from large delta", "[scheduler]
 TEST_CASE("Scheduler pauses and resumes systems", "[scheduler]") {
     ExecutionSystem::reset();
 
-    CommandQueue commands;
-    SimulationClock clock;
-	Random rand;
-    EventBus events;
-
-    WorldContext ctx{
-        .rand = rand,
-        .clock = clock,
-        .queue = commands,
-        .events = events
-    };
+    Application app(config);
+    World world(app.random());
 
     Scheduler scheduler;
 
@@ -291,7 +264,7 @@ TEST_CASE("Scheduler pauses and resumes systems", "[scheduler]") {
 
     handle.pause();
 
-    scheduler.update(1.0, ctx);
+    scheduler.update(1.0, world.get_context(app.get_context()));
 
     REQUIRE(
         ExecutionSystem::executions == 0
@@ -299,7 +272,7 @@ TEST_CASE("Scheduler pauses and resumes systems", "[scheduler]") {
 
     handle.resume();
 
-    scheduler.update(0.1, ctx);
+    scheduler.update(0.1, world.get_context(app.get_context()));
 
     REQUIRE(
         ExecutionSystem::executions == 1
@@ -309,17 +282,8 @@ TEST_CASE("Scheduler pauses and resumes systems", "[scheduler]") {
 TEST_CASE("Cancelling a system prevents future execution", "[scheduler]") {
     ExecutionSystem::reset();
 
-    CommandQueue commands;
-    SimulationClock clock;
-	Random rand;
-    EventBus events;
-
-    WorldContext ctx{
-        .rand = rand,
-        .clock = clock,
-        .queue = commands,
-        .events = events
-    };
+    Application app(config);
+    World world(app.random());
 
     Scheduler scheduler;
 
@@ -344,7 +308,7 @@ TEST_CASE("Cancelling a system prevents future execution", "[scheduler]") {
 
     REQUIRE_FALSE(handle.valid());
 
-    scheduler.update(1.0, ctx);
+    scheduler.update(1.0, world.get_context(app.get_context()));
 
     REQUIRE(
         ExecutionSystem::executions == 0
@@ -357,17 +321,8 @@ TEST_CASE("Scheduler respects system dependencies", "[scheduler]") {
     OrderSystemA::order = &order;
     OrderSystemB::order = &order;
 
-    CommandQueue commands;
-    SimulationClock clock;
-	Random rand;
-    EventBus events;
-
-    WorldContext ctx{
-        .rand = rand,
-        .clock = clock,
-        .queue = commands,
-        .events = events
-    };
+    Application app(config);
+    World world(app.random());
 
     Scheduler scheduler;
 
@@ -406,7 +361,7 @@ TEST_CASE("Scheduler respects system dependencies", "[scheduler]") {
 
     scheduler.update(
         1.0 / 60.0,
-        ctx
+        world.get_context(app.get_context())
     );
 
     REQUIRE(order.size() == 2);
@@ -421,17 +376,8 @@ TEST_CASE("System dependency requires parent execution", "[scheduler]") {
     OrderSystemA::order = &order;
     OrderSystemB::order = &order;
 
-    CommandQueue commands;
-    SimulationClock clock;
-	Random rand;
-    EventBus events;
-
-    WorldContext ctx{
-        .rand = rand,
-        .clock = clock,
-        .queue = commands,
-        .events = events
-    };
+    Application app(config);
+    World world(app.random());
 
     Scheduler scheduler;
 
@@ -470,7 +416,7 @@ TEST_CASE("System dependency requires parent execution", "[scheduler]") {
 
     scheduler.update(
         1.0 / 60.0,
-        ctx
+        world.get_context(app.get_context())
     );
 
     REQUIRE(order.size() == 2);
@@ -480,7 +426,7 @@ TEST_CASE("System dependency requires parent execution", "[scheduler]") {
     // B must not run again merely because it is due.
     scheduler.update(
         1.0 / 120.0,
-        ctx
+        world.get_context(app.get_context())
     );
 
     REQUIRE(order.empty());
@@ -489,17 +435,8 @@ TEST_CASE("System dependency requires parent execution", "[scheduler]") {
 TEST_CASE("Failed system enters failed state", "[scheduler]") {
     FailingSystem::reset();
 
-    CommandQueue commands;
-    SimulationClock clock;
-	Random rand;
-    EventBus events;
-
-    WorldContext ctx{
-        .rand = rand,
-        .clock = clock,
-        .queue = commands,
-        .events = events
-    };
+    Application app(config);
+    World world(app.random());
 
     Scheduler scheduler;
 
@@ -521,7 +458,7 @@ TEST_CASE("Failed system enters failed state", "[scheduler]") {
     REQUIRE_THROWS(
         scheduler.update(
             1.0 / 60.0,
-            ctx
+            world.get_context(app.get_context())
         )
     );
 
@@ -533,7 +470,7 @@ TEST_CASE("Failed system enters failed state", "[scheduler]") {
     REQUIRE_NOTHROW(
         scheduler.update(
             1.0 / 60.0,
-            ctx
+            world.get_context(app.get_context())
         )
     );
 
@@ -546,17 +483,8 @@ TEST_CASE("Failed system does not satisfy dependencies", "[scheduler]") {
     FailingSystem::reset();
     DependentSystem::reset();
 
-    CommandQueue commands;
-    SimulationClock clock;
-	Random rand;
-    EventBus events;
-
-    WorldContext ctx{
-        .rand = rand,
-        .clock = clock,
-        .queue = commands,
-        .events = events
-    };
+    Application app(config);
+    World world(app.random());
 
     Scheduler scheduler;
 
@@ -596,7 +524,7 @@ TEST_CASE("Failed system does not satisfy dependencies", "[scheduler]") {
     REQUIRE_THROWS(
         scheduler.update(
             1.0 / 60.0,
-            ctx
+            world.get_context(app.get_context())
         )
     );
 

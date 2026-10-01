@@ -16,7 +16,7 @@ namespace conductor {
             BoundQueryT& query,
             CommandQueue& commands,
             double delta_seconds,
-            SimulationClock& clock,
+            const SimulationClock& clock,
             Random& rand,
             EventBus& events
         ) : m_query(query),
@@ -67,7 +67,7 @@ namespace conductor {
         BoundQueryT& m_query;
         CommandQueue& m_commands;
         double m_delta_seconds;
-        SimulationClock& m_clock;
+        const SimulationClock& m_clock;
         Random& m_rand;
         EventBus& m_events;
     };

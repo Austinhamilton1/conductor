@@ -39,6 +39,10 @@ namespace conductor {
         return m_rand;
     }
 
+    tf::Executor& Application::executor() {
+        return m_executor;
+    }
+
     void Application::load_plugin(const std::string& plugin_path) {
         m_plugins.load(plugin_path, m_world, m_events);
     }
@@ -51,11 +55,7 @@ namespace conductor {
 
         m_world.finalize();
 
-        ApplicationContext ctx{
-            .random = m_rand,
-            .clock = m_simulation_clock,
-            .events = m_events,
-        };
+        ApplicationContext ctx = get_context();
 
         while(m_running) {
             m_clock.tick();
@@ -85,6 +85,15 @@ namespace conductor {
 
         m_plugins.shutdown();
         shutdown();
+    }
+
+    ApplicationContext Application::get_context() {
+        return ApplicationContext{
+            .random = m_rand,
+            .clock = m_simulation_clock,
+            .events = m_events,
+            .executor = m_executor
+        };
     }
 
     void Application::stop() {

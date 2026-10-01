@@ -479,7 +479,7 @@ namespace conductor {
         return true;
     }
 
-    void Scheduler::update(double delta, WorldContext& ctx) {
+    void Scheduler::update(double delta, WorldContext ctx) {
         if(!m_dependencies_resolved) {
             resolve_dependencies();
             m_dependencies_resolved = true;
@@ -536,7 +536,7 @@ namespace conductor {
             node.executor->execute(
                 ctx.queue,
                 ctx.clock,
-                ctx.rand,
+                ctx.random,
                 ctx.events,
                 system_delta
             );

@@ -28,7 +28,7 @@ namespace conductor {
 
         void execute(
             CommandQueue& commands,
-            SimulationClock& clock,
+            const SimulationClock& clock,
             Random& rand,
             EventBus& events,
             double delta_seconds

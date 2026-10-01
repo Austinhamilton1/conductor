@@ -7,7 +7,7 @@ add_executable(event_tests
 
 target_link_libraries(event_tests
 PRIVATE
-    conductor_events
+    conductor_lib
     Catch2::Catch2WithMain
 )
 
@@ -15,5 +15,5 @@ include(Catch)
 
 catch_discover_tests(event_tests
 PROPERTIES
-    LABELS "events"
+    LABELS "conductor events"
 )
