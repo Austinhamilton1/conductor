@@ -569,17 +569,17 @@ On both machines, the simulation was run for 10 simulation seconds with 10, 100,
 | Num Drones | Simulation Speed | Simulation Time | Real Time | Observed Simulation Speed |
 | ---------- | ---------------- | --------------- | --------- | ------------------------- |
 | 10 | 1.0x | 10.0s | 10.005s | ~1.0x |
-| 10 | 10.0x | 10.0s | 1.004s | 9.96x |
+| 10 | 10.0x | 10.0s | 1.003s | 9.97x |
 | 10 | 100.0x | 10.0s | 0.103s | 97.09x |
-| 10 | 1000.0x | 10.0s | 0.021s | 476.19x |
+| 10 | 1000.0x | 10.0s | 0.014s | 714.29x |
 | 100 | 1.0x | 10.0s | 10.003s | ~1.0x |
 | 100 | 10.0x | 10.0s | 1.003s | 9.97x |
-| 100 | 100.0x | 10.0s | 0.152s | 65.79x |
-| 100 | 1000.0x | 10.0s | 0.152s | 65.79x |
+| 100 | 100.0x | 10.0s | 0.103s | 97.09x |
+| 100 | 1000.0x | 10.0s | 0.012s | 833.33x |
 | 1000 | 1.0x | 10.0s | 10.005s | ~1.0x |
-| 1000 | 10.0x | 10.0s | 1.448s | 6.91x |
-| 1000 | 100.0x | 10.0s | 1.474s | 6.78x |
-| 1000 | 1000.0x | 10.0s | 1.448s | 6.91x |
+| 1000 | 10.0x | 10.0s | 1.003s | 9.97x |
+| 1000 | 100.0x | 10.0s | 0.103s | 97.09x |
+| 1000 | 1000.0x | 10.0s | 0.053s | 188.68x |
 
 ### i9 Benchmark Results:
 | Num Drones | Simulation Speed | Simulation Time | Real Time | Observed Simulation Speed |
