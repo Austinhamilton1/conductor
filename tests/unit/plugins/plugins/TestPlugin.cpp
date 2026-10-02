@@ -3,6 +3,7 @@
 #include "simulation/World.h"
 #include "ecs/Query.h"
 #include "scheduler/Scheduler.h"
+#include "ecs/Entity.h"
 
 namespace {
     class PluginMovementSystem {
@@ -18,16 +19,18 @@ namespace {
         void update(conductor::SystemContext<BoundQuery>& ctx) {
             ++executions;
 
-            for(auto [velocity, position] : ctx.query()) {
-                position.x += velocity.x * 
-                              ctx.delta_seconds();
+            ctx.query(
+                [&](conductor::Entity& e, const PluginVelocity& velocity, PluginPosition& position) {
+                    position.x += velocity.x * 
+                        ctx.delta_seconds();
 
-                position.y += velocity.y *
-                              ctx.delta_seconds();
+                    position.y += velocity.y *
+                        ctx.delta_seconds();
 
-                position.z += velocity.z *
-                              ctx.delta_seconds();
-            }
+                    position.z += velocity.z *
+                        ctx.delta_seconds();
+                }
+            );
         }
 
         static void reset() {

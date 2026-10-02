@@ -538,6 +538,7 @@ namespace conductor {
                 ctx.clock,
                 ctx.random,
                 ctx.events,
+                ctx.executor,
                 system_delta
             );
 

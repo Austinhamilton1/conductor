@@ -1,0 +1,8 @@
+serial_iteration                19806.702 ms
+parallel_iteration               1446.075 ms
+serial_iteration                19397.756 ms
+parallel_iteration               1486.922 ms
+serial_iteration                19429.424 ms
+parallel_iteration               1467.113 ms
+serial_iteration                19948.580 ms
+parallel_iteration               1479.710 ms

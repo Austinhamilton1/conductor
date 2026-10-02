@@ -9,6 +9,8 @@
 #include "ecs/SystemExecutor.h"
 #include "ecs/ComponentStorage.h"
 
+#include "taskflow/taskflow.hpp"
+
 namespace {
     struct Position {
         float x;
@@ -36,9 +38,7 @@ namespace {
         ) {
             ++executions;
 
-            for(auto [velocity, position] :
-                ctx.query())
-            {
+            ctx.query([&](conductor::Entity& e, const Velocity& velocity, Position& position) {
                 position.x += velocity.x *
                               ctx.delta_seconds();
 
@@ -47,7 +47,7 @@ namespace {
 
                 position.z += velocity.z *
                               ctx.delta_seconds();
-            }
+            });
         }
 
         static void reset() {
@@ -62,6 +62,7 @@ TEST_CASE("SystemExecutor provides functional query", "[ecs]") {
     Random rand;
     SimulationClock clock;
     EventBus events;
+    tf::Executor texecutor;
 
     MovementSystem::reset();
 
@@ -112,6 +113,7 @@ TEST_CASE("SystemExecutor provides functional query", "[ecs]") {
         clock,
         rand,
         events,
+        texecutor,
         0.5
     );
 

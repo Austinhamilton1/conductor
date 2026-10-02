@@ -3,6 +3,7 @@
 #include "runtime/Application.h"
 #include "simulation/World.h"
 #include "ecs/SystemContext.h"
+#include "ecs/Entity.h"
 
 namespace {
     struct Position {
@@ -29,11 +30,11 @@ namespace {
 
         template<typename BoundQueryT>
         void update(conductor::SystemContext<BoundQueryT> ctx) {
-            for(auto [velocity, position] : ctx.query()) {
+            ctx.query([&](conductor::Entity& e, const Velocity& velocity, Position& position) {
                 position.x += velocity.x * ctx.delta_seconds();
                 position.y += velocity.y * ctx.delta_seconds();
                 position.z += velocity.z * ctx.delta_seconds();
-            }
+            });
         }
     };
 }

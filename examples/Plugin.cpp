@@ -104,15 +104,17 @@ namespace {
 
         template<typename BoundQueryT>
         void update(conductor::SystemContext<BoundQueryT>& ctx) {
-            for(auto [position, target, sensor] : ctx.query()) {
-                const double dx = target.x - position.x;
-                const double dy = target.y - position.y;
+            ctx.query(
+                [&](conductor::Entity& e, const Position& position, const Target& target, SensorData& sensor) {
+                    const double dx = target.x - position.x;
+                    const double dy = target.y - position.y;
 
-                sensor.distance_to_target = std::sqrt(
-                    dx * dx + 
-                    dy * dy
-                );
-            }
+                    sensor.distance_to_target = std::sqrt(
+                        dx * dx + 
+                        dy * dy
+                    );
+                }
+            );
         }
     };
 
@@ -130,33 +132,35 @@ namespace {
 
         template<typename BoundQueryT>
         void update(conductor::SystemContext<BoundQueryT>& ctx) {
-            for(auto [position, target, sensor, velocity] : ctx.query()) {
-                const double dx = target.x - position.x;
-                const double dy = target.y - position.y;
+            ctx.query(
+                [&](conductor::Entity& e, const Position& position, const Target& target, const SensorData& sensor, Velocity& velocity) {
+                    const double dx = target.x - position.x;
+                    const double dy = target.y - position.y;
 
-                const double ax =
-                    dx * stiffness -
-                    velocity.x * damping;
+                    const double ax =
+                        dx * stiffness -
+                        velocity.x * damping;
 
-                const double ay =
-                    dy * stiffness -
-                    velocity.y * damping;
+                    const double ay =
+                        dy * stiffness -
+                        velocity.y * damping;
 
-                velocity.x += ax * ctx.delta_seconds();
-                velocity.y += ay * ctx.delta_seconds();
+                    velocity.x += ax * ctx.delta_seconds();
+                    velocity.y += ay * ctx.delta_seconds();
 
-                const double speed = std::sqrt(
-                    velocity.x * velocity.x +
-                    velocity.y * velocity.y
-                );
+                    const double speed = std::sqrt(
+                        velocity.x * velocity.x +
+                        velocity.y * velocity.y
+                    );
 
-                if(speed > max_speed) {
-                    const double scale = max_speed / speed;
+                    if(speed > max_speed) {
+                        const double scale = max_speed / speed;
 
-                    velocity.x *= scale;
-                    velocity.y *= scale;
+                        velocity.x *= scale;
+                        velocity.y *= scale;
+                    }
                 }
-            }
+            );
         }
     };
 
@@ -170,12 +174,14 @@ namespace {
 
         template<typename BoundQueryT>
         void update(conductor::SystemContext<BoundQueryT>& ctx) {
-            for(auto [position, velocity, target, t_velocity] : ctx.query()) {
-                position.x += velocity.x * ctx.delta_seconds();
-                position.y += velocity.y * ctx.delta_seconds();
-                target.x += t_velocity.x * ctx.delta_seconds();
-                target.y += t_velocity.y * ctx.delta_seconds();
-            }
+            ctx.query(
+                [&](conductor::Entity& e, Position& position, const Velocity& velocity, Target& target, const TargetVelocity& t_velocity) {
+                    position.x += velocity.x * ctx.delta_seconds();
+                    position.y += velocity.y * ctx.delta_seconds();
+                    target.x += t_velocity.x * ctx.delta_seconds();
+                    target.y += t_velocity.y * ctx.delta_seconds();
+                }
+            );
         }
     };
 
@@ -186,14 +192,14 @@ namespace {
 
         template<typename BoundQueryT>
         void update(conductor::SystemContext<BoundQueryT>& ctx) {
-            for(auto [t_velocity] : ctx.query()) {
+            ctx.query([&](conductor::Entity& e, TargetVelocity& t_velocity) {
                 t_velocity.x += 
                     (10.0 * ctx.rand().next_double() - 5.0) *
                     ctx.delta_seconds();
                 t_velocity.y += 
                     (10.0 * ctx.rand().next_double() - 5.0) *
                     ctx.delta_seconds();
-            }
+            });
         }
     };
 
@@ -205,7 +211,7 @@ namespace {
 
         template<typename BoundQueryT>
         void update(conductor::SystemContext<BoundQueryT>& ctx) {
-            for(auto [velocity, battery] : ctx.query()) {
+            ctx.query([&](conductor::Entity& e, const Velocity& velocity, Battery& battery) {
                 const double speed = std::sqrt(
                     velocity.x * velocity.x +
                     velocity.y * velocity.y
@@ -218,7 +224,7 @@ namespace {
                 if(battery.level < 0.0) {
                     battery.level = 0.0;
                 }
-            }
+            });
         }
     };
 
@@ -230,11 +236,11 @@ namespace {
 
         template<typename BoundQueryT>
         void update(conductor::SystemContext<BoundQueryT>& ctx) {
-            for(auto [battery, drone_status] : ctx.query()) {
+            ctx.query([&](conductor::Entity& e, const Battery& battery, DroneStatus& drone_status) {
                 if(battery.level <= 10.0) {
                     drone_status.state = DroneState::LowBattery;
                 }
-            }
+            });
         }
     };
 
@@ -245,14 +251,11 @@ namespace {
 
         template<typename BoundQueryT>
         void update(conductor::SystemContext<BoundQueryT>& ctx) {
-            for(auto it = ctx.query().begin(); it != ctx.query().end(); it++) {
-                conductor::Entity e = it.entity();
-                auto [drone_status] = *it;
-
+            ctx.query([&](conductor::Entity& e, const DroneStatus& drone_status) {
                 if(drone_status.state == DroneState::LowBattery) {
                     ctx.commands().destroy_entity(e);
                 }
-            }
+            });
         }
     };
 
@@ -268,30 +271,37 @@ namespace {
 
         template<typename BoundQueryT>
         void update(conductor::SystemContext<BoundQueryT>& ctx) {
-            for(auto it = ctx.query().begin(); it != ctx.query().end(); it++) {
-                conductor::Entity e = it.entity();
-                auto [position, velocity, target, t_velocity, battery, drone_status] = *it;
+            ctx.query(
+                [&](
+                    conductor::Entity& e, 
+                    const Position& position, 
+                    const Velocity& velocity,
+                    const Target& target,
+                    const TargetVelocity& t_velocity,
+                    const Battery& battery,
+                    const DroneStatus& drone_status
+                ) {
+                    const std::string telemetry_line = 
+                        std::format(
+                            "{},{},{},{},{},{},{},{},{},{},{},{},{}",
+                            ctx.clock().total_seconds(),
+                            e.index(),
+                            e.generation(),
+                            position.x,
+                            position.y,
+                            velocity.x,
+                            velocity.y,
+                            target.x,
+                            target.y,
+                            t_velocity.x,
+                            t_velocity.y,
+                            battery.level,
+                            (drone_status.state == DroneState::Active ? "active" : "low battery")
+                        );
 
-                const std::string telemetry_line = 
-                    std::format(
-                        "{},{},{},{},{},{},{},{},{},{},{},{},{}",
-                        ctx.clock().total_seconds(),
-                        e.index(),
-                        e.generation(),
-                        position.x,
-                        position.y,
-                        velocity.x,
-                        velocity.y,
-                        target.x,
-                        target.y,
-                        t_velocity.x,
-                        t_velocity.y,
-                        battery.level,
-                        (drone_status.state == DroneState::Active ? "active" : "low battery")
-                    );
-
-                record(telemetry_line);
-            }
+                    record(telemetry_line);
+                }
+            );
         }
     };
 }
@@ -357,14 +367,7 @@ namespace {
                 DroneRemovalSystem{}
             );
 
-            // m_telemetry = config.system(
-            //     "telemetry",
-            //     frequency,
-            //     TelemetrySystem{}
-            // );
-
             m_steering.depends_on(m_integration);
-            // m_telemetry.depends_on(m_removal);
         }
 
         void shutdown() override {}

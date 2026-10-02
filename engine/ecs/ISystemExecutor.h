@@ -15,6 +15,7 @@ namespace conductor {
             const SimulationClock& clock,
             Random& rand,
             EventBus& events,
+            tf::Executor& executor,
             double delta_seconds
         ) = 0;
     };

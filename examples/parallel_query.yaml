@@ -5,8 +5,8 @@ simulation:
   seed: 12345
 
 plugins:
-  - ../../build/release/lib/libdrone_sim.so
+  - ../build/release/lib/libparallel_query.so
 
 entities:
-  - type: drone
-    count: 1000
+  - type: object
+    count: 100000000
