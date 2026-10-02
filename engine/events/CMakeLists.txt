@@ -1,4 +1,5 @@
 add_library(conductor_events
+SHARED
     EventBus.cpp
     EventDispatcher.cpp
     EventQueue.cpp

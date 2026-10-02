@@ -1,4 +1,5 @@
-add_library(conductor_commands
+add_library(conductor_commands 
+SHARED
     Command.cpp
     CommandQueue.cpp
 )

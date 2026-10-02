@@ -9,6 +9,8 @@
 #include <utility>
 #include <vector>
 
+#include <iostream>
+
 #include "ComponentType.h"
 #include "Entity.h"
 #include "ComponentView.h"
@@ -505,6 +507,18 @@ namespace conductor {
             return &component_at(index);
         }
 
+        Entity* entity(size_t index) noexcept {
+            assert(index < m_size);
+
+            return &entity_at(index);
+        }
+
+        const Entity* entity(size_t index) const noexcept {
+            assert(index < m_size);
+
+            return &entity_at(index);
+        }
+
     private:
         void ensure_location_capacity(
             Entity::Index index
@@ -514,6 +528,28 @@ namespace conductor {
                     static_cast<size_t>(index) + 1
                 );
             }
+        }
+
+        Entity& entity_at(size_t index) noexcept {
+            const size_t chunk_index =
+                index / ChunkSize;
+
+            const size_t offset =
+                index % ChunkSize;
+
+            return m_chunks[chunk_index]
+                .entities[offset];
+        }
+
+        const Entity& entity_at(size_t index) const noexcept {
+            const size_t chunk_index =
+                index / ChunkSize;
+
+            const size_t offset =
+                index % ChunkSize;
+
+            return m_chunks[chunk_index]
+                .entities[offset];
         }
 
         /*

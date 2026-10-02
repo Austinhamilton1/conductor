@@ -2,6 +2,7 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include "commands/CommandQueue.h"
+#include "core/Executor.h"
 #include "core/SimulationClock.h"
 #include "core/Random.h"
 #include "ecs/Query.h"
@@ -62,7 +63,7 @@ TEST_CASE("SystemExecutor provides functional query", "[ecs]") {
     Random rand;
     SimulationClock clock;
     EventBus events;
-    tf::Executor texecutor;
+    conductor::Executor texecutor;
 
     MovementSystem::reset();
 

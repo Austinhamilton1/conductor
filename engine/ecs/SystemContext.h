@@ -1,13 +1,12 @@
 #pragma once
 
 #include "Query.h"
+#include "core/Executor.h"
 #include "core/SimulationClock.h"
 #include "core/Random.h"
 #include "commands/CommandQueue.h"
 #include "ecs/Entity.h"
 #include "events/EventBus.h"
-
-#include "taskflow/taskflow.hpp"
 
 namespace conductor {
     template<typename BoundQueryT>
@@ -22,7 +21,7 @@ namespace conductor {
             const SimulationClock& clock,
             Random& rand,
             EventBus& events,
-            tf::Executor& executor
+            Executor& executor
         ) : m_query(query),
             m_commands(commands),
             m_delta_seconds(delta_seconds),
@@ -82,6 +81,6 @@ namespace conductor {
         const SimulationClock& m_clock;
         Random& m_rand;
         EventBus& m_events;
-        tf::Executor& m_executor;
+        Executor& m_executor;
     };
 }

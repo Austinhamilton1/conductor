@@ -1,4 +1,5 @@
 add_library(conductor_runtime
+SHARED
     Application.cpp
 )
 
@@ -15,7 +16,6 @@ PUBLIC
     conductor_plugins
     conductor_scheduler
     conductor_simulation
-    Taskflow::Taskflow
 )
 
 target_link_libraries(conductor_runtime

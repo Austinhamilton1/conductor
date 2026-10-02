@@ -1,4 +1,5 @@
 add_library(conductor_plugins
+SHARED
     PluginManager.cpp
 )
 

@@ -9,4 +9,4 @@ plugins:
 
 entities:
   - type: object
-    count: 100000000
+    count: 10000

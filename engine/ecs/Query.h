@@ -11,8 +11,7 @@
 
 #include "ComponentType.h"
 #include "ComponentView.h"
-
-#include "taskflow/taskflow.hpp"
+#include "core/Executor.h"
 
 namespace conductor {
     // ============================================================
@@ -468,47 +467,46 @@ namespace conductor {
 
             template<typename Func>
             requires std::is_invocable_v<Func, Entity&, detail::reference_t<Access>...>
-            void par_iter(tf::Executor& executor, Func&& lambda) {
-                if(driver_size() < 4096) {
+            void par_iter(Executor& executor, Func&& lambda) {
+                const auto size = driver_size();
+                
+                if(size < 4096) {
                     iter(std::forward<Func>(lambda));
                     return;
                 }
 
-                tf::Taskflow taskflow;
+                const std::size_t task_count =
+                    executor.worker_count() * 8;
 
-                Iterator beginning = begin();
-                Iterator ending = beginning;
+                const std::size_t chunk_size =
+                    (size + task_count - 1) / task_count;
 
-                std::size_t chunk_size = driver_size() / 500;
-                if(chunk_size == 0) 
-                    chunk_size += 1;
+                std::vector<std::function<void()>> tasks;
+                tasks.reserve(task_count);
 
-                while(ending != end()) {
-                    for(std::size_t j = 0; j < chunk_size; j++) {
-                        ending++;
-                        if(ending == end())
-                            break;
-                    }
+                for(std::size_t begin = 0; begin < driver_size(); begin += chunk_size) {
+                    const std::size_t end = 
+                        std::min(begin + chunk_size, size);
 
-                    taskflow.emplace([&, beginning, ending]() {
-                        for(auto it = beginning; it != ending; it++) {
-                            Entity current_entity = it.entity();
+                    tasks.emplace_back([&, begin, end]() {
+                        for(std::size_t i = begin; i < end; i++) {
+                            Entity *current_entity = std::get<0>(m_views).entity_at(i);
 
-                            [&]<std::size_t... Is>(std::index_sequence<Is...>) {
-                                std::forward<Func>(lambda)(
-                                    current_entity,
-                                    detail::get_component<
-                                        std::tuple_element_t<Is, std::tuple<Access...>>
-                                    >(std::get<Is>(m_views), current_entity)...
-                                );
-                            }(std::make_index_sequence<sizeof...(Access)>{});
+                            if(current_entity != nullptr && matches(*current_entity)) {
+                                [&]<std::size_t... Is>(std::index_sequence<Is...>) {
+                                    lambda(
+                                        *current_entity,
+                                        detail::get_component<
+                                            std::tuple_element_t<Is, std::tuple<Access...>>
+                                        >(std::get<Is>(m_views), *current_entity)...
+                                    );
+                                }(std::make_index_sequence<sizeof...(Access)>{});
+                            }
                         }
                     });
-
-                    beginning = ending;
                 }
 
-                executor.run(taskflow).wait();
+                executor.parallel(std::move(tasks));
             }
 
         private:

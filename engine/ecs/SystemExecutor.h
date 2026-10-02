@@ -31,7 +31,7 @@ namespace conductor {
             const SimulationClock& clock,
             Random& rand,
             EventBus& events,
-            tf::Executor& executor,
+            Executor& executor,
             double delta_seconds
         ) override {
             SystemContext<BoundQueryT> context(

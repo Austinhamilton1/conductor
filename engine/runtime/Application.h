@@ -4,6 +4,7 @@
 
 #include "ApplicationConfig.h"
 #include "core/Clock.h"
+#include "core/Executor.h"
 #include "core/SimulationClock.h"
 #include "core/NonCopyable.h"
 #include "core/Random.h"
@@ -11,8 +12,6 @@
 #include "plugins/PluginManager.h"
 #include "scheduler/Scheduler.h"
 #include "simulation/World.h"
-
-#include "taskflow/taskflow.hpp"
 
 namespace conductor {
     class Application : public NonCopyable {
@@ -31,7 +30,7 @@ namespace conductor {
         World& world();
         PluginManager& plugins();
         Random& random();
-        tf::Executor& executor();
+        Executor& executor();
 
         void run();
         void stop();
@@ -56,6 +55,6 @@ namespace conductor {
         SimulationClock m_simulation_clock;
         EventBus m_events;
 
-        tf::Executor m_executor;
+        Executor m_executor;
     };
 }

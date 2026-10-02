@@ -1,4 +1,5 @@
-add_library(conductor_ecs
+add_library(conductor_ecs 
+SHARED
     ComponentRegistry.cpp
     ComponentSet.cpp
     ComponentStorageRegistry.cpp
@@ -15,7 +16,6 @@ target_link_libraries(conductor_ecs
 PUBLIC
     conductor_core
     conductor_events
-    Taskflow::Taskflow
 )
 
 target_compile_features(conductor_ecs

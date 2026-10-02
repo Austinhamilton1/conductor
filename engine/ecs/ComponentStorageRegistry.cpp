@@ -71,7 +71,7 @@ namespace conductor {
 
         if(index >= m_storages.size()) {
             throw std::out_of_range(
-                "Invalid component type ID"
+                "ComponentStorageRegistry: Invalid component type ID"
             );
         }
 

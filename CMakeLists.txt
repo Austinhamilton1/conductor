@@ -53,7 +53,6 @@ INTERFACE
     conductor_runtime
     conductor_scheduler
     conductor_simulation
-    Taskflow::Taskflow
 )
 
 add_subdirectory(apps)

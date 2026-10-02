@@ -530,7 +530,7 @@ namespace conductor {
 
         node.schedule.set_state(SystemState::Running);
 
-        try {
+        try {            
             const double system_delta = node.schedule.interval();
 
             node.executor->execute(

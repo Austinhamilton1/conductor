@@ -37,15 +37,17 @@ namespace {
 
 namespace {
     struct Spawner {
-        void configure(conductor::SpawnConfig config) {
+        void configure(conductor::SpawnConfig& config) {
             config
-                .component([](conductor::SpawnContext& ctx) {
-                    return Position{
-                        static_cast<double>(ctx.index),
-                        static_cast<double>(ctx.index),
-                        static_cast<double>(ctx.index)
-                    };
-                });
+                .component<Position>(
+                    [](const conductor::SpawnContext& ctx) {
+                        return Position{
+                            static_cast<double>(ctx.index),
+                            static_cast<double>(ctx.index),
+                            static_cast<double>(ctx.index)
+                        };
+                    }
+                );
         }
     };
 };

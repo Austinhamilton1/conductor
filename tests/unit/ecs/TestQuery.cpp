@@ -4,10 +4,9 @@
 #include <type_traits>
 #include <vector>
 
+#include "core/Executor.h"
 #include "ecs/ComponentStorage.h"
 #include "ecs/Query.h"
-
-#include "taskflow/taskflow.hpp"
 
 
 namespace {
@@ -647,7 +646,7 @@ TEST_CASE("Query can read from const component storage", "[ecs]") {
 
 TEST_CASE("Large parallel query works", "[ecs]") {
     conductor::ComponentStorage<Position> storage;
-    tf::Executor executor;
+    conductor::Executor executor;
 
     for(int i = 0; i < 100000; i++) {
         const auto entity = make_entity(i);

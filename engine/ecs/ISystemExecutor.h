@@ -5,6 +5,7 @@ namespace conductor {
     class SimulationClock;
     class Random;
     class EventBus;
+    class Executor;
 
     class ISystemExecutor {
     public:
@@ -15,7 +16,7 @@ namespace conductor {
             const SimulationClock& clock,
             Random& rand,
             EventBus& events,
-            tf::Executor& executor,
+            Executor& executor,
             double delta_seconds
         ) = 0;
     };

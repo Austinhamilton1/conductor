@@ -54,6 +54,14 @@ namespace conductor {
             return m_storage->end();
         }
 
+        Entity *entity_at(std::size_t i) noexcept {
+            return m_storage->entity(i);
+        }
+
+        const Entity *entity_at(std::size_t i) const noexcept {
+            return m_storage->entity(i);
+        }
+
         size_t size() const noexcept {
             return m_storage->size();
         }

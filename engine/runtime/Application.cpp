@@ -10,8 +10,7 @@ namespace conductor {
         : m_duration(config.duration),
           m_step_size(config.step_size),
           m_rand(config.seed),
-          m_world(m_rand),
-          m_executor(std::thread::hardware_concurrency() - 1)
+          m_world(m_rand)
     {
         m_simulation_clock.set_time_scale(config.time_scale);
     }
@@ -40,7 +39,7 @@ namespace conductor {
         return m_rand;
     }
 
-    tf::Executor& Application::executor() {
+    Executor& Application::executor() {
         return m_executor;
     }
 
