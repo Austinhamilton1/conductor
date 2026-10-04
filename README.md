@@ -446,14 +446,14 @@ Clone the repository and configure the project with CMake:
 git clone --recurse-subdirectories https://github.com/Austinhamilton1/conductor.git
 cd conductor
 
-cmake --preset debug
-cmake --build --preset debug
+cmake --preset release
+cmake --build --preset release
 ```
 
 Run the test suite with:
 
 ```bash
-ctest --preset debug
+ctest --preset release
 ```
 
 See the project documentation for additional build and development information.
