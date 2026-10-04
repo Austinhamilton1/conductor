@@ -1,5 +1,5 @@
 #include "Random.h"
-#include "Assert.h"
+#include "ConductorAssert.h"
 
 namespace conductor {
     Random::Random() {

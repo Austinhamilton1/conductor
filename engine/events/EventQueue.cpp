@@ -1,7 +1,7 @@
 #include <utility>
 
 #include "EventQueue.h"
-#include "core/Assert.h"
+#include "core/ConductorAssert.h"
 
 namespace conductor {
     EventQueue::~EventQueue() {
