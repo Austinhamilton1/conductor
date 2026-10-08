@@ -5,69 +5,69 @@
 #include "runtime/Application.h"
 #include "TestComponents.h"
 
-// TEST_CASE("Plugin can be loaded", "[plugins]") {
-//     conductor::ApplicationConfig config{
-//         .duration = 10.0,
-//         .time_scale = 1.0,
-//         .step_size = 1.0 / 60.0,
-//         .seed = 12345
-//     };
+TEST_CASE("Plugin can be loaded", "[plugins]") {
+    conductor::ApplicationConfig config{
+        .duration = 10.0,
+        .time_scale = 1.0,
+        .step_size = 1.0 / 60.0,
+        .seed = 12345
+    };
 
-//     conductor::Application app(config);
+    conductor::Application app(config);
 
-//     REQUIRE_FALSE(app.plugins().loaded("hello"));
+    REQUIRE_FALSE(app.plugins().loaded("hello"));
 
-//     REQUIRE_NOTHROW(
-//         app.load_plugin(TEST_PLUGIN_PATH)
-//     );
+    REQUIRE_NOTHROW(
+        app.load_plugin(TEST_PLUGIN_PATH)
+    );
 
-//     REQUIRE(app.plugins().loaded("hello"));
-// }
+    REQUIRE(app.plugins().loaded("hello"));
+}
 
-// TEST_CASE("Duplicate plugin names are rejected", "[plugins]") {
-//     conductor::ApplicationConfig config{
-//         .duration = 10.0,
-//         .time_scale = 1.0,
-//         .step_size = 1.0 / 60.0,
-//         .seed = 12345
-//     };
+TEST_CASE("Duplicate plugin names are rejected", "[plugins]") {
+    conductor::ApplicationConfig config{
+        .duration = 10.0,
+        .time_scale = 1.0,
+        .step_size = 1.0 / 60.0,
+        .seed = 12345
+    };
 
-//     conductor::Application app(config);
+    conductor::Application app(config);
 
-//     app.load_plugin(TEST_PLUGIN_PATH);
+    app.load_plugin(TEST_PLUGIN_PATH);
 
-//     REQUIRE_THROWS_AS(
-//         app.load_plugin(TEST_PLUGIN_PATH),
-//         std::runtime_error
-//     );
+    REQUIRE_THROWS_AS(
+        app.load_plugin(TEST_PLUGIN_PATH),
+        std::runtime_error
+    );
 
-//     REQUIRE(app.plugins().loaded("hello"));
-// }
+    REQUIRE(app.plugins().loaded("hello"));
+}
 
-// TEST_CASE("Plugin can register components", "[plugins]") {
-//     conductor::ApplicationConfig config{
-//         .duration = 10.0,
-//         .time_scale = 1.0,
-//         .step_size = 1.0 / 60.0,
-//         .seed = 12345
-//     };
+TEST_CASE("Plugin can register components", "[plugins]") {
+    conductor::ApplicationConfig config{
+        .duration = 10.0,
+        .time_scale = 1.0,
+        .step_size = 1.0 / 60.0,
+        .seed = 12345
+    };
 
-//     conductor::Application app(config);
+    conductor::Application app(config);
 
-//     app.load_plugin(TEST_PLUGIN_PATH);
+    app.load_plugin(TEST_PLUGIN_PATH);
 
-//     const auto position =
-//         conductor::ComponentRegistry::info<PluginPosition>();
+    const auto position =
+        conductor::ComponentRegistry::info<PluginPosition>();
 
-//     const auto velocity =
-//         conductor::ComponentRegistry::info<PluginVelocity>();
+    const auto velocity =
+        conductor::ComponentRegistry::info<PluginVelocity>();
 
-//     REQUIRE(position.size == sizeof(PluginPosition));
-//     REQUIRE(position.alignment == alignof(PluginPosition));
+    REQUIRE(position.size == sizeof(PluginPosition));
+    REQUIRE(position.alignment == alignof(PluginPosition));
 
-//     REQUIRE(velocity.size == sizeof(PluginVelocity));
-//     REQUIRE(velocity.alignment == alignof(PluginVelocity));
-// }
+    REQUIRE(velocity.size == sizeof(PluginVelocity));
+    REQUIRE(velocity.alignment == alignof(PluginVelocity));
+}
 
 TEST_CASE("Plugin system executes during simulation", "[plugins]") {
     conductor::ApplicationConfig config{
