@@ -35,15 +35,18 @@ namespace conductor {
         }
     }
 
+    // Plugin libraries remain loaded until process termination.
+    //
+    // ComponentRegistry stores process-wide std::type_index keys,
+    // and registered component types may originate in plugin libraries.
+    // Unloading a library could invalidate RTTI reference by the registry.
     PluginManager::~PluginManager() {
         for(auto& [name, plugin] : m_plugins) {
             if(plugin.instance != nullptr && plugin.destroy != nullptr) {
                 plugin.destroy(plugin.instance);
             }
 
-            if(plugin.library != nullptr) {
-                dlclose(plugin.library);
-            }
+            // Intentionally do not call dlclose().
         }
     }
 

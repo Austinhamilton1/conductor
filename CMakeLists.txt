@@ -37,6 +37,9 @@ FetchContent_Declare(
     GIT_TAG v4.0.0
 )
 
+set(TF_BUILD_EXAMPLES OFF CACHE BOOL "Disable taskflow examples" FORCE)
+set(TF_BUILD_TESTS OFF CACHE BOOL "Disable taskflow unit tests" FORCE)
+
 FetchContent_MakeAvailable(taskflow)
 
 add_subdirectory(engine)
