@@ -75,7 +75,7 @@ namespace conductor {
                     "conductor_create_plugin"
                 );
 
-            const auto destroy =
+            destroy =
                 load_symbol<DestroyPluginFn>(
                     library,
                     "conductor_destroy_plugin"
