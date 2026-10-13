@@ -92,7 +92,6 @@ namespace conductor {
             const std::string plugin_name(plugin->name());
 
             if(m_plugins.contains(plugin_name)) {
-                destroy(plugin);
                 throw std::runtime_error(
                     "Plugin already loaded: " + plugin_name
                 );

@@ -1,7 +1,7 @@
-#include <utility>
-
 #include "EventQueue.h"
-#include "core/ConductorAssert.h"
+
+#include <cassert>
+#include <utility>
 
 namespace conductor {
     EventQueue::~EventQueue() {
@@ -26,7 +26,7 @@ namespace conductor {
     }
 
     Event EventQueue::pop() {
-        CONDUCTOR_ASSERT(!events.empty());
+        assert(!events.empty());
 
         Event event = std::move(events.front());
         events.pop();

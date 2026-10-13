@@ -2,11 +2,8 @@ add_library(conductor_core
 SHARED
     Clock.cpp
     Executor.cpp
-    Logger.cpp
     Random.cpp
     SimulationClock.cpp
-    Timer.cpp
-    UUID.cpp
 )
 
 target_include_directories(conductor_core

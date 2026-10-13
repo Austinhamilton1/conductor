@@ -1,5 +1,6 @@
 #include "Random.h"
-#include "ConductorAssert.h"
+
+#include <cassert>
 
 namespace conductor {
     Random::Random() {
@@ -34,7 +35,7 @@ namespace conductor {
     }
 
     bool Random::chance(float p) {
-        CONDUCTOR_ASSERT(p <= 1.0f && p >= 0.0f);
+        assert(p <= 1.0f && p >= 0.0f);
         
         std::uniform_real_distribution<float> dis(0.0f, 1.0f);
         float test = dis(generator);
