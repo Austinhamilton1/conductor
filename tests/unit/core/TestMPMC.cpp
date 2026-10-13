@@ -37,14 +37,14 @@ namespace {
     class SeenItems {
     public:
         explicit SeenItems(int total)
-            : total_(total), m_seen(static_cast<std::size_t>(total) + 1) {
+            : m_total(total), m_seen(static_cast<std::size_t>(total) + 1) {
             for (auto& entry : m_seen) {
                 entry.store(0, std::memory_order_relaxed);
             }
         }
 
         void record(int value) noexcept {
-            if (value < 1 || value > total_) {
+            if (value < 1 || value > m_total) {
                 m_invalid.fetch_add(1, std::memory_order_relaxed);
                 return;
             }
@@ -69,11 +69,11 @@ namespace {
         }
 
         int total() const noexcept {
-            return total_;
+            return m_total;
         }
 
     private:
-        int total_;
+        int m_total;
         std::vector<std::atomic<int>> m_seen;
         std::atomic<int> m_consumed{0};
         std::atomic<int> m_invalid{0};
