@@ -627,7 +627,7 @@ There are several dependencies within Conductor. Parallel execution of different
 ### `Scheduler`
 
  - [ ] `Random`: The random number generator needs to be made thread safe. Making this multithreaded will break determinism, therefore users need to be able to define whether they want multithreading or not.
- - [ ] `SimulationClock`: This should be made constant when passing through dependency injection to ensure no changes are made that race.
+ - [X] `SimulationClock`: This should be made constant when passing through dependency injection to ensure no changes are made that race.
  - [ ] `CommandQueue`: There is no guarantee that two threads will not race on this. This needs to be made thread safe. Start with mutex, then move on to MPMC queue.
  - [ ] `EventBus`: This also needs to be made thread safe. Start with mutex, then move on to MPMC queue.
 
