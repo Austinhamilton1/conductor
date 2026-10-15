@@ -21,13 +21,14 @@ namespace {
 
         // Keep tests repeatable and avoid creating excessive threads.
         return static_cast<int>(
-            std::min(reported == 0 ? 4u : reported, 8u));
+            std::min(reported == 0 ? 4u : reported, 8u)
+        );
     }
 
     std::size_t next_power_of_two(std::size_t n) {
         std::size_t capacity = 2;
 
-        while (capacity < n) {
+        while(capacity < n) {
             capacity *= 2;
         }
 
@@ -37,14 +38,16 @@ namespace {
     class SeenItems {
     public:
         explicit SeenItems(int total)
-            : m_total(total), m_seen(static_cast<std::size_t>(total) + 1) {
-            for (auto& entry : m_seen) {
+            : m_total(total), 
+              m_seen(static_cast<std::size_t>(total) + 1) 
+        {
+            for(auto& entry : m_seen) {
                 entry.store(0, std::memory_order_relaxed);
             }
         }
 
         void record(int value) noexcept {
-            if (value < 1 || value > m_total) {
+            if(value < 1 || value > m_total) {
                 m_invalid.fetch_add(1, std::memory_order_relaxed);
                 return;
             }
@@ -64,8 +67,7 @@ namespace {
         }
 
         int occurrences(int value) const noexcept {
-            return m_seen[static_cast<std::size_t>(value)].load(
-                std::memory_order_relaxed);
+            return m_seen[static_cast<std::size_t>(value)].load(std::memory_order_relaxed);
         }
 
         int total() const noexcept {
@@ -83,7 +85,7 @@ namespace {
         REQUIRE(seen.invalid() == 0);
         REQUIRE(seen.consumed() == seen.total());
 
-        for (int value = 1; value <= seen.total(); ++value) {
+        for(int value = 1; value <= seen.total(); value++) {
             INFO("Checking item " << value);
             REQUIRE(seen.occurrences(value) == 1);
         }
@@ -100,23 +102,23 @@ TEST_CASE("Every MPMC item is pushed exactly once", "[core]") {
     std::vector<std::thread> producers;
     producers.reserve(static_cast<std::size_t>(thread_count));
 
-    for (int i = 0; i < thread_count; ++i) {
+    for(int i = 0; i < thread_count; i++) {
         producers.emplace_back([&queue, i]() {
-            for (int j = 1; j <= items_per_thread; ++j) {
+            for(int j = 1; j <= items_per_thread; j++) {
                 const int value = i * items_per_thread + j;
 
-                while (!queue.try_push(value)) {
+                while(!queue.try_push(value)) {
                     std::this_thread::yield();
                 }
             }
         });
     }
 
-    for (auto& producer : producers) {
+    for(auto& producer : producers) {
         producer.join();
     }
 
-    while (auto value = queue.try_pop()) {
+    while(auto value = queue.try_pop()) {
         seen.record(*value);
     }
 
@@ -131,22 +133,22 @@ TEST_CASE("Every MPMC item is popped exactly once", "[core]") {
     SeenItems seen(total_items);
 
     // Fill the queue before starting multiple consumers.
-    for (int value = 1; value <= total_items; ++value) {
+    for (int value = 1; value <= total_items; value++) {
         REQUIRE(queue.try_push(value));
     }
 
     std::vector<std::thread> consumers;
     consumers.reserve(static_cast<std::size_t>(thread_count));
 
-    for (int i = 0; i < thread_count; ++i) {
+    for(int i = 0; i < thread_count; i++) {
         consumers.emplace_back([&queue, &seen]() {
-            while (auto value = queue.try_pop()) {
+            while(auto value = queue.try_pop()) {
                 seen.record(*value);
             }
         });
     }
 
-    for (auto& consumer : consumers) {
+    for(auto& consumer : consumers) {
         consumer.join();
     }
 
@@ -184,24 +186,24 @@ TEST_CASE("MPMC handles concurrent producer and consumer contention", "[core]") 
     producers.reserve(static_cast<std::size_t>(thread_count));
     consumers.reserve(static_cast<std::size_t>(thread_count));
 
-    for (int i = 0; i < thread_count; ++i) {
+    for(int i = 0; i < thread_count; i++) {
         producers.emplace_back([&, i]() {
-            for (int j = 1; j <= items_per_thread; ++j) {
-                if (check_deadline()) {
+            for (int j = 1; j <= items_per_thread; j++) {
+                if(check_deadline()) {
                     break;
                 }
 
                 const int value = i * items_per_thread + j;
 
-                while (!queue.try_push(value)) {
-                    if (check_deadline()) {
+                while(!queue.try_push(value)) {
+                    if(check_deadline()) {
                         break;
                     }
 
                     std::this_thread::yield();
                 }
 
-                if (timed_out.load(std::memory_order_relaxed)) {
+                if(timed_out.load(std::memory_order_relaxed)) {
                     break;
                 }
             }
@@ -210,14 +212,14 @@ TEST_CASE("MPMC handles concurrent producer and consumer contention", "[core]") 
         });
     }
 
-    for (int i = 0; i < thread_count; ++i) {
+    for (int i = 0; i < thread_count; i++) {
         consumers.emplace_back([&]() {
-            for (;;) {
-                if (check_deadline()) {
+            for(;;) {
+                if(check_deadline()) {
                     break;
                 }
 
-                if (auto value = queue.try_pop()) {
+                if(auto value = queue.try_pop()) {
                     seen.record(*value);
                     continue;
                 }
@@ -226,7 +228,7 @@ TEST_CASE("MPMC handles concurrent producer and consumer contention", "[core]") 
                     producers_done.load(std::memory_order_acquire)
                     == thread_count;
 
-                if (all_producers_done &&
+                if(all_producers_done &&
                     seen.consumed() >= total_items) {
                     break;
                 }
@@ -236,11 +238,11 @@ TEST_CASE("MPMC handles concurrent producer and consumer contention", "[core]") 
         });
     }
 
-    for (auto& producer : producers) {
+    for(auto& producer : producers) {
         producer.join();
     }
 
-    for (auto& consumer : consumers) {
+    for(auto& consumer : consumers) {
         consumer.join();
     }
 
