@@ -634,9 +634,9 @@ There are several dependencies within Conductor. Parallel execution of different
 ### `CommandQueue`
 
  - [ ] Internal representation: `CommandQueue` uses three internal vectors. These need to be made thread safe so they do not race.
- - [ ] `EntityManager`: This will need to be made thread safe. `CommandQueue` uses this to create/destroy entities. Entities may be created/destroyed in parallel.
+ - [X] `EntityManager`: This will need to be made thread safe. `CommandQueue` uses this to create/destroy entities. Entities may be created/destroyed in parallel.
  - [ ] `ComponentStorage/ComponentStorageRegistry`: This will also need to be made thread safe. This is used to create/destroy components. Components may be created/destroyed in parallel.
 
 ### `Query`
 
-Making `Query` parallel should not affect any other subsystems. `Query` workers should be independent. Each query contains one instance of every entity, so there should be no write-write conflicts.
+- [X] Making `Query` parallel should not affect any other subsystems. `Query` workers should be independent. Each query contains one instance of every entity, so there should be no write-write conflicts.
