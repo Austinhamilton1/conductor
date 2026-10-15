@@ -2,11 +2,12 @@
 
 #include "Event.h"
 #include "EventType.h"
+#include "core/MPMC.h"
 
-#include <queue>
-#include <utility>
-#include <type_traits>
 #include <cstddef>
+#include <thread>
+#include <type_traits>
+#include <utility>
 
 namespace conductor {
     class EventQueue {
@@ -26,7 +27,7 @@ namespace conductor {
         static void destroy(void *ptr);
 
     private:
-        std::queue<Event> events;
+        MPMC<Event> events;
     };
 }
 
@@ -40,7 +41,9 @@ void conductor::EventQueue::push(T&& event) {
     e.payload = new U(std::forward<T>(event));
     e.destroy = &EventQueue::destroy<U>;
 
-    events.push(e);
+    while(!events.try_push(e)) {
+        std::this_thread::yield();
+    }
 }
 
 template<typename T>

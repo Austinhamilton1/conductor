@@ -81,7 +81,7 @@ namespace {
         std::atomic<int> m_invalid{0};
     };
 
-    void verify_all_items_m_seenonce(const SeenItems& seen) {
+    void verify_all_items_seen_once(const SeenItems& seen) {
         REQUIRE(seen.invalid() == 0);
         REQUIRE(seen.consumed() == seen.total());
 
@@ -122,7 +122,7 @@ TEST_CASE("Every MPMC item is pushed exactly once", "[core]") {
         seen.record(*value);
     }
 
-    verify_all_items_m_seenonce(seen);
+    verify_all_items_seen_once(seen);
 }
 
 TEST_CASE("Every MPMC item is popped exactly once", "[core]") {
@@ -152,7 +152,7 @@ TEST_CASE("Every MPMC item is popped exactly once", "[core]") {
         consumer.join();
     }
 
-    verify_all_items_m_seenonce(seen);
+    verify_all_items_seen_once(seen);
 }
 
 TEST_CASE("MPMC handles concurrent producer and consumer contention", "[core]") {
@@ -247,5 +247,5 @@ TEST_CASE("MPMC handles concurrent producer and consumer contention", "[core]") 
     }
 
     REQUIRE_FALSE(timed_out.load(std::memory_order_relaxed));
-    verify_all_items_m_seenonce(seen);
+    verify_all_items_seen_once(seen);
 }

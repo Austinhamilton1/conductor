@@ -1,6 +1,7 @@
 #include "EventQueue.h"
 
 #include <cassert>
+#include <optional>
 #include <utility>
 
 namespace conductor {
@@ -9,27 +10,25 @@ namespace conductor {
     }
 
     bool EventQueue::empty() const {
-        return events.empty();
+        return events.empty_approx();
     }
 
     std::size_t EventQueue::size() const {
-        return events.size();
+        return events.size_approx();
     }
 
     void EventQueue::clear() {
-        while(!events.empty()) {
-            auto event = pop();
-
-            if(event.destroy)
-                event.destroy(event.payload);
+        std::optional<Event> event;
+        while((event = events.try_pop()).has_value()) {
+            if(event->destroy)
+                event->destroy(event->payload);
         }
     }
 
     Event EventQueue::pop() {
-        assert(!events.empty());
+        auto event = events.try_pop();
+        assert(event.has_value());
 
-        Event event = std::move(events.front());
-        events.pop();
-        return event;
+        return std::move(*event);
     }
 }

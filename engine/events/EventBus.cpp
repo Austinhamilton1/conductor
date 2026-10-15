@@ -1,6 +1,6 @@
-#include <cstddef>
-
 #include "EventBus.h"
+
+#include <cstddef>
 
 namespace conductor {
     void EventBus::process() {
