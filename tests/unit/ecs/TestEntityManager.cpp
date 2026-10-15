@@ -19,15 +19,6 @@ namespace {
             std::min(reported == 0 ? 4u : reported, 8u)
         );
     }
-
-    struct EntityHash {
-        std::size_t operator()(const conductor::Entity& e) const noexcept {
-            std::size_t h1 = std::hash<conductor::Entity::Index>{}(e.index());
-            std::size_t h2 = std::hash<conductor::Entity::Generation>{}(e.generation());
-
-            return h1 ^ (h2 << 1);
-        }
-    };
 }
 
 TEST_CASE("Registry creates entities", "[ecs]") {
