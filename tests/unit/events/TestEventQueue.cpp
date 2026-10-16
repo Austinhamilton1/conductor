@@ -1,5 +1,6 @@
 #include <catch2/catch_test_macros.hpp>
 
+#include <chrono>
 #include <thread>
 #include <vector>
 
@@ -8,6 +9,7 @@
 
 namespace {
     constexpr int events_per_thread = 100;
+    constexpr auto test_timeout = std::chrono::seconds(10);
     
     int get_thread_count() {
         const unsigned int reported =
@@ -164,7 +166,162 @@ TEST_CASE("Multithreaded push works", "[events]") {
         TestEvent *event = static_cast<TestEvent *>(e.payload);
 
         seen.record(event->value);
+
+        e.destroy(e.payload);
     }
 
+    verify_all_items_seen_once(seen);
+}
+
+TEST_CASE("Multithreaded pop works", "[events]") {
+    conductor::EventQueue queue;
+
+    int thread_count = get_thread_count();
+    std::vector<std::thread> threads;
+    threads.reserve(thread_count);
+
+    int total_events = thread_count * events_per_thread;
+
+    for(int i = 1; i <= total_events; i++) {
+        queue.push(TestEvent{i});
+    }
+
+    std::atomic<bool> timed_out{false};
+
+    const auto deadline =
+        std::chrono::steady_clock::now() + test_timeout;
+
+    auto check_deadline = [&]() {
+        if (std::chrono::steady_clock::now() >= deadline) {
+            timed_out.store(true, std::memory_order_relaxed);
+            return true;
+        }
+
+        return timed_out.load(std::memory_order_relaxed);
+    };
+
+    SeenItems seen(total_events);
+    for(int i = 0; i < thread_count; i++) {
+        threads.emplace_back([&, i]() {
+            for(;;) {
+                if(check_deadline()) {
+                    break;
+                }
+
+                if(auto value = queue.try_pop()) {
+                    TestEvent *event = static_cast<TestEvent *>(value->payload);
+                    seen.record(event->value);
+                    value->destroy(event);
+                    continue;
+                }
+
+                if(seen.consumed() >= total_events) {
+                    break;
+                }
+            }
+        });
+    }
+
+    for(auto& thread : threads) {
+        thread.join();
+    }
+
+    verify_all_items_seen_once(seen);
+}
+
+TEST_CASE("Multithreaded push and pop works under contention", "[events]") {
+    const int thread_count = get_thread_count();
+    const int total_events = thread_count * events_per_thread;
+
+    // Deliberately small to exercise full/empty transitions and reuse.
+    constexpr std::size_t capacity = 64;
+
+    conductor::EventQueue queue(capacity);
+    SeenItems seen(total_events);
+
+    std::atomic<int> producers_done{0};
+    std::atomic<bool> timed_out{false};
+
+    const auto deadline =
+        std::chrono::steady_clock::now() + test_timeout;
+
+    auto check_deadline = [&]() {
+        if (std::chrono::steady_clock::now() >= deadline) {
+            timed_out.store(true, std::memory_order_relaxed);
+            return true;
+        }
+
+        return timed_out.load(std::memory_order_relaxed);
+    };
+
+    std::vector<std::thread> producers;
+    std::vector<std::thread> consumers;
+
+    producers.reserve(static_cast<std::size_t>(thread_count));
+    consumers.reserve(static_cast<std::size_t>(thread_count));
+
+    for(int i = 0; i < thread_count; i++) {
+        producers.emplace_back([&, i]() {
+            for (int j = 1; j <= events_per_thread; j++) {
+                if(check_deadline()) {
+                    break;
+                }
+
+                const int value = i * events_per_thread+ j;
+
+                while(!queue.try_push(value)) {
+                    if(check_deadline()) {
+                        break;
+                    }
+
+                    std::this_thread::yield();
+                }
+
+                if(timed_out.load(std::memory_order_relaxed)) {
+                    break;
+                }
+            }
+
+            producers_done.fetch_add(1, std::memory_order_release);
+        });
+    }
+
+    for (int i = 0; i < thread_count; i++) {
+        consumers.emplace_back([&]() {
+            for(;;) {
+                if(check_deadline()) {
+                    break;
+                }
+
+                if(auto value = queue.try_pop()) {
+                    TestEvent *event = static_cast<TestEvent *>(value->payload);
+                    seen.record(event->value);
+                    value->destroy(event);
+                    continue;
+                }
+
+                const bool all_producers_done =
+                    producers_done.load(std::memory_order_acquire)
+                    == thread_count;
+
+                if(all_producers_done &&
+                    seen.consumed() >= total_events) {
+                    break;
+                }
+
+                std::this_thread::yield();
+            }
+        });
+    }
+
+    for(auto& producer : producers) {
+        producer.join();
+    }
+
+    for(auto& consumer : consumers) {
+        consumer.join();
+    }
+
+    REQUIRE_FALSE(timed_out.load(std::memory_order_relaxed));
     verify_all_items_seen_once(seen);
 }

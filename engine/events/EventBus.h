@@ -9,6 +9,8 @@
 namespace conductor {
     class EventBus {
     public:
+        EventBus(std::size_t capacity = 4096) : queue(capacity) {}
+        
         template<typename T>
         void publish(T&&  event);
 

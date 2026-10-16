@@ -1,8 +1,6 @@
 #include "EventQueue.h"
 
-#include <cassert>
 #include <optional>
-#include <utility>
 
 namespace conductor {
     EventQueue::~EventQueue() {
@@ -26,9 +24,21 @@ namespace conductor {
     }
 
     Event EventQueue::pop() {
-        auto event = events.try_pop();
-        assert(event.has_value());
+        std::optional<Event> event;
+        while(!(event = events.try_pop()).has_value()) {
+            std::this_thread::yield();
+        }
 
         return std::move(*event);
+    }
+
+    std::optional<Event> EventQueue::try_pop() {
+        std::optional<Event> event;
+
+        if((event = events.try_pop()).has_value()) {
+            return std::move(*event);
+        }
+
+        return std::nullopt;
     }
 }

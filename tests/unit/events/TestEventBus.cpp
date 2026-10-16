@@ -3,6 +3,20 @@
 #include "events/EventBus.h"
 #include "TestEvent.h"
 
+namespace {
+    constexpr int events_per_thread = 100;
+
+    int get_thread_count() {
+        const unsigned int reported =
+            std::thread::hardware_concurrency();
+
+        // Keep tests repeatable and avoid creating excessive threads.
+        return static_cast<int>(
+            std::min(reported == 0 ? 4u : reported, 8u)
+        );
+    }
+}
+
 TEST_CASE("Publish dispatches event", "[events]") {
     conductor::EventBus bus;
 
@@ -90,4 +104,37 @@ TEST_CASE("Events published during dispatch are processed next cycle", "[events]
     bus.process();
 
     REQUIRE(calls == 2);
+}
+
+TEST_CASE("Events published in multithreaded environment are seen once", "[events]") {
+    conductor::EventBus bus;
+
+    std::atomic<int> calls{0};
+
+    auto sub = bus.subscribe<TestEvent>(
+        [&](const TestEvent&) {
+            calls.fetch_add(1, std::memory_order_relaxed);
+        }
+    );
+
+    int thread_count = get_thread_count();
+    std::vector<std::thread> threads;
+    threads.reserve(thread_count);
+
+    for(int i = 0; i < thread_count; i++) {
+        threads.emplace_back([&, i]() {
+            for(int j = 0; j < events_per_thread; j++) {
+                bus.publish<TestEvent>(TestEvent{i});
+            }
+        });
+    }
+
+    for(auto& thread : threads) {
+        thread.join();
+    }
+
+    bus.process();
+
+    int total_events = thread_count * events_per_thread;
+    REQUIRE(calls.load(std::memory_order_relaxed) == total_events);
 }
