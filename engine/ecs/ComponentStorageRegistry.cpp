@@ -128,11 +128,9 @@ namespace conductor {
                 entity
             );
         }
+    }
 
-        /*
-         * Phase 2:
-         * Apply all pending removals.
-         */
+    void ComponentStorageRegistry::flush() {
         for(auto& entry : m_storages) {
             if(!entry.valid())
                 continue;

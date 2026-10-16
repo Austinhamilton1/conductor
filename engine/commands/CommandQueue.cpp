@@ -279,18 +279,10 @@ namespace conductor {
                 );
             }
 
-            if(entry.flush == nullptr) {
-                throw std::logic_error(
-                    "Component storage does not support flush"
-                );
-            }
-
             entry.remove(
                 entry.storage,
                 entity
             );
-
-            entry.flush(entry.storage);
 
             break;
         }
@@ -350,6 +342,7 @@ namespace conductor {
             }
         }
 
+        storages.flush();
         m_commands.clear();
         m_component_data.clear();
     }

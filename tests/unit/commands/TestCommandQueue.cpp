@@ -378,6 +378,8 @@ TEST_CASE("CommandQueue defers component removal", "[commands]") {
         Position{1.0f, 2.0f, 3.0f}
     );
 
+    positions.flush_additions();
+
     REQUIRE(positions.contains(entity));
 
     commands.remove_component<Position>(

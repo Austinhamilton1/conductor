@@ -8,7 +8,6 @@
 
 
 namespace {
-
     struct Position {
         float x;
         float y;
@@ -27,6 +26,17 @@ namespace {
 
     using Storage = conductor::ComponentStorage<Position>;
 
+    constexpr int components_per_thread = 1000;
+
+    int get_thread_count() {
+        const unsigned int reported =
+            std::thread::hardware_concurrency();
+
+        // Keep tests repeatable and avoid creating excessive threads.
+        return static_cast<int>(
+            std::min(reported == 0 ? 4u : reported, 8u)
+        );
+    }
 }
 
 
@@ -53,12 +63,12 @@ TEST_CASE("ComponentStorage adds a component", "[ecs]") {
         .y = 20.0f
     };
 
-    Position& stored = storage.add(entity, position);
+    storage.add(entity, position);
+    storage.flush_additions();
 
     REQUIRE(storage.size() == 1);
     REQUIRE_FALSE(storage.empty());
 
-    REQUIRE(stored == position);
     REQUIRE(storage.contains(entity));
 }
 
@@ -72,6 +82,7 @@ TEST_CASE("ComponentStorage retrieves a component", "[ecs]") {
         .x = 10.0f,
         .y = 20.0f
     });
+    storage.flush_additions();
 
     Position* position = storage.get(entity);
 
@@ -100,6 +111,7 @@ TEST_CASE("ComponentStorage component can be modified", "[ecs]") {
         .x = 10.0f,
         .y = 20.0f
     });
+    storage.flush_additions();
 
     Position* position = storage.get(entity);
 
@@ -139,6 +151,8 @@ TEST_CASE("ComponentStorage stores multiple components", "[ecs]") {
         .y = 6.0f
     });
 
+    storage.flush_additions();
+
     REQUIRE(storage.size() == 3);
 
     REQUIRE(storage.get(first)->x == 1.0f);
@@ -162,6 +176,7 @@ TEST_CASE("ComponentStorage supports different entity indices", "[ecs]") {
     storage.add(first, {.x = 1.0f, .y = 2.0f});
     storage.add(second, {.x = 3.0f, .y = 4.0f});
     storage.add(third, {.x = 5.0f, .y = 6.0f});
+    storage.flush_additions();
 
     REQUIRE(storage.size() == 3);
 
@@ -180,22 +195,19 @@ TEST_CASE("Adding an existing component returns existing component", "[ecs]") {
 
     conductor::Entity entity(0, 0);
 
-    Position& first = storage.add(entity, {
+    storage.add(entity, {
         .x = 10.0f,
         .y = 20.0f
     });
 
-    Position& second = storage.add(entity, {
+    storage.add(entity, {
         .x = 30.0f,
         .y = 40.0f
     });
 
-    REQUIRE(&first == &second);
+    storage.flush_additions();
 
     REQUIRE(storage.size() == 1);
-
-    REQUIRE(second.x == 10.0f);
-    REQUIRE(second.y == 20.0f);
 }
 
 
@@ -213,6 +225,7 @@ TEST_CASE("ComponentStorage rejects stale entity generation", "[ecs]") {
         .x = 10.0f,
         .y = 20.0f
     });
+    storage.flush_additions();
 
     REQUIRE(storage.contains(old_entity));
 
@@ -231,6 +244,7 @@ TEST_CASE("ComponentStorage allows reused entity index with new generation", "[e
         .x = 10.0f,
         .y = 20.0f
     });
+    storage.flush_additions();
 
     storage.remove(old_entity);
     storage.flush_removals();
@@ -239,6 +253,7 @@ TEST_CASE("ComponentStorage allows reused entity index with new generation", "[e
         .x = 30.0f,
         .y = 40.0f
     });
+    storage.flush_additions();
 
     REQUIRE_FALSE(storage.contains(old_entity));
     REQUIRE(storage.contains(new_entity));
@@ -261,6 +276,7 @@ TEST_CASE("ComponentStorage removal is deferred", "[ecs]") {
         .x = 10.0f,
         .y = 20.0f
     });
+    storage.flush_additions();
 
     storage.remove(entity);
 
@@ -279,6 +295,7 @@ TEST_CASE("ComponentStorage flush removes pending components", "[ecs]") {
         .x = 10.0f,
         .y = 20.0f
     });
+    storage.flush_additions();
 
     storage.remove(entity);
 
@@ -299,6 +316,7 @@ TEST_CASE("ComponentStorage can flush removals multiple times", "[ecs]") {
 
     storage.add(first, {.x = 1.0f, .y = 2.0f});
     storage.add(second, {.x = 3.0f, .y = 4.0f});
+    storage.flush_additions();
 
     storage.remove(first);
     storage.flush_removals();
@@ -326,6 +344,7 @@ TEST_CASE("ComponentStorage preserves remaining components after removal", "[ecs
     storage.add(first, {.x = 1.0f, .y = 2.0f});
     storage.add(second, {.x = 3.0f, .y = 4.0f});
     storage.add(third, {.x = 5.0f, .y = 6.0f});
+    storage.flush_additions();
 
     storage.remove(second);
     storage.flush_removals();
@@ -353,6 +372,7 @@ TEST_CASE("ComponentStorage updates moved entity location after removal", "[ecs]
     storage.add(first, {.x = 1.0f, .y = 2.0f});
     storage.add(second, {.x = 3.0f, .y = 4.0f});
     storage.add(third, {.x = 5.0f, .y = 6.0f});
+    storage.flush_additions();
 
     storage.remove(first);
     storage.flush_removals();
@@ -375,6 +395,7 @@ TEST_CASE("ComponentStorage can remove last component", "[ecs]") {
 
     storage.add(first, {.x = 1.0f, .y = 2.0f});
     storage.add(second, {.x = 3.0f, .y = 4.0f});
+    storage.flush_additions();
 
     storage.remove(second);
     storage.flush_removals();
@@ -395,6 +416,7 @@ TEST_CASE("ComponentStorage removes the only component", "[ecs]") {
     conductor::Entity entity(0, 0);
 
     storage.add(entity, {.x = 1.0f, .y = 2.0f});
+    storage.flush_additions();
 
     REQUIRE(storage.chunk_count() == 1);
 
@@ -423,6 +445,7 @@ TEST_CASE("ComponentStorage allocates a new chunk when full", "[ecs]") {
         );
     }
 
+    storage.flush_additions();
     REQUIRE(storage.size() == 4096);
     REQUIRE(storage.chunk_count() == 1);
 
@@ -434,6 +457,7 @@ TEST_CASE("ComponentStorage allocates a new chunk when full", "[ecs]") {
         }
     );
 
+    storage.flush_additions();
     REQUIRE(storage.size() == 4097);
     REQUIRE(storage.chunk_count() == 2);
 }
@@ -454,6 +478,7 @@ TEST_CASE("ComponentStorage stores components across multiple chunks", "[ecs]") 
         );
     }
 
+    storage.flush_additions();
     REQUIRE(storage.size() == count);
     REQUIRE(storage.chunk_count() == 2);
 
@@ -485,6 +510,8 @@ TEST_CASE("ComponentStorage iterates over all components", "[ecs]") {
         );
     }
 
+    storage.flush_additions();
+
     size_t count = 0;
 
     for (Position& position : storage) {
@@ -510,6 +537,8 @@ TEST_CASE("ComponentStorage iteration remains dense after removal", "[ecs]") {
             }
         );
     }
+
+    storage.flush_additions();
 
     storage.remove(conductor::Entity(2, 0));
     storage.remove(conductor::Entity(4, 0));
@@ -541,6 +570,8 @@ TEST_CASE("ComponentStorage supports const iteration", "[ecs]") {
             .y = 20.0f
         }
     );
+
+    storage.flush_additions();
 
     const Storage& const_storage = storage;
 
@@ -574,6 +605,8 @@ TEST_CASE("ComponentStorage data provides dense access", "[ecs]") {
         );
     }
 
+    storage.flush_additions();
+
     for (size_t i = 0; i < storage.size(); ++i) {
         REQUIRE(storage.data(i)->x == static_cast<float>(i));
     }
@@ -592,6 +625,7 @@ TEST_CASE("ComponentStorage remains densely indexed after swap removal", "[ecs]"
             }
         );
     }
+    storage.flush_additions();
 
     storage.remove(conductor::Entity(1, 0));
     storage.flush_removals();
@@ -638,6 +672,7 @@ TEST_CASE("ComponentStorage reserve accepts entity capacity", "[ecs]") {
         );
     }
 
+    storage.flush_additions();
     REQUIRE(storage.size() == 100);
 }
 
@@ -689,6 +724,9 @@ TEST_CASE("Different component types have independent storage", "[ecs]") {
         .y = 2.0f
     });
 
+    positions.flush_additions();
+    velocities.flush_additions();
+
     REQUIRE(positions.size() == 1);
     REQUIRE(velocities.size() == 1);
 
@@ -708,6 +746,8 @@ TEST_CASE("ComponentStorage iterates across chunk boundaries", "[ecs]") {
             }
         );
     }
+
+    storage.flush_additions();
 
     REQUIRE(storage.chunk_count() == 2);
 
@@ -738,6 +778,8 @@ TEST_CASE("ComponentStorage single component iterates correctly", "[ecs]") {
         }
     );
 
+    storage.flush_additions();
+
     auto it = storage.begin();
 
     REQUIRE(it != storage.end());
@@ -747,4 +789,44 @@ TEST_CASE("ComponentStorage single component iterates correctly", "[ecs]") {
     ++it;
 
     REQUIRE(it == storage.end());
+}
+
+TEST_CASE("Multithreaded delete queues in removal queue", "[ecs]") {
+    Storage storage;
+
+    int num_threads = get_thread_count();
+    std::vector<std::thread> threads;
+    threads.reserve(num_threads);
+
+    int total_components = num_threads * components_per_thread;
+    for(int i = 0; i < total_components; i++) {
+        storage.add(
+            conductor::Entity(i, 0),
+            {
+                .x = static_cast<float>(i),
+                .y = static_cast<float>(i * 2)
+            }
+        );
+    }
+
+    storage.flush_additions();
+
+    REQUIRE(storage.size() == total_components);
+
+    for(int i = 0; i < num_threads; i++) {
+        threads.emplace_back([&, i]() {
+            for(int j = 0; j < components_per_thread; j++) {
+                int entity_idx = i * components_per_thread + j;
+                storage.remove(conductor::Entity(entity_idx, 0));
+            }
+        });
+    }
+
+    for(auto& thread : threads) {
+        thread.join();
+    }
+
+    storage.flush_removals();
+
+    REQUIRE(storage.size() == 0);
 }

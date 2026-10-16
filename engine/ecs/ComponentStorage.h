@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <iterator>
 #include <memory>
+#include <thread>
 #include <type_traits>
 #include <utility>
 #include <vector>
@@ -14,6 +15,7 @@
 #include "ComponentType.h"
 #include "Entity.h"
 #include "ComponentView.h"
+#include "core/MPMC.h"
 #include "core/NonCopyable.h"
 #include "core/Prefetch.h"
 
@@ -45,6 +47,10 @@ namespace conductor {
             bool present = false;
         };
 
+        struct AddComponent {
+            Entity entity;
+            T component;
+        };
 
     public:
         class Iterator {
@@ -299,9 +305,14 @@ namespace conductor {
     public:
         using component_type = T;
 
-        ComponentStorage() = default;
+        ComponentStorage() 
+          : m_pending_removals(65536),
+            m_pending_additions(65536) {};
 
-        explicit ComponentStorage(size_t entity_capacity) {
+        explicit ComponentStorage(size_t entity_capacity, size_t queue_capacity = 65536)
+          : m_pending_removals(queue_capacity),
+            m_pending_additions(queue_capacity) 
+        {
             reserve(entity_capacity);
         }
 
@@ -329,79 +340,56 @@ namespace conductor {
             m_chunks.reserve(chunk_count);
         }
 
-        T& add(
+        void add(
             Entity entity,
-            const T& component
+            T component
         ) {
-            assert(entity.valid());
+            AddComponent command{
+                entity,
+                component
+            };
 
-            ensure_location_capacity(entity.index());
-
-            Location& location =
-                m_locations[entity.index()];
-
-            /*
-             * A live component already exists.
-             */
-            if(location.present) {
-                assert(
-                    location.generation ==
-                    entity.generation()
+            if(!m_pending_additions.try_push(command)) {
+                throw std::runtime_error(
+                    "Queue size insufficient"
                 );
-
-                return component_at(location);
             }
+        }
 
-            /*
-             * Allocate a new chunk when necessary.
-             */
-            if(
-                m_chunks.empty() ||
-                m_chunks.back().size == ChunkSize
-            ) {
-                m_chunks.emplace_back();
+        void flush_additions() {
+            for(;;) {
+                if(auto command = m_pending_additions.try_pop()) {
+                    add_immediate(
+                        command->entity,
+                        command->component
+                    );
+                    continue;
+                }
+
+                break;
             }
-
-            Chunk& chunk = m_chunks.back();
-
-            const size_t offset = chunk.size;
-
-            chunk.components[offset] = component;
-            chunk.entities[offset] = entity;
-
-            ++chunk.size;
-
-            location.chunk =
-                static_cast<uint32_t>(
-                    m_chunks.size() - 1
-                );
-
-            location.offset =
-                static_cast<uint32_t>(offset);
-
-            location.generation =
-                entity.generation();
-
-            location.present = true;
-
-            ++m_size;
-
-            return chunk.components[offset];
         }
 
         void remove(Entity entity) {
             if(!contains(entity))
                 return;
 
-            m_pending_removals.push_back(entity);
+            if(!m_pending_removals.try_push(entity)) {
+                throw std::runtime_error(
+                    "Queue size insufficient"
+                );
+            }
         }
 
         void flush_removals() {
-            for(const Entity entity : m_pending_removals) {
-                remove_immediate(entity);
-            }
+            for(;;) {
+                if(auto entity = m_pending_removals.try_pop()) {
+                    remove_immediate(*entity);
+                    continue;
+                }
 
-            m_pending_removals.clear();
+                break;
+            }
         }
 
         bool contains(Entity entity) const noexcept {
@@ -595,6 +583,64 @@ namespace conductor {
                 .components[location.offset];
         }
 
+        void add_immediate(
+            Entity entity,
+            T component
+        ) {
+            assert(entity.valid());
+
+            ensure_location_capacity(entity.index());
+
+            Location& location =
+                m_locations[entity.index()];
+
+            /*
+             * A live component already exists.
+             */
+            if(location.present) {
+                assert(
+                    location.generation ==
+                    entity.generation()
+                );
+
+                return;
+            }
+
+            /*
+             * Allocate a new chunk when necessary.
+             */
+            if(
+                m_chunks.empty() ||
+                m_chunks.back().size == ChunkSize
+            ) {
+                m_chunks.emplace_back();
+            }
+
+            Chunk& chunk = m_chunks.back();
+
+            const size_t offset = chunk.size;
+
+            chunk.components[offset] = component;
+            chunk.entities[offset] = entity;
+
+            ++chunk.size;
+
+            location.chunk =
+                static_cast<uint32_t>(
+                    m_chunks.size() - 1
+                );
+
+            location.offset =
+                static_cast<uint32_t>(offset);
+
+            location.generation =
+                entity.generation();
+
+            location.present = true;
+
+            ++m_size;
+        }
+
         void remove_immediate(Entity entity) {
             if(!contains(entity))
                 return;
@@ -687,10 +733,16 @@ namespace conductor {
         std::vector<Location> m_locations;
 
         /*
+         * Structural adds are deferred until the end
+         * of the simulation frame.
+         */
+        MPMC<AddComponent> m_pending_additions;
+
+        /*
          * Structural removals are deferred until the end
          * of the simulation frame.
          */
-        std::vector<Entity> m_pending_removals;
+        MPMC<Entity> m_pending_removals;
 
         /*
          * Number of components currently stored.

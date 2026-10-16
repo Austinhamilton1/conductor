@@ -117,6 +117,8 @@ TEST_CASE("World adds components to entities", "[simulation]") {
 
     world.add_component(entity, position);
 
+    world.finalize();
+
     auto& storage = world.storage().get<Position>();
 
     REQUIRE(storage.contains(entity));
@@ -273,6 +275,7 @@ TEST_CASE("SpawnConfig can initialize a constant component", "[simulation]") {
 
     world.register_spawner("position", config);
     world.spawn_entities(1, "position");
+    world.finalize();
 
     conductor::Entity entity = world.get_entity(0);
 
@@ -300,6 +303,7 @@ TEST_CASE("SpawnConfig can spawn multiple entities", "[simulation]") {
 
     world.register_spawner("position", config);
     world.spawn_entities(200, "position");
+    world.finalize();
 
     for(std::size_t i = 0; i < 200; ++i) {
         conductor::Entity entity = world.get_entity(i);
@@ -335,6 +339,7 @@ TEST_CASE("SpawnConfig can generate component values per entity", "[simulation]"
 
     world.register_spawner("position", config);
     world.spawn_entities(10, "position");
+    world.finalize();
 
     for(std::size_t i = 0; i < 10; ++i) {
         conductor::Entity entity = world.get_entity(i);
@@ -372,6 +377,7 @@ TEST_CASE("SpawnConfig can initialize multiple components", "[simulation]") {
 
     world.register_spawner("robot", config);
     world.spawn_entities(1, "robot");
+    world.finalize();
 
     conductor::Entity entity = world.get_entity(0);
 
@@ -410,6 +416,7 @@ TEST_CASE("SpawnConfig can be reused", "[simulation]") {
     world.register_spawner("position", config);
     world.spawn_entities(5, "position");
     world.spawn_entities(5, "position");
+    world.finalize();
 
     REQUIRE(world.entities().size() == 10);
 
@@ -448,6 +455,7 @@ TEST_CASE("Spawning zero entities does nothing", "[simulation]") {
 
     world.register_spawner("position", config);
     world.spawn_entities(0, "position");
+    world.finalize();
 
     REQUIRE(world.entities().size() == 0);
 }
@@ -492,6 +500,8 @@ TEST_CASE("SpawnConfig random initialization is deterministic", "[simulation]") 
     world_b.register_spawner("position", config_b);
     world_a.spawn_entities(100, "position");
     world_b.spawn_entities(100, "position");
+    world_a.finalize();
+    world_b.finalize();
 
     for(std::size_t i = 0; i < 100; ++i) {
         conductor::Entity a = world_a.get_entity(i);
@@ -528,6 +538,7 @@ TEST_CASE("SpawnConfig does not retain generated component state", "[simulation]
     world.register_spawner("position", config);
     world.spawn_entities(3, "position");
     world.spawn_entities(3, "position");
+    world.finalize();
 
     for(std::size_t i = 0; i < 6; ++i) {
         conductor::Entity entity = world.get_entity(i);

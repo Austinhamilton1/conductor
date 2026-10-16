@@ -96,6 +96,7 @@ namespace conductor {
                 auto& typed_storage =
                     *static_cast<ComponentStorage<T>*>(ptr);
 
+                typed_storage.flush_additions();
                 typed_storage.flush_removals();
             };
 
@@ -153,6 +154,13 @@ namespace conductor {
         const StorageEntry& entry(ComponentTypeId id) const;
 
         void remove_entity(Entity entity);
+
+        /*
+         * Flush should be called after applying all Component
+         * commands. Flush is not thread safe, so it should only
+         * be called once by a single thread.
+         */
+        void flush();
 
         size_t size() const noexcept {
             return m_size;

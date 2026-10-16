@@ -84,6 +84,8 @@ TEST_CASE("SystemExecutor provides functional query", "[ecs]") {
         }
     );
 
+    velocities.flush_additions();
+
     positions.add(
         entity,
         Position{
@@ -92,6 +94,8 @@ TEST_CASE("SystemExecutor provides functional query", "[ecs]") {
             .z = 3.0f
         }
     );
+
+    positions.flush_additions();
 
     auto query =
         MovementSystem::Query::bind_storage(

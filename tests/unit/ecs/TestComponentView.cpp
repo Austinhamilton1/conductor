@@ -34,6 +34,7 @@ TEST_CASE("Adding components changes view", "[ecs]") {
     storage.add(e0, Position{1, 2, 3});
     storage.add(e1, Position{4, 5, 6});
     storage.add(e2, Position{7, 8, 9});
+    storage.flush_additions();
 
     auto view = storage.view();
 
@@ -56,6 +57,7 @@ TEST_CASE("Mutating through view mutates underlying component", "[ecs]") {
 
     storage.add(e0, Position{1, 2, 3});
     storage.add(e1, Position{4, 5, 6});
+    storage.flush_additions();
 
     auto view = storage.view();
 
@@ -87,6 +89,7 @@ TEST_CASE("Views work across chunk boundaries", "[ecs]") {
             static_cast<float>(i * 3)
         });
     }
+    storage.flush_additions();
 
     auto view = storage.view();
 
@@ -107,6 +110,7 @@ TEST_CASE("ComponentView can lookup components by entity", "[ecs]") {
     conductor::Entity entity(0, 0);
 
     storage.add(entity, Position{1.0f, 2.0f, 3.0f});
+    storage.flush_additions();
 
     auto view = storage.view();
 

@@ -67,6 +67,8 @@ TEST_CASE("Query reads a single component", "[ecs]") {
         Position{5.0f, 6.0f}
     );
 
+    storage.flush_additions();
+
     using Query =
         conductor::Query<conductor::Read<Position>>;
 
@@ -115,6 +117,8 @@ TEST_CASE("Query writes a single component", "[ecs]") {
         Position{3.0f, 4.0f}
     );
 
+    storage.flush_additions();
+
     using Query = 
         conductor::Query<conductor::Write<Position>>;
 
@@ -161,6 +165,8 @@ TEST_CASE("Query reads one component and writes another", "[ecs]") {
         Position{30.0f, 40.0f}
     );
 
+    positions.flush_additions();
+
     velocities.add(
         entity1,
         Velocity{1.0f, 2.0f}
@@ -170,6 +176,8 @@ TEST_CASE("Query reads one component and writes another", "[ecs]") {
         entity2,
         Velocity{3.0f, 4.0f}
     );
+
+    velocities.flush_additions();
 
     using Query =
         conductor::Query<
@@ -258,6 +266,8 @@ TEST_CASE("Query returns only entities containing all components", "[ecs]") {
         Position{4.0f, 4.0f}
     );
 
+    positions.flush_additions();
+
     // Velocity:
     // entity1
     // entity3
@@ -277,6 +287,8 @@ TEST_CASE("Query returns only entities containing all components", "[ecs]") {
         entity4,
         Velocity{40.0f, 40.0f}
     );
+
+    velocities.flush_additions();
 
     using Query = 
         conductor::Query<
@@ -341,6 +353,8 @@ TEST_CASE("Query uses the first view as the driver", "[ecs]") {
         Position{3.0f, 3.0f}
     );
 
+    positions.flush_additions();
+
     velocities.add(
         entity1,
         Velocity{10.0f, 10.0f}
@@ -350,6 +364,8 @@ TEST_CASE("Query uses the first view as the driver", "[ecs]") {
         entity3,
         Velocity{30.0f, 30.0f}
     );
+
+    velocities.flush_additions();
 
     using Query = 
         conductor::Query<
@@ -415,10 +431,14 @@ TEST_CASE("Query is empty when no entity has all components", "[ecs]") {
         Position{1.0f, 1.0f}
     );
 
+    positions.flush_additions();
+
     velocities.add(
         entity2,
         Velocity{2.0f, 2.0f}
     );
+
+    velocities.flush_additions();
 
     using Query = 
         conductor::Query<
@@ -472,6 +492,9 @@ TEST_CASE("Query works across multiple component storage chunks", "[ecs]") {
             }
         );
     }
+
+    positions.flush_additions();
+    velocities.flush_additions();
 
     REQUIRE(positions.chunk_count() > 1);
     REQUIRE(velocities.chunk_count() > 1);
@@ -547,6 +570,8 @@ TEST_CASE("Query iterator exposes the correct entity", "[ecs]") {
         Position{2.0f, 2.0f}
     );
 
+    positions.flush_additions();
+
     velocities.add(
         entity1,
         Velocity{10.0f, 10.0f}
@@ -556,6 +581,8 @@ TEST_CASE("Query iterator exposes the correct entity", "[ecs]") {
         entity2,
         Velocity{20.0f, 20.0f}
     );
+
+    velocities.flush_additions();
 
     using Query = 
         conductor::Query<
@@ -616,6 +643,8 @@ TEST_CASE("Query can read from const component storage", "[ecs]") {
         Position{10.0f, 20.0f}
     );
 
+    storage.flush_additions();
+
     const auto& const_storage = storage;
 
     using Query =
@@ -654,6 +683,7 @@ TEST_CASE("Large parallel query works", "[ecs]") {
             entity,
             Position{static_cast<float>(i), 0.0f}
         );
+        storage.flush_additions();
     }
 
     using Query =

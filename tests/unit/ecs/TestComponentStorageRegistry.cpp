@@ -349,6 +349,8 @@ TEST_CASE("ComponentStorageRegistry creates valid add and remove operations", "[
         &position
     );
 
+    entry.flush(entry.storage);
+
     REQUIRE(storage.contains(entity));
 
     entry.remove(
@@ -387,6 +389,8 @@ TEST_CASE("ComponentStorageRegistry add operation preserves component data", "[e
         &expected
     );
 
+    entry.flush(entry.storage);
+
     const Position& actual =
         *storage.get(entity);
 
@@ -408,6 +412,10 @@ TEST_CASE("Destroying an entity removes all components", "[ecs]") {
     positions.add(entity, Position{1.0, 2.0});
     velocities.add(entity, Velocity{3.0, 4.0});
     batteries.add(entity, Health{100});
+    
+    positions.flush_additions();
+    velocities.flush_additions();
+    batteries.flush_additions();
 
     REQUIRE(positions.contains(entity));
     REQUIRE(velocities.contains(entity));
@@ -415,6 +423,7 @@ TEST_CASE("Destroying an entity removes all components", "[ecs]") {
 
     manager.destroy(entity);
     storages.remove_entity(entity);
+    storages.flush();
 
     REQUIRE_FALSE(positions.contains(entity));
     REQUIRE_FALSE(velocities.contains(entity));
