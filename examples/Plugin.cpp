@@ -367,6 +367,12 @@ namespace {
                 DroneRemovalSystem{}
             );
 
+            m_telemetry = config.system(
+                "telemetry",
+                frequency,
+                TelemetrySystem{}
+            );
+
             m_steering.depends_on(m_integration);
         }
 
@@ -376,7 +382,7 @@ namespace {
         conductor::Scheduler::SystemHandle
             m_sensor, m_steering, m_integration,
             m_battery, m_monitor, m_removal,
-            m_target;
+            m_target, m_telemetry;
     };
 }
 
