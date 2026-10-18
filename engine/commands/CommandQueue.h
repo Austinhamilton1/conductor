@@ -68,7 +68,6 @@ namespace conductor {
 
         /*
          * Queue addition of a component to a deferred entity.
-         
          */
         template<Component T>
         void add_component(
