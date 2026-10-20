@@ -5,42 +5,55 @@
 
 namespace conductor {
     DeferredEntity CommandQueue::create_entity() {
-        const auto id = 
-            static_cast<DeferredEntity::Id>(
+        DeferredEntity deferred;
+
+        {
+            std::lock_guard lock(m_resolved_mutex);
+
+            if(m_resolved_entities.size() >= DeferredEntity::INVALID_ID) {
+                throw std::length_error(
+                    "CommandQueue has exhausted DeferredEntity IDs"
+                );
+            }
+
+            const auto id = static_cast<DeferredEntity::Id>(
                 m_resolved_entities.size()
             );
 
-        if(id == DeferredEntity::INVALID_ID) {
-            throw std::length_error(
-                "CommandQueue has exhausted DeferredEntity IDs"
-            );
+            m_resolved_entities.emplace_back();
+            deferred = DeferredEntity{id};
         }
 
-        m_resolved_entities.emplace_back();
-
-        const DeferredEntity deferred{id};
-
-        m_commands.push_back(
+        auto buffer = get_thread_buffer();
+        buffer->commands.push_back(
             Command::create_entity(deferred)
         );
+
+        m_command_count.fetch_add(1, std::memory_order_relaxed);
 
         return deferred;
     }
 
     void CommandQueue::destroy_entity(Entity entity) {
-        m_commands.push_back(
+        auto buffer = get_thread_buffer();
+        buffer->commands.push_back(
             Command::destroy_entity(
                 EntityReference::from_entity(entity)
             )
         );
+
+        m_command_count.fetch_add(1, std::memory_order_relaxed);
     }
 
     void CommandQueue::destroy_entity(DeferredEntity entity) {
-        m_commands.push_back(
+        auto buffer = get_thread_buffer();
+        buffer->commands.push_back(
             Command::destroy_entity(
                 EntityReference::from_deferred(entity)
             )
         );
+
+        m_command_count.fetch_add(1, std::memory_order_relaxed);
     }
 
     void CommandQueue::add_component(
@@ -64,8 +77,10 @@ namespace conductor {
                 );
             }
 
+        auto buffer = get_thread_buffer();
+
         const auto offset =
-            m_component_data.size();
+            buffer->component_data.size();
 
         const auto new_size =
             offset + component_size;
@@ -76,15 +91,15 @@ namespace conductor {
             );
         }
 
-        m_component_data.resize(new_size);
+        buffer->component_data.resize(new_size);
 
         std::memcpy(
-            m_component_data.data() + offset,
+            buffer->component_data.data() + offset,
             component,
             component_size
         );
 
-        m_commands.push_back(
+        buffer->commands.push_back(
             Command::add_component(
                 entity,
                 component_type,
@@ -92,13 +107,16 @@ namespace conductor {
                 static_cast<uint32_t>(component_size)
             )
         );
+
+        m_command_count.fetch_add(1, std::memory_order_relaxed);
     }
 
     void CommandQueue::remove_component(
         EntityReference entity,
         ComponentTypeId component
     ) {
-        m_commands.push_back(
+        auto buffer = get_thread_buffer();
+        buffer->commands.push_back(
             Command::remove_component(
                 entity,
                 component
@@ -115,19 +133,24 @@ namespace conductor {
 
         const auto id = deferred.id();
 
-        if(id >= m_resolved_entities.size()) {
-            throw std::out_of_range(
-                "DeferredEntity does not belong to this CommandQueue"
-            );
-        }
+        Entity entity;
 
-        const Entity entity = 
-            m_resolved_entities[id];
+        {
+            std::lock_guard lock(m_resolved_mutex);
 
-        if(!entity.valid()) {
-            throw std::out_of_range(
-                "DeferredEntity has not been resolved"
-            );
+            if(id >= m_resolved_entities.size()) {
+                throw std::out_of_range(
+                    "DeferredEntity does not belong to this CommandQueue"
+                );
+            }
+
+            entity = m_resolved_entities[id];
+
+            if(!entity.valid()) {
+                throw std::out_of_range(
+                    "DeferredEntity has not been resolved"
+                );
+            }
         }
 
         return entity;
@@ -166,13 +189,17 @@ namespace conductor {
             const auto id =
                 command.m_create_entity.deferred.id();
 
-            if(id >= m_resolved_entities.size()) {
-                throw std::out_of_range(
-                    "CreateEntity contains an invalid DeferredEntity"
-                );
-            }
+            {
+                std::lock_guard lock(m_resolved_mutex);
 
-            m_resolved_entities[id] = entity;
+                if(id >= m_resolved_entities.size()) {
+                    throw std::out_of_range(
+                        "CreateEntity contains an invalid DeferredEntity"
+                    );
+                }
+
+                m_resolved_entities[id] = entity;
+            }
             break;
         }
 
@@ -195,7 +222,8 @@ namespace conductor {
     void CommandQueue::apply_component_command(
         const Command& command,
         EntityManager& manager,
-        ComponentStorageRegistry& storages
+        ComponentStorageRegistry& storages,
+        const ThreadBuffer& buffer
     ) {
         switch(command.type) {
         case CommandType::AddComponent: {
@@ -230,9 +258,9 @@ namespace conductor {
                     command.m_add_component.data_offset
                 );
 
-            if(offset > m_component_data.size() ||
+            if(offset > buffer.component_data.size() ||
                 data_size >
-                m_component_data.size() - offset) {
+                buffer.component_data.size() - offset) {
                     throw std::out_of_range(
                         "AddComponent contains invalid component data"
                     );
@@ -250,7 +278,7 @@ namespace conductor {
             entry.add(
                 entry.storage,
                 entity,
-                m_component_data.data() + offset
+                buffer.component_data.data() + offset
             );
 
             break;
@@ -303,19 +331,21 @@ namespace conductor {
          * There is intentionally no ordering contract between entity
          * commands beyond this phase boundary.
          */
-        for(const Command& command : m_commands) {
-            switch(command.type) {
-            case CommandType::CreateEntity:
-            case CommandType::DestroyEntity:
-                apply_entity_command(
-                    command,
-                    manager,
-                    storages
-                );
-                break;
+        for(auto buffer : m_buffers) {
+            for(const Command& command : buffer->commands) {
+                switch(command.type) {
+                case CommandType::CreateEntity:
+                case CommandType::DestroyEntity:
+                    apply_entity_command(
+                        command,
+                        manager,
+                        storages
+                    );
+                    break;
 
-            default:
-                break;
+                default:
+                    break;
+                }
             }
         }
 
@@ -326,46 +356,73 @@ namespace conductor {
          * All DeferredEntity references are now resolvable because the
          * entire entity phase has completed.
          */
-        for(const Command& command : m_commands) {
-            switch (command.type) {
-            case CommandType::AddComponent:
-            case CommandType::RemoveComponent:
-                apply_component_command(
-                    command,
-                    manager,
-                    storages
-                );
-                break;
-            
-            default:
-                break;
+        for(auto buffer : m_buffers) {
+            for(const Command& command : buffer->commands) {
+                switch (command.type) {
+                case CommandType::AddComponent:
+                case CommandType::RemoveComponent:
+                    apply_component_command(
+                        command,
+                        manager,
+                        storages,
+                        *buffer
+                    );
+                    break;
+                
+                default:
+                    break;
+                }
             }
         }
 
         storages.flush();
-        m_commands.clear();
-        m_component_data.clear();
+        clear_commands();
+    }
+
+    void CommandQueue::clear_commands() {
+        for(const auto& buffer : m_buffers) {
+            buffer->commands.clear();
+            buffer->component_data.clear();
+        }
+
+        m_command_count.store(0, std::memory_order_relaxed);
     }
 
     void CommandQueue::clear() {
-        m_commands.clear();
+        clear_commands();
+
+        std::lock_guard lock(m_resolved_mutex);
         m_resolved_entities.clear();
-        m_component_data.clear();
     }
 
     bool CommandQueue::empty() const noexcept {
-        return m_commands.empty();
+        return size() == 0;
     }
 
     CommandQueue::SizeType CommandQueue::size() const noexcept {
-        return m_commands.size();
+        return m_command_count.load(std::memory_order_relaxed);
     }
 
-    void CommandQueue::reserve(SizeType capacity) {
-        m_commands.reserve(capacity);
-    }
+    std::shared_ptr<ThreadBuffer> CommandQueue::get_thread_buffer() const {
+        thread_local std::unordered_map<
+            std::uint64_t,
+            std::weak_ptr<ThreadBuffer>
+        > cache;
 
-    const Command *CommandQueue::commands() const noexcept {
-        return m_commands.data();
+        if(auto it = cache.find(m_queue_id); it != cache.end()) {
+            if(auto buffer = it->second.lock()) {
+                return buffer;
+            }
+        }
+
+        auto buffer = std::make_shared<ThreadBuffer>();
+
+        {
+            std::lock_guard lock(m_buffers_mutex);
+            m_buffers.push_back(buffer);
+        }
+
+        cache[m_queue_id] = buffer;
+        return buffer;
     }
 }

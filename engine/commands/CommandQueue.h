@@ -1,10 +1,14 @@
 #pragma once
 
+#include <atomic>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
 #include <limits>
+#include <memory>
+#include <mutex>
 #include <stdexcept>
+#include <unordered_map>
 #include <vector>
 
 #include "Command.h"
@@ -16,15 +20,20 @@
 #include "ecs/ComponentStorageRegistry.h"
 
 namespace conductor {
+    struct ThreadBuffer {
+        std::vector<Command> commands;
+        std::vector<std::byte> component_data;
+    };
+
     class CommandQueue : public NonCopyable {
     public:
         using SizeType = size_t;
 
-        CommandQueue() = default;
+        CommandQueue() : m_queue_id(next_queue_id()) {};
         ~CommandQueue() = default;
 
-        CommandQueue(CommandQueue&&) noexcept = default;
-        CommandQueue& operator=(CommandQueue&&) noexcept = default;
+        CommandQueue(CommandQueue&&) noexcept = delete;
+        CommandQueue& operator=(CommandQueue&&) noexcept = delete;
 
         /*
          * Queue creation of a new entity.
@@ -190,16 +199,27 @@ namespace conductor {
         void apply_component_command(
             const Command& command,
             EntityManager& manager,
-            ComponentStorageRegistry& storages
+            ComponentStorageRegistry& storages,
+            const ThreadBuffer& buffer
         );
 
+        static std::uint64_t next_queue_id() noexcept {
+            static std::atomic<std::uint64_t> next{1};
+            return next.fetch_add(1, std::memory_order_relaxed);
+        }
+
+        std::shared_ptr<ThreadBuffer> get_thread_buffer() const;
+
+        void clear_commands();
+
     private:
-        std::vector<Command> m_commands;
+        mutable std::mutex m_buffers_mutex;
+        mutable std::vector<std::shared_ptr<ThreadBuffer>> m_buffers;
 
-        // Maps DeferredEntity::Id -> resolved Entity.
+        const std::uint64_t m_queue_id;
+        std::atomic<SizeType> m_command_count{0};
+
+        mutable std::mutex m_resolved_mutex;
         std::vector<Entity> m_resolved_entities;
-
-        // Raw component data owned by the queue.
-        std::vector<std::byte> m_component_data;
     };
 }
