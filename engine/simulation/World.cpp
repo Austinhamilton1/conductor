@@ -8,7 +8,6 @@ namespace conductor {
     }
     
     void World::finalize() {
-        m_storages.flush();
         m_finalized = true;
     }
 

@@ -184,6 +184,7 @@ namespace conductor {
 
         ComponentStorage<T>& storage = m_storages.get<T>();
         storage.add(entity, component);
+        storage.flush_additions();
     }
 
     template<Component T>
