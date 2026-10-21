@@ -616,7 +616,7 @@ Version 0.5 of Conductor will introduce parallelism to several subsystems within
 Some goals of v0.5 include:
 
  - [ ] Parallelize scheduler. Scheduler should be able to run independent systems concurrently, reducing the overall time to run systems.
- - [ ] Parallelize command queue. Commands that are queued for execution during a single frame should be able to run concurrently. Commands are atomic, so running several in parallel should not affect the execution of the command queue.
+ - [X] Parallelize command queue. Commands that are queued for execution during a single frame should be able to run concurrently. Commands are atomic, so running several in parallel should not affect the execution of the command queue.
  - [X] Parallelize queries. Sufficiently large queries should be able to run with chunked workers.
  - [X] Change query API. Queries should be able to run either single threaded or multithreaded. Proposed API change is to add `.do(function())` to query, which runs parallel workers.
 
