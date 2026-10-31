@@ -616,7 +616,7 @@ Version 0.5 of Conductor will introduce parallelism to several subsystems within
 Some goals of v0.5 include:
 
  - [ ] Parallelize scheduler. Scheduler should be able to run independent systems concurrently, reducing the overall time to run systems.
- - [ ] Parallelize command queue. Commands that are queued for execution during a single frame should be able to run concurrently. Commands are atomic, so running several in parallel should not affect the execution of the command queue.
+ - [X] Parallelize command queue. Commands that are queued for execution during a single frame should be able to run concurrently. Commands are atomic, so running several in parallel should not affect the execution of the command queue.
  - [X] Parallelize queries. Sufficiently large queries should be able to run with chunked workers.
  - [X] Change query API. Queries should be able to run either single threaded or multithreaded. Proposed API change is to add `.do(function())` to query, which runs parallel workers.
 
@@ -628,12 +628,12 @@ There are several dependencies within Conductor. Parallel execution of different
 
  - [ ] `Random`: The random number generator needs to be made thread safe. Making this multithreaded will break determinism, therefore users need to be able to define whether they want multithreading or not.
  - [X] `SimulationClock`: This should be made constant when passing through dependency injection to ensure no changes are made that race.
- - [ ] `CommandQueue`: There is no guarantee that two threads will not race on this. This needs to be made thread safe. Start with mutex, then move on to MPMC queue.
+ - [X] `CommandQueue`: There is no guarantee that two threads will not race on this. This needs to be made thread safe. Start with mutex, then move on to MPMC queue.
  - [X] `EventBus`: This also needs to be made thread safe. Start with mutex, then move on to MPMC queue.
 
 ### `CommandQueue`
 
- - [ ] Internal representation: `CommandQueue` uses three internal vectors. These need to be made thread safe so they do not race.
+ - [X] Internal representation: `CommandQueue` uses three internal vectors. These need to be made thread safe so they do not race.
  - [X] `EntityManager`: This will need to be made thread safe. `CommandQueue` uses this to create/destroy entities. Entities may be created/destroyed in parallel.
  - [X] `ComponentStorage/ComponentStorageRegistry`: This will also need to be made thread safe. This is used to create/destroy components. Components may be created/destroyed in parallel.
 

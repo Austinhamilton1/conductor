@@ -1,5 +1,11 @@
 #include <catch2/catch_test_macros.hpp>
 
+#include <barrier>
+#include <cstddef>
+#include <thread>
+#include <unordered_set>
+#include <vector>
+
 #include "commands/CommandQueue.h"
 #include "ecs/ComponentRegistry.h"
 #include "ecs/ComponentStorageRegistry.h"
@@ -23,7 +29,6 @@ namespace {
     struct Health {
         int value;
     };
-
 }
 
 
@@ -727,4 +732,246 @@ TEST_CASE("CommandQueue rejects removing a component without storage", "[command
         ),
         std::logic_error
     );
+}
+
+TEST_CASE("CommandQueue supports concurrent deferred entity creation", "[commands]") {
+    EntityManager entities;
+    ComponentStorageRegistry storages;
+    CommandQueue commands;
+
+    constexpr std::size_t thread_count = 4;
+    constexpr std::size_t entities_per_thread = 1000;
+
+    std::vector<std::vector<DeferredEntity>> deferred(
+        thread_count
+    );
+
+    std::vector<std::thread> threads;
+    threads.reserve(thread_count);
+
+    for(std::size_t t = 0; t < thread_count; ++t) {
+        threads.emplace_back([&, t]() {
+            deferred[t].reserve(entities_per_thread);
+
+            for (std::size_t i = 0; i < entities_per_thread; ++i) {
+                deferred[t].push_back(commands.create_entity());
+            }
+        });
+    }
+
+    for(auto& thread : threads) {
+        thread.join();
+    }
+
+    REQUIRE(
+        commands.size() == thread_count * entities_per_thread
+    );
+
+    commands.apply(entities, storages);
+
+    std::unordered_set<std::uint64_t> resolved_ids;
+
+    for(const auto& thread_entities : deferred) {
+        for(const DeferredEntity handle : thread_entities) {
+            const Entity entity = commands.resolve(handle);
+
+            REQUIRE(entity.valid());
+            REQUIRE(entities.alive(entity));
+
+            const std::uint64_t key =
+                (static_cast<std::uint64_t>(entity.generation()) << 32) |
+                entity.index();
+
+            REQUIRE(resolved_ids.insert(key).second);
+        }
+    }
+
+    REQUIRE(
+        resolved_ids.size() == thread_count * entities_per_thread
+    );
+}
+
+TEST_CASE("CommandQueue preserves component data across producer threads", "[commands]") {
+    EntityManager entities;
+    ComponentStorageRegistry storages;
+    CommandQueue commands;
+
+    auto& positions = storages.create<Position>();
+
+    constexpr std::size_t thread_count = 4;
+    constexpr std::size_t entities_per_thread = 500;
+
+    std::vector<std::vector<Entity>> thread_entities(thread_count);
+
+    for(auto& batch : thread_entities) {
+        batch.reserve(entities_per_thread);
+
+        for(std::size_t i = 0; i < entities_per_thread; ++i) {
+            batch.push_back(entities.create());
+        }
+    }
+
+    std::vector<std::thread> threads;
+    threads.reserve(thread_count);
+
+    for(std::size_t t = 0; t < thread_count; ++t) {
+        threads.emplace_back([&, t]() {
+            for(std::size_t i = 0; i < entities_per_thread; ++i) {
+                const float expected =
+                    static_cast<float>(t * entities_per_thread + i);
+
+                commands.add_component(
+                    thread_entities[t][i],
+                    Position{
+                        expected,
+                        expected + 1.0f,
+                        expected + 2.0f
+                    }
+                );
+            }
+        });
+    }
+
+    for(auto& thread : threads) {
+        thread.join();
+    }
+
+    REQUIRE(
+        commands.size() == thread_count * entities_per_thread
+    );
+
+    commands.apply(entities, storages);
+
+    for(std::size_t t = 0; t < thread_count; ++t) {
+        for(std::size_t i = 0; i < entities_per_thread; ++i) {
+            const Entity entity = thread_entities[t][i];
+            const float expected =
+                static_cast<float>(t * entities_per_thread + i);
+
+            REQUIRE(positions.contains(entity));
+
+            const auto& position = positions.get(entity);
+
+            REQUIRE(position->x == expected);
+            REQUIRE(position->y == expected + 1.0f);
+            REQUIRE(position->z == expected + 2.0f);
+        }
+    }
+}
+
+TEST_CASE("CommandQueue supports concurrent deferred entities with components", "[commands]") {
+    EntityManager entities;
+    ComponentStorageRegistry storages;
+    CommandQueue commands;
+
+    auto& positions = storages.create<Position>();
+
+    constexpr std::size_t thread_count = 4;
+    constexpr std::size_t entities_per_thread = 250;
+
+    struct Expected {
+        DeferredEntity deferred;
+        float x;
+    };
+
+    std::vector<std::vector<Expected>> expected(thread_count);
+    std::vector<std::thread> threads;
+
+    for(std::size_t t = 0; t < thread_count; ++t) {
+        threads.emplace_back([&, t]() {
+            expected[t].reserve(entities_per_thread);
+
+            for(std::size_t i = 0; i < entities_per_thread; ++i) {
+                const auto deferred = commands.create_entity();
+
+                const float x =
+                    static_cast<float>(t * entities_per_thread + i);
+
+                commands.add_component(
+                    deferred,
+                    Position{x, x + 10.0f, x + 20.0f}
+                );
+
+                expected[t].push_back({deferred, x});
+            }
+        });
+    }
+
+    for(auto& thread : threads) {
+        thread.join();
+    }
+
+    REQUIRE(
+        commands.size() ==
+        thread_count * entities_per_thread * 2
+    );
+
+    commands.apply(entities, storages);
+
+    for(const auto& batch : expected) {
+        for(const auto& item : batch) {
+            const Entity entity = commands.resolve(item.deferred);
+
+            REQUIRE(entities.alive(entity));
+            REQUIRE(positions.contains(entity));
+
+            const auto& position = positions.get(entity);
+
+            REQUIRE(position->x == item.x);
+            REQUIRE(position->y == item.x + 10.0f);
+            REQUIRE(position->z == item.x + 20.0f);
+        }
+    }
+}
+
+TEST_CASE("CommandQueue supports concurrent entity destruction", "[commands]") {
+    EntityManager entities;
+    ComponentStorageRegistry storages;
+    CommandQueue commands;
+
+    constexpr std::size_t thread_count = 4;
+    constexpr std::size_t entities_per_thread = 500;
+
+    std::vector<std::vector<Entity>> thread_entities(thread_count);
+
+    for(auto& batch : thread_entities) {
+        batch.reserve(entities_per_thread);
+
+        for(std::size_t i = 0; i < entities_per_thread; ++i) {
+            batch.push_back(entities.create());
+        }
+    }
+
+    std::vector<std::thread> threads;
+    threads.reserve(thread_count);
+
+    for(std::size_t t = 0; t < thread_count; ++t) {
+        threads.emplace_back([&, t]() {
+            for(const Entity entity : thread_entities[t]) {
+                commands.destroy_entity(entity);
+            }
+        });
+    }
+
+    for(auto& thread : threads) {
+        thread.join();
+    }
+
+    REQUIRE(
+        commands.size() == thread_count * entities_per_thread
+    );
+
+    for(const auto& batch : thread_entities) {
+        for(const Entity entity : batch) {
+            REQUIRE(entities.alive(entity));
+        }
+    }
+
+    commands.apply(entities, storages);
+
+    for(const auto& batch : thread_entities) {
+        for(const Entity entity : batch) {
+            REQUIRE_FALSE(entities.alive(entity));
+        }
+    }
 }
