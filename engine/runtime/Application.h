@@ -41,10 +41,6 @@ namespace conductor {
         
     private:
         bool m_running = false;
-
-        // This needs to be declared first so that World
-        // is destroyed before this (plugin lifecycles)
-        PluginManager m_plugins;
         
         double m_duration;
         double m_step_size;
@@ -56,5 +52,9 @@ namespace conductor {
         EventBus m_events;
 
         Executor m_executor;
+
+        // This needs to be declared first so that World
+        // is destroyed after this (plugin lifecycles)
+        PluginManager m_plugins;
     };
 }
